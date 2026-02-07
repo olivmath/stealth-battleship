@@ -30,7 +30,11 @@ export default function RadarSpinner({ size = 60 }: Props) {
   const r = size / 2;
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View
+      style={[styles.container, { width: size, height: size }]}
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+    >
       {/* Outer ring */}
       <View
         style={[

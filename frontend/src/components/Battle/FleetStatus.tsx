@@ -17,7 +17,11 @@ export default function FleetStatus({ ships, label }: Props) {
       <Text style={styles.label}>{label}</Text>
       <View style={styles.ships}>
         {ships.map(ship => (
-          <View key={ship.id} style={styles.shipRow}>
+          <View
+            key={ship.id}
+            style={styles.shipRow}
+            accessibilityLabel={ship.isSunk ? `${ship.name}: sunk` : `${ship.name}: ${ship.hits} of ${ship.size} hits`}
+          >
             <View style={styles.shipCells}>
               {Array.from({ length: ship.size }).map((_, i) => (
                 <View
@@ -35,7 +39,7 @@ export default function FleetStatus({ ships, label }: Props) {
           </View>
         ))}
       </View>
-      <Text style={styles.count}>{alive}/{total}</Text>
+      <Text style={styles.count} accessibilityLabel={`${alive} of ${total} ships remaining`}>{alive}/{total}</Text>
     </View>
   );
 }

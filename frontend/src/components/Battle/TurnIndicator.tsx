@@ -8,7 +8,12 @@ interface Props {
 
 export default function TurnIndicator({ isPlayerTurn }: Props) {
   return (
-    <View style={[styles.container, !isPlayerTurn && styles.enemyContainer]}>
+    <View
+      style={[styles.container, !isPlayerTurn && styles.enemyContainer]}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={isPlayerTurn ? 'Your turn. Tap a cell to fire.' : 'Enemy is firing. Please wait.'}
+    >
       <View style={[styles.dot, { backgroundColor: isPlayerTurn ? COLORS.accent.gold : COLORS.accent.fire }]} />
       <Text style={[styles.text, !isPlayerTurn && styles.enemyText]}>
         {isPlayerTurn ? 'YOUR TURN' : 'ENEMY FIRING...'}

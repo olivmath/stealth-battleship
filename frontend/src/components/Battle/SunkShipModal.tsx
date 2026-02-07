@@ -64,7 +64,7 @@ export default function SunkShipModal({ visible, ship }: Props) {
   if (!visible || !ship) return null;
 
   return (
-    <Modal transparent visible={visible} animationType="none">
+    <Modal transparent visible={visible} animationType="none" accessibilityViewIsModal>
       <View style={styles.backdrop}>
         <Animated.View
           style={[
@@ -77,6 +77,8 @@ export default function SunkShipModal({ visible, ship }: Props) {
               opacity,
             },
           ]}
+          accessibilityRole="alert"
+          accessibilityLabel={`Ship sunk! ${ship?.name ?? 'Unknown'} destroyed`}
         >
           <Text style={styles.label}>SHIP SUNK!</Text>
           <Text style={styles.shipName}>{ship.name}</Text>
