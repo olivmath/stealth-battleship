@@ -81,7 +81,9 @@ export default function MatchDetailScreen() {
             {isVictory ? 'VICTORY' : 'DEFEAT'}
           </Text>
           <Text style={styles.date}>{dateStr}</Text>
-          <Text style={styles.gridLabel}>{match.gridSize}x{match.gridSize} Grid</Text>
+          <Text style={styles.gridLabel}>
+            {match.gridSize}x{match.gridSize} Grid{match.difficulty ? ` • ${match.difficulty.toUpperCase()}` : ''}
+          </Text>
           <View style={[styles.divider, { backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }]} />
         </View>
 

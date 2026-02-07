@@ -8,6 +8,7 @@ import { useHaptics } from '../src/hooks/useHaptics';
 import { usePlayerStats } from '../src/hooks/useStorage';
 import { getLevelInfo } from '../src/engine/stats';
 import { ShipKillEfficiency, LevelInfo } from '../src/types/game';
+import { DIFFICULTY_CONFIG } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 function KillEfficiencyBar({ item }: { item: ShipKillEfficiency }) {
@@ -120,6 +121,8 @@ export default function GameOverScreen() {
   const isVictory = state.winner === 'player';
   const ms = state.lastMatchStats;
   const xpEarned = ms?.score ?? 0;
+  const difficulty = state.settings.difficulty;
+  const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
 
   // Track level-up
   useEffect(() => {
@@ -183,7 +186,15 @@ export default function GameOverScreen() {
         <View style={styles.xpContainer}>
           <View style={styles.xpRow}>
             <Text style={styles.xpLabel}>XP EARNED</Text>
-            <Text style={styles.xpValue}>+{xpEarned}</Text>
+            <View style={styles.xpRight}>
+              {multiplier !== 1 && (
+                <Text style={styles.multiplierBadge}>{multiplier}x</Text>
+              )}
+              <Text style={styles.xpValue}>+{xpEarned}</Text>
+            </View>
+          </View>
+          <View style={styles.difficultyRow}>
+            <Text style={styles.difficultyLabel}>{difficulty.toUpperCase()}</Text>
           </View>
           <View style={styles.levelRow}>
             <Text style={styles.levelRank}>{currentLevel.rank.toUpperCase()}</Text>
@@ -307,6 +318,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  xpRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  multiplierBadge: {
+    fontFamily: FONTS.heading,
+    fontSize: 11,
+    color: COLORS.background.dark,
+    backgroundColor: COLORS.accent.gold,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+    overflow: 'hidden',
+    letterSpacing: 1,
+  },
   xpLabel: {
     fontFamily: FONTS.heading,
     fontSize: 10,
@@ -317,6 +344,15 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.heading,
     fontSize: 20,
     color: COLORS.accent.gold,
+  },
+  difficultyRow: {
+    marginTop: 4,
+  },
+  difficultyLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
   },
   levelRow: {
     flexDirection: 'row',
