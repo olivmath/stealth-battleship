@@ -5,6 +5,8 @@ import {
   StyleSheet,
   Dimensions,
   GestureResponderEvent,
+  Alert,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
@@ -173,11 +175,30 @@ export default function PlacementScreen() {
     }
   };
 
+  const handleAbandon = () => {
+    Alert.alert(
+      'Abandon Mission',
+      'Are you sure you want to abandon ship placement and return to menu?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Abandon',
+          style: 'destructive',
+          onPress: () => router.replace('/menu'),
+        },
+      ]
+    );
+  };
+
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
   return (
     <GradientContainer>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.title}>DEPLOY FLEET</Text>
         <Text style={styles.subtitle}>
           {selectedShip
@@ -236,28 +257,42 @@ export default function PlacementScreen() {
           onSelect={handleShipSelect}
         />
 
-        <View style={styles.actions}>
+        <View style={styles.actionsRow}>
           <NavalButton
-            title="AUTO PLACE"
+            title="BACK"
+            onPress={handleAbandon}
+            variant="danger"
+            size="small"
+            style={styles.actionButton}
+          />
+          <NavalButton
+            title="AUTO"
             onPress={handleAutoPlace}
             variant="secondary"
+            size="small"
+            style={styles.actionButton}
           />
           <NavalButton
-            title="READY FOR BATTLE"
+            title="READY"
             onPress={handleReady}
             disabled={!allPlaced}
+            variant="success"
+            size="small"
+            style={styles.actionButton}
           />
         </View>
-      </View>
+      </ScrollView>
     </GradientContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+  },
+  content: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   title: {
     fontFamily: FONTS.heading,
@@ -271,8 +306,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.text.secondary,
     textAlign: 'center',
-    marginBottom: SPACING.sm,
-    minHeight: 32,
+    marginBottom: SPACING.xs,
+    minHeight: 28,
   },
   gridWrapper: {
     alignSelf: 'center',
@@ -284,8 +319,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
-  actions: {
+  actionsRow: {
+    flexDirection: 'row',
     gap: SPACING.sm,
     marginTop: SPACING.sm,
+  },
+  actionButton: {
+    flex: 1,
   },
 });
