@@ -6,30 +6,41 @@ interface Props {
   title: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  size?: 'default' | 'small';
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
-export default function NavalButton({ title, onPress, disabled, variant = 'primary', style }: Props) {
+export default function NavalButton({ title, onPress, disabled, variant = 'primary', size = 'default', style, accessibilityLabel, accessibilityHint }: Props) {
   const borderColor = disabled
     ? COLORS.ui.disabledBorder
     : variant === 'danger'
       ? COLORS.accent.fire
-      : COLORS.ui.buttonBorder;
+      : variant === 'success'
+        ? '#22c55e'
+        : COLORS.ui.buttonBorder;
 
   const bgColor = disabled ? COLORS.ui.disabledBg : COLORS.ui.buttonBg;
 
   return (
     <TouchableOpacity
-      style={[styles.button, { borderColor, backgroundColor: bgColor }, style]}
+      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, style]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!disabled }}
     >
       <Text style={[
         styles.text,
+        size === 'small' && styles.textSmall,
         disabled && styles.disabledText,
         variant === 'danger' && styles.dangerText,
+        variant === 'success' && styles.successText,
       ]}>
         {title}
       </Text>
@@ -46,6 +57,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  buttonSmall: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
   text: {
     fontFamily: FONTS.heading,
     fontSize: 14,
@@ -53,10 +68,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
+  textSmall: {
+    fontSize: 11,
+    letterSpacing: 1,
+  },
   disabledText: {
     color: COLORS.text.secondary,
   },
   dangerText: {
     color: COLORS.accent.fire,
+  },
+  successText: {
+    color: '#22c55e',
   },
 });
