@@ -241,16 +241,28 @@ export default function PlacementScreen() {
           </View>
         </View>
 
-        {selectedShip && (
-          <ShipPreview shipName={selectedShip.name} orientation={orientation} />
-        )}
-
-        <ShipSelector
-          ships={shipDefs}
-          placedShipIds={placedShipIds}
-          selectedShipId={selectedShip?.id ?? null}
-          onSelect={handleShipSelect}
-        />
+        <View style={styles.selectorRow}>
+          <View style={styles.selectorLeft}>
+            <ShipSelector
+              ships={shipDefs}
+              placedShipIds={placedShipIds}
+              selectedShipId={selectedShip?.id ?? null}
+              onSelect={handleShipSelect}
+            />
+          </View>
+          <View style={styles.selectorRight}>
+            {selectedShip && (
+              <ShipPreview
+                shipSize={selectedShip.size}
+                orientation={orientation}
+                onToggle={() => {
+                  haptics.light();
+                  setOrientation(o => o === 'horizontal' ? 'vertical' : 'horizontal');
+                }}
+              />
+            )}
+          </View>
+        </View>
 
         <View style={styles.actionsRow}>
           <NavalButton
@@ -311,10 +323,21 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
+  selectorRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  selectorLeft: {
+    flex: 1,
+  },
+  selectorRight: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   actionsRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    marginTop: SPACING.sm,
+    marginTop: 'auto',
   },
   actionButton: {
     flex: 1,
