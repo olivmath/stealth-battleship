@@ -6,11 +6,49 @@ import { COLORS, FONTS, SPACING } from '../../constants/theme';
 interface Props {
   ships: PlacedShip[];
   label: string;
+  compact?: boolean;
 }
 
-export default function FleetStatus({ ships, label }: Props) {
+export default function FleetStatus({ ships, label, compact = false }: Props) {
   const alive = ships.filter(s => !s.isSunk).length;
   const total = ships.length;
+
+  if (compact) {
+    return (
+      <View style={styles.compactContainer}>
+        <Text style={styles.compactLabel}>
+          {label} {alive}/{total}
+        </Text>
+        <View style={styles.compactShips}>
+          {ships.map(ship => (
+            <View
+              key={ship.id}
+              style={styles.compactShipRow}
+              accessibilityLabel={ship.isSunk ? `${ship.name}: sunk` : `${ship.name}: ${ship.hits} of ${ship.size} hits`}
+            >
+              <View style={styles.compactShipCells}>
+                {Array.from({ length: ship.size }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.compactCell,
+                      ship.isSunk ? styles.sunkCell : i < ship.hits ? styles.hitCell : styles.aliveCell,
+                    ]}
+                  />
+                ))}
+              </View>
+              <Text
+                style={[styles.compactShipName, ship.isSunk && styles.sunkText]}
+                numberOfLines={1}
+              >
+                {ship.name}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -103,5 +141,44 @@ const styles = StyleSheet.create({
     color: COLORS.text.accent,
     textAlign: 'right',
     marginTop: SPACING.xs,
+  },
+  // Compact styles
+  compactContainer: {
+    // Removed flex: 1 to allow content to determine height, removing empty space
+    padding: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.grid.border,
+    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+  },
+  compactLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  compactShips: {
+    gap: 2,
+  },
+  compactShipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactShipCells: {
+    flexDirection: 'row',
+    gap: 1,
+    marginRight: 6,
+  },
+  compactCell: {
+    width: 7,
+    height: 7,
+    borderWidth: 1,
+  },
+  compactShipName: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 11,
+    color: COLORS.text.primary,
+    flexShrink: 1,
   },
 });

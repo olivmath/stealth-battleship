@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
@@ -176,7 +176,6 @@ export default function BattleScreen() {
     return (
       <GradientContainer>
         <View style={styles.container}>
-          <Text style={styles.title}>BATTLE STATIONS</Text>
           <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
 
           <View style={styles.swipeTabs}>
@@ -229,14 +228,14 @@ export default function BattleScreen() {
   }
 
   // --- Stacked mode (default) ---
+  const miniBoardWidth = SCREEN_WIDTH * 0.6;
+
   return (
     <GradientContainer>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>BATTLE STATIONS</Text>
-
+      <View style={styles.stackedContainer}>
         <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
 
-        <View style={styles.section}>
+        <View style={styles.enemySection}>
           <Text style={styles.sectionLabel}>ENEMY WATERS</Text>
           <GameBoard
             board={state.opponentBoard}
@@ -248,24 +247,28 @@ export default function BattleScreen() {
           />
         </View>
 
-        <View style={styles.fleetRow}>
-          <FleetStatus ships={state.opponentShips} label="ENEMY FLEET" />
-          <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
+        <View style={styles.bottomStrip}>
+          <View style={[styles.miniMapSection, { marginLeft: 20 }]}>
+            <Text style={styles.miniLabel}>YOUR WATERS</Text>
+            <GameBoard
+              board={state.playerBoard}
+              showShips
+              disabled
+              gridSize={gridSize}
+              maxWidth={miniBoardWidth}
+              hideLabels
+            />
+          </View>
+          <View style={styles.fleetColumn}>
+            <FleetStatus ships={state.opponentShips} label="ENEMY" compact />
+            <FleetStatus ships={state.playerShips} label="YOURS" compact />
+          </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>YOUR WATERS</Text>
-          <GameBoard
-            board={state.playerBoard}
-            showShips
-            compact
-            disabled
-            gridSize={gridSize}
-          />
-        </View>
-
-        <NavalButton title="SURRENDER" onPress={handleSurrender} variant="danger" />
-      </ScrollView>
+        <TouchableOpacity onPress={handleSurrender} style={styles.surrenderCompact}>
+          <Text style={styles.surrenderText}>SURRENDER</Text>
+        </TouchableOpacity>
+      </View>
       <SunkShipModal visible={showSunkModal} ship={sunkShip} />
     </GradientContainer>
   );
@@ -277,22 +280,15 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: SPACING.sm,
   },
-  scrollContainer: {
+  // Stacked mode styles
+  stackedContainer: {
     flex: 1,
-  },
-  content: {
     padding: SPACING.md,
-    paddingBottom: SPACING.xxl,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 18,
-    color: COLORS.text.accent,
-    letterSpacing: 3,
-    textAlign: 'center',
-  },
-  section: {
+  enemySection: {
+    flex: 1,
+    justifyContent: 'center',
     gap: SPACING.xs,
   },
   sectionLabel: {
@@ -302,9 +298,34 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
   },
-  fleetRow: {
+  bottomStrip: {
     flexDirection: 'row',
     gap: SPACING.sm,
+    alignItems: 'flex-start',
+  },
+  miniMapSection: {
+    gap: 2,
+  },
+  miniLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  fleetColumn: {
+    flex: 1,
+    gap: SPACING.xs,
+  },
+  surrenderCompact: {
+    paddingVertical: SPACING.xs,
+    alignItems: 'center',
+  },
+  surrenderText: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.accent.fire,
+    letterSpacing: 2,
   },
   // Swipe mode styles
   swipeTabs: {

@@ -15,6 +15,8 @@ interface Props {
   compact?: boolean;
   gridSize?: number;
   isOpponent?: boolean;
+  maxWidth?: number;
+  hideLabels?: boolean;
 }
 
 const LABEL_WIDTH = 20;
@@ -28,18 +30,25 @@ export default function GameBoard({
   compact = false,
   gridSize,
   isOpponent = false,
+  maxWidth,
+  hideLabels = false,
 }: Props) {
   const effectiveGridSize = gridSize ?? board.length ?? GRID_SIZE;
   const screenWidth = Dimensions.get('window').width;
-  const maxGridWidth = compact ? screenWidth * 0.45 : screenWidth - SPACING.lg * 2 - LABEL_WIDTH;
+  const labelW = hideLabels ? 0 : LABEL_WIDTH;
+  const maxGridWidth = maxWidth
+    ? maxWidth - labelW
+    : compact
+      ? screenWidth * 0.45
+      : screenWidth - SPACING.lg * 2 - LABEL_WIDTH;
   const cellSize = Math.floor(maxGridWidth / effectiveGridSize);
 
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
   return (
     <View style={styles.container} accessible accessibilityLabel={isOpponent ? 'Enemy grid' : 'Your grid'}>
-      <CoordinateLabels cellSize={cellSize} gridSize={effectiveGridSize} />
-      <View style={[styles.grid, { marginLeft: LABEL_WIDTH }]}>
+      {!hideLabels && <CoordinateLabels cellSize={cellSize} gridSize={effectiveGridSize} />}
+      <View style={[styles.grid, !hideLabels && { marginLeft: LABEL_WIDTH }]}>
         {board.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {row.map((cell, colIndex) => {
