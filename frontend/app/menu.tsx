@@ -65,7 +65,7 @@ export default function MenuScreen() {
             style={{ borderStyle: 'dashed' }}
           />
           <NavalButton
-            title="MATCH HISTORY"
+            title="YOUR HISTORY"
             onPress={() => {
               haptics.light();
               router.replace('/match-history');

@@ -8,9 +8,17 @@ import { useHaptics } from '../src/hooks/useHaptics';
 import { MatchRecord } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: '#22c55e',
+  normal: '#f59e0b',
+  hard: '#f87171',
+};
+
 function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () => void }) {
   const isVictory = match.result === 'victory';
   const dateStr = new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const difficulty = match.difficulty ?? 'normal';
+  const diffColor = DIFFICULTY_COLORS[difficulty] ?? COLORS.text.secondary;
 
   return (
     <TouchableOpacity
@@ -18,7 +26,7 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, score ${match.score}`}
+      accessibilityLabel={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, ${difficulty}, score ${match.score}`}
     >
       <View style={itemStyles.left}>
         <Text style={[itemStyles.result, isVictory ? itemStyles.win : itemStyles.loss]}>
@@ -26,7 +34,14 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
         </Text>
         <View>
           <Text style={itemStyles.date}>{dateStr}</Text>
-          <Text style={itemStyles.grid}>{match.gridSize}x{match.gridSize}</Text>
+          <View style={itemStyles.infoRow}>
+            <Text style={itemStyles.grid}>{match.gridSize}x{match.gridSize}</Text>
+            <View style={[itemStyles.diffBadge, { borderColor: diffColor }]}>
+              <Text style={[itemStyles.diffText, { color: diffColor }]}>
+                {difficulty.toUpperCase()}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
       <Text style={[itemStyles.score, isVictory ? itemStyles.win : itemStyles.loss]}>
@@ -68,10 +83,26 @@ const itemStyles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.text.primary,
   },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
   grid: {
     fontFamily: FONTS.bodyLight,
     fontSize: 11,
     color: COLORS.text.secondary,
+  },
+  diffBadge: {
+    borderWidth: 1,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  diffText: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    letterSpacing: 1,
   },
   score: {
     fontFamily: FONTS.heading,
@@ -88,7 +119,7 @@ export default function MatchHistoryScreen() {
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>MATCH HISTORY</Text>
+          <Text style={styles.title}>YOUR HISTORY</Text>
           <View style={styles.divider} />
         </View>
 
