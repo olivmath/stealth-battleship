@@ -54,15 +54,18 @@ export default function MenuScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <NavalButton
-            title="START BATTLE"
-            onPress={handleStartBattle}
+            title="PvP ONLINE"
+            subtitle="challenge players"
+            variant="pvp"
+            onPress={() => {
+              haptics.light();
+              router.replace('/pvp-mode');
+            }}
           />
           <NavalButton
-            title="PvP ONLINE"
-            subtitle="coming soon"
-            onPress={() => {}}
-            disabled
-            style={{ borderStyle: 'dashed' }}
+            title="ARCADE"
+            subtitle="vs AI opponent"
+            onPress={handleStartBattle}
           />
           <NavalButton
             title="YOUR HISTORY"
