@@ -11,21 +11,24 @@ import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import Cell from '../src/components/Board/Cell';
-import CoordinateLabels from '../src/components/Board/CoordinateLabels';
+import { getLabelSize, computeCellSize } from '../src/components/Board/GameBoard';
 import ShipSelector from '../src/components/Ship/ShipSelector';
 import ShipPreview from '../src/components/Ship/ShipPreview';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { useSettings } from '../src/hooks/useStorage';
-import { getShipDefinitions, getShipStyle } from '../src/constants/game';
-import { ShipDefinition, Orientation, Position } from '../src/types/game';
+import { getShipDefinitions, getShipStyle, getColumnLabels, getRowLabels } from '../src/constants/game';
+import { ShipDefinition, Orientation, Position, GridSizeOption } from '../src/types/game';
 import { calculatePositions, validatePlacement } from '../src/engine/shipPlacement';
 import { autoPlaceShips } from '../src/engine/shipPlacement';
 import { createEmptyBoard } from '../src/engine/board';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { COLORS, FONTS } from '../src/constants/theme';
 
-const LABEL_WIDTH = 20;
+const SCREEN_PADDING = 16;
 const screenWidth = Dimensions.get('window').width;
+const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, 400);
+const VARIANT = 'full' as const;
+const LABEL_SIZE = getLabelSize(VARIANT);
 
 export default function PlacementScreen() {
   const router = useRouter();
@@ -35,8 +38,10 @@ export default function PlacementScreen() {
 
   const gridSize = state.settings.gridSize;
   const shipDefs = getShipDefinitions(gridSize);
-  const maxGridWidth = screenWidth - SPACING.lg * 2 - LABEL_WIDTH;
-  const CELL_SIZE = Math.floor(maxGridWidth / gridSize);
+  const CELL_SIZE = computeCellSize(CONTENT_WIDTH, VARIANT, gridSize);
+
+  const colLabels = getColumnLabels(gridSize as GridSizeOption);
+  const rowLabels = getRowLabels(gridSize as GridSizeOption);
 
   const [selectedShip, setSelectedShip] = useState<ShipDefinition | null>(null);
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
@@ -45,7 +50,6 @@ export default function PlacementScreen() {
 
   const gridLayoutRef = useRef({ x: 0, y: 0 });
 
-  // Load settings into game context on mount
   useEffect(() => {
     if (settings.gridSize !== state.settings.gridSize) {
       dispatch({ type: 'LOAD_SETTINGS', settings });
@@ -71,10 +75,10 @@ export default function PlacementScreen() {
   }, [selectedShip, haptics]);
 
   const positionFromTouch = useCallback((pageX: number, pageY: number): Position | null => {
-    const gridX = pageX - gridLayoutRef.current.x - LABEL_WIDTH;
-    const gridY = pageY - gridLayoutRef.current.y;
-    const col = Math.floor(gridX / CELL_SIZE);
-    const row = Math.floor(gridY / CELL_SIZE);
+    const localX = pageX - gridLayoutRef.current.x;
+    const localY = pageY - gridLayoutRef.current.y - LABEL_SIZE;
+    const col = Math.floor(localX / CELL_SIZE);
+    const row = Math.floor(localY / CELL_SIZE);
     if (row >= 0 && row < gridSize && col >= 0 && col < gridSize) {
       return { row, col };
     }
@@ -107,7 +111,7 @@ export default function PlacementScreen() {
     }
 
     if (selectedShip && pos) {
-      haptics.light(); // Ship pickup feedback
+      haptics.light();
     }
     updatePreview(pos);
   }, [selectedShip, state.playerBoard, positionFromTouch, updatePreview, haptics, dispatch]);
@@ -194,17 +198,23 @@ export default function PlacementScreen() {
   return (
     <GradientContainer>
       <View style={styles.container}>
-        <Text style={styles.title}>DEPLOY FLEET</Text>
-        <Text style={styles.subtitle}>
-          {selectedShip
-            ? `Tap grid to position • Tap ${selectedShip.name} again to rotate`
-            : allPlaced
-              ? 'All ships deployed! Tap a ship to reposition.'
-              : 'Select a ship below, then drag on the grid'}
-        </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>DEPLOY FLEET</Text>
+          <Text style={styles.subtitle}>
+            {selectedShip
+              ? `Tap grid to position \u2022 Tap ${selectedShip.name} again to rotate`
+              : allPlaced
+                ? 'All ships deployed! Tap a ship to reposition.'
+                : 'Select a ship below, then drag on the grid'}
+          </Text>
+        </View>
 
+        <View style={{ height: 8 }} />
+
+        {/* Grid section with integrated labels */}
         <View
-          style={styles.gridWrapper}
+          style={styles.gridSection}
           onLayout={(e) => {
             e.target.measureInWindow((x: number, y: number) => {
               gridLayoutRef.current = { x, y };
@@ -212,12 +222,25 @@ export default function PlacementScreen() {
           }}
           onStartShouldSetResponder={() => true}
           onMoveShouldSetResponder={() => true}
-          onResponderStart={handleGridTouchStart}
+          onResponderGrant={handleGridTouchStart}
           onResponderMove={handleGridTouchMove}
           onResponderRelease={handleGridTouchEnd}
         >
-          <CoordinateLabels cellSize={CELL_SIZE} gridSize={gridSize} />
-          <View style={[styles.grid, { marginLeft: LABEL_WIDTH }]}>
+          {/* Header row: column labels + empty corner */}
+          <View style={styles.labelRow}>
+            {colLabels.map(label => (
+              <Text
+                key={label}
+                style={[styles.label, { width: CELL_SIZE, height: LABEL_SIZE, lineHeight: LABEL_SIZE }]}
+              >
+                {label}
+              </Text>
+            ))}
+            <View style={{ width: LABEL_SIZE, height: LABEL_SIZE }} />
+          </View>
+
+          {/* Grid body with row labels on right */}
+          <View style={styles.gridBody}>
             {state.playerBoard.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
                 {row.map((cell, colIndex) => {
@@ -238,12 +261,20 @@ export default function PlacementScreen() {
                     />
                   );
                 })}
+                <Text
+                  style={[styles.label, { width: LABEL_SIZE, height: CELL_SIZE, lineHeight: CELL_SIZE }]}
+                >
+                  {rowLabels[rowIndex]}
+                </Text>
               </View>
             ))}
           </View>
         </View>
 
-        <View style={styles.selectorRow}>
+        <View style={{ height: 16 }} />
+
+        {/* Ship selector */}
+        <View style={styles.selectorSection}>
           <View style={styles.selectorLeft}>
             <ShipSelector
               ships={shipDefs}
@@ -266,6 +297,10 @@ export default function PlacementScreen() {
           </View>
         </View>
 
+        {/* Flex spacer */}
+        <View style={styles.flexSpacer} />
+
+        {/* Action buttons */}
         <View style={styles.actionsRow}>
           <NavalButton
             title="BACK"
@@ -298,48 +333,64 @@ export default function PlacementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: SPACING.lg,
+    padding: SCREEN_PADDING,
+  },
+  header: {
+    alignItems: 'center',
+    gap: 2,
   },
   title: {
     fontFamily: FONTS.heading,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.text.accent,
     letterSpacing: 3,
-    textAlign: 'center',
   },
   subtitle: {
     fontFamily: FONTS.bodyLight,
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.text.secondary,
     textAlign: 'center',
-    marginBottom: SPACING.xs,
-    minHeight: 28,
+    minHeight: 18,
   },
-  gridWrapper: {
+  gridSection: {
     alignSelf: 'center',
+    maxWidth: CONTENT_WIDTH,
   },
-  grid: {
+  labelRow: {
+    flexDirection: 'row',
+  },
+  gridBody: {
     borderWidth: 1,
     borderColor: COLORS.grid.border,
   },
   row: {
     flexDirection: 'row',
   },
-  selectorRow: {
+  label: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+  },
+  selectorSection: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: 8,
   },
   selectorLeft: {
     flex: 1,
   },
   selectorRight: {
+    width: 72,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  flexSpacer: {
+    flex: 1,
+    minHeight: 16,
+  },
   actionsRow: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: 'auto',
+    gap: 8,
   },
   actionButton: {
     flex: 1,
