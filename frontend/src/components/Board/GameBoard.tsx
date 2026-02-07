@@ -14,6 +14,7 @@ interface Props {
   previewPositions?: Position[];
   compact?: boolean;
   gridSize?: number;
+  isOpponent?: boolean;
 }
 
 const LABEL_WIDTH = 20;
@@ -26,6 +27,7 @@ export default function GameBoard({
   previewPositions = [],
   compact = false,
   gridSize,
+  isOpponent = false,
 }: Props) {
   const effectiveGridSize = gridSize ?? board.length ?? GRID_SIZE;
   const screenWidth = Dimensions.get('window').width;
@@ -35,7 +37,7 @@ export default function GameBoard({
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessible accessibilityLabel={isOpponent ? 'Enemy grid' : 'Your grid'}>
       <CoordinateLabels cellSize={cellSize} gridSize={effectiveGridSize} />
       <View style={[styles.grid, { marginLeft: LABEL_WIDTH }]}>
         {board.map((row, rowIndex) => (
@@ -51,6 +53,9 @@ export default function GameBoard({
                   size={cellSize}
                   isPreview={isPreview}
                   disabled={disabled || cell.state === 'hit' || cell.state === 'miss' || cell.state === 'sunk'}
+                  row={rowIndex}
+                  col={colIndex}
+                  isOpponent={isOpponent}
                   onPress={
                     onCellPress
                       ? () => onCellPress({ row: rowIndex, col: colIndex })

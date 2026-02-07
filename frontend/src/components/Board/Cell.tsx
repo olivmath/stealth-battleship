@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
 import { CellState } from '../../types/game';
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 
 interface Props {
   state: CellState;
@@ -10,9 +10,19 @@ interface Props {
   disabled?: boolean;
   isPreview?: boolean;
   isInvalid?: boolean;
+  row?: number;
+  col?: number;
+  isOpponent?: boolean;
 }
 
-function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid }: Props) {
+function getCellLabel(row: number | undefined, col: number | undefined, state: CellState): string {
+  if (row == null || col == null) return state;
+  const letter = String.fromCharCode(65 + row);
+  const num = col + 1;
+  return `${letter}${num}, ${state}`;
+}
+
+function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, row, col, isOpponent }: Props) {
   const bgColor = isInvalid
     ? 'rgba(239, 68, 68, 0.3)'
     : isPreview
@@ -29,6 +39,8 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid }:
           ? COLORS.accent.fireDark
           : COLORS.grid.border;
 
+  const label = getCellLabel(row, col, state);
+
   return (
     <TouchableOpacity
       style={[
@@ -43,10 +55,25 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid }:
       onPress={onPress}
       disabled={disabled || !onPress}
       activeOpacity={0.6}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={isOpponent && state === 'empty' ? 'Tap to fire' : undefined}
     >
-      {state === 'hit' && <View style={styles.hitMarker} />}
-      {state === 'miss' && <View style={styles.missMarker} />}
-      {state === 'sunk' && <View style={styles.sunkMarker} />}
+      {state === 'hit' && (
+        <View style={styles.hitMarker}>
+          <Text style={styles.hitMarkerText}>X</Text>
+        </View>
+      )}
+      {state === 'miss' && (
+        <View style={styles.missMarker}>
+          <Text style={styles.missMarkerText}>{'\u2022'}</Text>
+        </View>
+      )}
+      {state === 'sunk' && (
+        <View style={styles.sunkMarker}>
+          <Text style={styles.sunkMarkerText}>X</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -74,6 +101,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: COLORS.accent.fire,
     opacity: 0.9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   missMarker: {
     width: '30%',
@@ -81,6 +110,13 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: COLORS.text.secondary,
     opacity: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missMarkerText: {
+    color: '#e2e8f0',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
   sunkMarker: {
     width: '60%',
@@ -88,6 +124,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent.fireDark,
     opacity: 0.8,
     transform: [{ rotate: '45deg' }],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hitMarkerText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  sunkMarkerText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    transform: [{ rotate: '-45deg' }],
   },
 });
 
