@@ -34,7 +34,7 @@ export default function BattleScreen() {
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
 
   // Mini-map sizing
-  const MINI_MAX_WIDTH = Math.floor(CONTENT_WIDTH * 0.48);
+  const MINI_MAX_WIDTH = Math.floor(CONTENT_WIDTH * 0.75);
 
   // Auto-switch to the relevant board when turn changes (swipe mode)
   useEffect(() => {
@@ -261,10 +261,11 @@ export default function BattleScreen() {
           />
         </View>
 
+        <View style={{ height: 16 }} />
+
         {/* Bottom panel: mini-map + fleet status */}
         <View style={styles.bottomPanel}>
           <View style={styles.miniMapColumn}>
-            <Text style={styles.miniLabel}>YOUR WATERS</Text>
             <GameBoard
               board={state.playerBoard}
               showShips
@@ -272,13 +273,17 @@ export default function BattleScreen() {
               gridSize={gridSize}
               maxWidth={MINI_MAX_WIDTH}
               variant="mini"
+              colLabelsBottom
             />
+            <Text style={styles.miniLabel}>YOUR WATERS</Text>
           </View>
           <View style={styles.fleetColumn}>
             <FleetStatus ships={state.opponentShips} label="ENEMY" compact />
             <FleetStatus ships={state.playerShips} label="YOURS" compact />
           </View>
         </View>
+
+        <View style={{ flex: 1 }} />
 
         <NavalButton
           title="SURRENDER"
@@ -301,8 +306,6 @@ const styles = StyleSheet.create({
   },
   // Stacked mode
   mainGridSection: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   sectionLabel: {
