@@ -1,4 +1,4 @@
-import { ShipDefinition, GridSizeOption } from '../types/game';
+import { ShipDefinition, GridSizeOption, DifficultyLevel } from '../types/game';
 
 // --- Default grid (used as fallback) ---
 export const GRID_SIZE = 6;
@@ -39,3 +39,41 @@ export const ROW_LABELS = getRowLabels(6);
 
 export const AI_DELAY_MIN = 600;
 export const AI_DELAY_MAX = 1200;
+
+// --- Difficulty configuration ---
+
+export interface DifficultyConfig {
+  useCheckerboard: boolean;
+  useAxisDetection: boolean;
+  centerWeight: boolean;
+  delayMin: number;
+  delayMax: number;
+  scoreMultiplier: number;
+}
+
+export const DIFFICULTY_CONFIG: Record<DifficultyLevel, DifficultyConfig> = {
+  easy: {
+    useCheckerboard: false,
+    useAxisDetection: false,
+    centerWeight: false,
+    delayMin: 1400,
+    delayMax: 2000,
+    scoreMultiplier: 0.5,
+  },
+  normal: {
+    useCheckerboard: true,
+    useAxisDetection: true,
+    centerWeight: false,
+    delayMin: 800,
+    delayMax: 1200,
+    scoreMultiplier: 1.0,
+  },
+  hard: {
+    useCheckerboard: true,
+    useAxisDetection: true,
+    centerWeight: true,
+    delayMin: 400,
+    delayMax: 700,
+    scoreMultiplier: 1.5,
+  },
+};

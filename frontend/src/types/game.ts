@@ -100,6 +100,7 @@ export interface MatchRecord {
   result: 'victory' | 'defeat';
   score: number;
   gridSize: number;
+  difficulty: DifficultyLevel;
   stats: MatchStats;
 }
 
@@ -107,10 +108,12 @@ export interface MatchRecord {
 
 export type GridSizeOption = 6 | 10;
 export type BattleViewMode = 'stacked' | 'swipe';
+export type DifficultyLevel = 'easy' | 'normal' | 'hard';
 
 export interface GameSettings {
   gridSize: GridSizeOption;
   battleView: BattleViewMode;
+  difficulty: DifficultyLevel;
 }
 
 // --- Player level ---
