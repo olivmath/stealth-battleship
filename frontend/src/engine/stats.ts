@@ -5,7 +5,6 @@ import {
   ShipKillEfficiency,
   LevelInfo,
 } from '../types/game';
-import { GRID_SIZE } from '../constants/game';
 
 const RANKS = [
   { rank: 'Recruit', xp: 0, motto: 'Every admiral started here' },
@@ -16,16 +15,19 @@ const RANKS = [
   { rank: 'Admiral', xp: 60000, motto: 'Legend of naval warfare' },
 ];
 
+export { RANKS };
+
 export function calculateScore(
   won: boolean,
   accuracy: number,
   shotsToWin: number,
   perfectKills: number,
-  overkillShots: number
+  overkillShots: number,
+  gridSize: number = 6
 ): number {
   const basePoints = won ? 1000 : 200;
   const accuracyBonus = Math.round(accuracy * 5);
-  const maxShots = GRID_SIZE * GRID_SIZE;
+  const maxShots = gridSize * gridSize;
   const speedBonus = won ? Math.max(0, (maxShots - shotsToWin) * 30) : 0;
   const perfectKillBonus = perfectKills * 150;
   const overkillPenalty = overkillShots * 50;
@@ -37,7 +39,8 @@ export function computeMatchStats(
   tracking: BattleTracking,
   opponentShips: PlacedShip[],
   playerShips: PlacedShip[],
-  won: boolean
+  won: boolean,
+  gridSize: number = 6
 ): MatchStats {
   const shotsFired = tracking.playerShots.length;
   const shotsHit = tracking.playerShots.filter(s => s.result !== 'miss').length;
@@ -50,7 +53,6 @@ export function computeMatchStats(
     .map(ship => {
       const firstHit = tracking.shipFirstHitTurn[ship.id] ?? 0;
       const sunkAt = tracking.shipSunkTurn[ship.id] ?? 0;
-      // Count player shots between firstHit and sunk turns (inclusive)
       const shotsInRange = tracking.playerShots.filter(
         s => s.turn >= firstHit && s.turn <= sunkAt
       ).length;
@@ -63,18 +65,14 @@ export function computeMatchStats(
       };
     });
 
-  // Perfect Kills
   const perfectKills = killEfficiency.filter(k => k.actualShots === k.idealShots).length;
 
-  // First Blood Turn
   const firstHitTurns = Object.values(tracking.shipFirstHitTurn);
   const firstBloodTurn = firstHitTurns.length > 0 ? Math.min(...firstHitTurns) : 0;
 
-  // Ships survived
   const shipsSurvived = playerShips.filter(s => !s.isSunk).length;
 
-  // Score
-  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0);
+  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0, gridSize);
 
   return {
     score,

@@ -1,9 +1,9 @@
 import { Board, Cell, Position, AttackResult, PlacedShip } from '../types/game';
 import { GRID_SIZE } from '../constants/game';
 
-export function createEmptyBoard(): Board {
-  return Array.from({ length: GRID_SIZE }, () =>
-    Array.from({ length: GRID_SIZE }, (): Cell => ({
+export function createEmptyBoard(gridSize: number = GRID_SIZE): Board {
+  return Array.from({ length: gridSize }, () =>
+    Array.from({ length: gridSize }, (): Cell => ({
       state: 'empty',
       shipId: null,
     }))
@@ -48,6 +48,6 @@ export function posKey(pos: Position): string {
   return `${pos.row},${pos.col}`;
 }
 
-export function isValidPosition(row: number, col: number): boolean {
-  return row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
+export function isValidPosition(row: number, col: number, gridSize: number = GRID_SIZE): boolean {
+  return row >= 0 && row < gridSize && col >= 0 && col < gridSize;
 }

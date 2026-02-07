@@ -3,8 +3,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Orbitron_400Regular, Orbitron_700Bold } from '@expo-google-fonts/orbitron';
 import { Rajdhani_400Regular, Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GameProvider } from '../src/context/GameContext';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { COLORS } from '../src/constants/theme';
 
 export default function RootLayout() {
@@ -18,7 +19,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={COLORS.accent.gold} />
+        <RadarSpinner size={60} />
       </View>
     );
   }

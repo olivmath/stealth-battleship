@@ -103,6 +103,16 @@ export interface MatchRecord {
   stats: MatchStats;
 }
 
+// --- Settings ---
+
+export type GridSizeOption = 6 | 10;
+export type BattleViewMode = 'stacked' | 'swipe';
+
+export interface GameSettings {
+  gridSize: GridSizeOption;
+  battleView: BattleViewMode;
+}
+
 // --- Player level ---
 
 export interface LevelInfo {
@@ -129,11 +139,13 @@ export interface GameState {
   stats: PlayerStats;
   tracking: BattleTracking;
   lastMatchStats: MatchStats | null;
+  settings: GameSettings;
 }
 
 export type GameAction =
   | { type: 'SET_PLAYER'; name: string }
   | { type: 'LOAD_STATS'; stats: PlayerStats }
+  | { type: 'LOAD_SETTINGS'; settings: GameSettings }
   | { type: 'PLACE_SHIP'; ship: PlacedShip }
   | { type: 'REMOVE_SHIP'; shipId: string }
   | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board }

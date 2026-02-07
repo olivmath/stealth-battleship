@@ -1,9 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PlayerStats, MatchRecord, MatchStats } from '../types/game';
+import { PlayerStats, MatchRecord, MatchStats, GameSettings } from '../types/game';
 
 const USER_KEY = '@battleship_user';
 const SCORES_KEY = '@battleship_scores';
 const HISTORY_KEY = '@battleship_history';
+const SETTINGS_KEY = '@battleship_settings';
+
+const DEFAULT_SETTINGS: GameSettings = {
+  gridSize: 6,
+  battleView: 'stacked',
+};
+
+export async function getSettings(): Promise<GameSettings> {
+  const data = await AsyncStorage.getItem(SETTINGS_KEY);
+  if (!data) return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+}
+
+export async function saveSettings(settings: GameSettings): Promise<void> {
+  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
 
 const DEFAULT_STATS: PlayerStats = {
   wins: 0,

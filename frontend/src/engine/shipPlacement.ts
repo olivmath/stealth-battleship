@@ -18,14 +18,15 @@ export function calculatePositions(
 
 export function validatePlacement(
   board: Board,
-  positions: Position[]
+  positions: Position[],
+  gridSize: number = GRID_SIZE
 ): boolean {
   return positions.every(
     p =>
       p.row >= 0 &&
-      p.row < GRID_SIZE &&
+      p.row < gridSize &&
       p.col >= 0 &&
-      p.col < GRID_SIZE &&
+      p.col < gridSize &&
       board[p.row][p.col].state === 'empty'
   );
 }
@@ -34,11 +35,12 @@ export function placeShip(
   board: Board,
   ship: ShipDefinition,
   origin: Position,
-  orientation: Orientation
+  orientation: Orientation,
+  gridSize: number = GRID_SIZE
 ): { newBoard: Board; placedShip: PlacedShip } | null {
   const positions = calculatePositions(origin, ship.size, orientation);
 
-  if (!validatePlacement(board, positions)) {
+  if (!validatePlacement(board, positions, gridSize)) {
     return null;
   }
 
@@ -62,7 +64,8 @@ export function placeShip(
 
 export function autoPlaceShips(
   board: Board,
-  shipDefs: ShipDefinition[]
+  shipDefs: ShipDefinition[],
+  gridSize: number = GRID_SIZE
 ): { board: Board; ships: PlacedShip[] } | null {
   let currentBoard = board.map(r => r.map(c => ({ ...c })));
   const ships: PlacedShip[] = [];
@@ -73,14 +76,14 @@ export function autoPlaceShips(
 
     while (!placed && attempts < 100) {
       const orientation: Orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
-      const maxRow = orientation === 'vertical' ? GRID_SIZE - shipDef.size : GRID_SIZE - 1;
-      const maxCol = orientation === 'horizontal' ? GRID_SIZE - shipDef.size : GRID_SIZE - 1;
+      const maxRow = orientation === 'vertical' ? gridSize - shipDef.size : gridSize - 1;
+      const maxCol = orientation === 'horizontal' ? gridSize - shipDef.size : gridSize - 1;
       const origin: Position = {
         row: Math.floor(Math.random() * (maxRow + 1)),
         col: Math.floor(Math.random() * (maxCol + 1)),
       };
 
-      const result = placeShip(currentBoard, shipDef, origin, orientation);
+      const result = placeShip(currentBoard, shipDef, origin, orientation, gridSize);
       if (result) {
         currentBoard = result.newBoard;
         ships.push(result.placedShip);

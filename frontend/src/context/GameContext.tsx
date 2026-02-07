@@ -28,6 +28,7 @@ const initialState: GameState = {
   stats: { wins: 0, losses: 0, totalShots: 0, totalHits: 0, totalXP: 0 },
   tracking: createInitialTracking(),
   lastMatchStats: null,
+  settings: { gridSize: 6, battleView: 'stacked' },
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -37,6 +38,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'LOAD_STATS':
       return { ...state, stats: action.stats };
+
+    case 'LOAD_SETTINGS':
+      return { ...state, settings: action.settings };
 
     case 'PLACE_SHIP': {
       const newBoard = state.playerBoard.map(r => r.map(c => ({ ...c })));
@@ -113,7 +117,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (action.shipId && action.result === 'hit' && !newFirstHit[action.shipId]) {
         newFirstHit[action.shipId] = newTurn;
       }
-      // For sunk, if we never recorded first hit (edge: first hit = sunk on size 1? no, min size 2)
       if (action.shipId && action.result === 'sunk' && !newFirstHit[action.shipId]) {
         newFirstHit[action.shipId] = newTurn;
       }
@@ -194,12 +197,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         lastMatchStats: action.matchStats,
       };
 
-    case 'RESET_GAME':
+    case 'RESET_GAME': {
+      const gs = state.settings.gridSize;
       return {
         ...state,
         phase: 'placement',
-        playerBoard: createEmptyBoard(),
-        opponentBoard: createEmptyBoard(),
+        playerBoard: createEmptyBoard(gs),
+        opponentBoard: createEmptyBoard(gs),
         playerShips: [],
         opponentShips: [],
         isPlayerTurn: true,
@@ -208,6 +212,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         tracking: createInitialTracking(),
         lastMatchStats: null,
       };
+    }
 
     default:
       return state;

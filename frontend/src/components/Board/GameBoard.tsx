@@ -13,6 +13,7 @@ interface Props {
   showShips?: boolean;
   previewPositions?: Position[];
   compact?: boolean;
+  gridSize?: number;
 }
 
 const LABEL_WIDTH = 20;
@@ -24,16 +25,18 @@ export default function GameBoard({
   showShips = false,
   previewPositions = [],
   compact = false,
+  gridSize,
 }: Props) {
+  const effectiveGridSize = gridSize ?? board.length ?? GRID_SIZE;
   const screenWidth = Dimensions.get('window').width;
   const maxGridWidth = compact ? screenWidth * 0.45 : screenWidth - SPACING.lg * 2 - LABEL_WIDTH;
-  const cellSize = Math.floor(maxGridWidth / GRID_SIZE);
+  const cellSize = Math.floor(maxGridWidth / effectiveGridSize);
 
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
   return (
     <View style={styles.container}>
-      <CoordinateLabels cellSize={cellSize} />
+      <CoordinateLabels cellSize={cellSize} gridSize={effectiveGridSize} />
       <View style={[styles.grid, { marginLeft: LABEL_WIDTH }]}>
         {board.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>

@@ -11,10 +11,10 @@ export function createInitialAIState(): AIState {
   };
 }
 
-function getCheckerboardTargets(fired: Set<string>): Position[] {
+function getCheckerboardTargets(fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
   const targets: Position[] = [];
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       if ((row + col) % 2 === 0 && !fired.has(posKey({ row, col }))) {
         targets.push({ row, col });
       }
@@ -23,10 +23,10 @@ function getCheckerboardTargets(fired: Set<string>): Position[] {
   return targets;
 }
 
-function getAllAvailableTargets(fired: Set<string>): Position[] {
+function getAllAvailableTargets(fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
   const targets: Position[] = [];
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
       if (!fired.has(posKey({ row, col }))) {
         targets.push({ row, col });
       }
@@ -35,14 +35,14 @@ function getAllAvailableTargets(fired: Set<string>): Position[] {
   return targets;
 }
 
-function getOrthogonalNeighbors(pos: Position, fired: Set<string>): Position[] {
+function getOrthogonalNeighbors(pos: Position, fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
   const deltas = [[-1, 0], [1, 0], [0, -1], [0, 1]];
   return deltas
     .map(([dr, dc]) => ({ row: pos.row + dr, col: pos.col + dc }))
-    .filter(p => isValidPosition(p.row, p.col) && !fired.has(posKey(p)));
+    .filter(p => isValidPosition(p.row, p.col, gridSize) && !fired.has(posKey(p)));
 }
 
-function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<string>): Position[] {
+function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
   if (hits.length < 2) return queue;
 
   const sameRow = hits.every(h => h.row === hits[0].row);
@@ -57,7 +57,7 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
     if (minCol - 1 >= 0 && !fired.has(posKey({ row, col: minCol - 1 }))) {
       filtered.push({ row, col: minCol - 1 });
     }
-    if (maxCol + 1 < GRID_SIZE && !fired.has(posKey({ row, col: maxCol + 1 }))) {
+    if (maxCol + 1 < gridSize && !fired.has(posKey({ row, col: maxCol + 1 }))) {
       filtered.push({ row, col: maxCol + 1 });
     }
     return filtered;
@@ -72,7 +72,7 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
     if (minRow - 1 >= 0 && !fired.has(posKey({ row: minRow - 1, col }))) {
       filtered.push({ row: minRow - 1, col });
     }
-    if (maxRow + 1 < GRID_SIZE && !fired.has(posKey({ row: maxRow + 1, col }))) {
+    if (maxRow + 1 < gridSize && !fired.has(posKey({ row: maxRow + 1, col }))) {
       filtered.push({ row: maxRow + 1, col });
     }
     return filtered;
@@ -84,7 +84,8 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
 export function computeAIMove(
   ai: AIState,
   board: Board,
-  ships: PlacedShip[]
+  ships: PlacedShip[],
+  gridSize: number = GRID_SIZE
 ): { position: Position; newAI: AIState } {
   const newAI: AIState = {
     mode: ai.mode,
@@ -106,9 +107,9 @@ export function computeAIMove(
   }
 
   if (newAI.mode === 'hunt' || (newAI.mode === 'target' && newAI.targetQueue.length === 0 && newAI.hitStack.length === 0)) {
-    let targets = getCheckerboardTargets(newAI.firedPositions);
+    let targets = getCheckerboardTargets(newAI.firedPositions, gridSize);
     if (targets.length === 0) {
-      targets = getAllAvailableTargets(newAI.firedPositions);
+      targets = getAllAvailableTargets(newAI.firedPositions, gridSize);
     }
     position = targets[Math.floor(Math.random() * targets.length)];
     newAI.mode = 'hunt';
@@ -123,7 +124,8 @@ export function updateAIAfterAttack(
   position: Position,
   result: AttackResult,
   sunkShipId?: string,
-  ships?: PlacedShip[]
+  ships?: PlacedShip[],
+  gridSize: number = GRID_SIZE
 ): AIState {
   const newAI: AIState = {
     mode: ai.mode,
@@ -142,9 +144,9 @@ export function updateAIAfterAttack(
   if (result === 'hit') {
     newAI.mode = 'target';
     newAI.hitStack.push(position);
-    const neighbors = getOrthogonalNeighbors(position, newAI.firedPositions);
+    const neighbors = getOrthogonalNeighbors(position, newAI.firedPositions, gridSize);
     newAI.targetQueue.push(...neighbors);
-    newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions);
+    newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
     return newAI;
   }
 
@@ -160,10 +162,10 @@ export function updateAIAfterAttack(
       newAI.mode = 'target';
       newAI.targetQueue = [];
       for (const hit of newAI.hitStack) {
-        const neighbors = getOrthogonalNeighbors(hit, newAI.firedPositions);
+        const neighbors = getOrthogonalNeighbors(hit, newAI.firedPositions, gridSize);
         newAI.targetQueue.push(...neighbors);
       }
-      newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions);
+      newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
     } else {
       newAI.mode = 'hunt';
       newAI.targetQueue = [];
