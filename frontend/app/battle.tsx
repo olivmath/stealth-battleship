@@ -18,6 +18,8 @@ import { DIFFICULTY_CONFIG } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CONTAINER_PADDING = SPACING.md;
+const AVAILABLE_WIDTH = SCREEN_WIDTH - CONTAINER_PADDING * 2;
 
 export default function BattleScreen() {
   const router = useRouter();
@@ -206,6 +208,7 @@ export default function BattleScreen() {
                 showShips={false}
                 gridSize={gridSize}
                 isOpponent
+                maxWidth={AVAILABLE_WIDTH}
               />
               <FleetStatus ships={state.opponentShips} label="ENEMY FLEET" />
             </View>
@@ -216,6 +219,7 @@ export default function BattleScreen() {
                 showShips
                 disabled
                 gridSize={gridSize}
+                maxWidth={AVAILABLE_WIDTH}
               />
               <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
             </View>
@@ -234,7 +238,7 @@ export default function BattleScreen() {
   }
 
   // --- Stacked mode (default) ---
-  const miniBoardWidth = SCREEN_WIDTH * 0.6;
+  const miniBoardWidth = Math.floor((AVAILABLE_WIDTH - SPACING.sm) * 0.5);
 
   return (
     <GradientContainer>
@@ -250,11 +254,12 @@ export default function BattleScreen() {
             showShips={false}
             gridSize={gridSize}
             isOpponent
+            maxWidth={AVAILABLE_WIDTH}
           />
         </View>
 
         <View style={styles.bottomStrip}>
-          <View style={[styles.miniMapSection, { marginLeft: 20 }]}>
+          <View style={styles.miniMapSection}>
             <Text style={styles.miniLabel}>YOUR WATERS</Text>
             <GameBoard
               board={state.playerBoard}
@@ -289,16 +294,19 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.md,
     gap: SPACING.sm,
+    overflow: 'hidden',
   },
   // Stacked mode styles
   stackedContainer: {
     flex: 1,
     padding: SPACING.md,
     gap: SPACING.xs,
+    overflow: 'hidden',
   },
   enemySection: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     gap: SPACING.xs,
   },
   sectionLabel: {
@@ -307,6 +315,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     letterSpacing: 2,
     textAlign: 'center',
+    alignSelf: 'stretch',
   },
   bottomStrip: {
     flexDirection: 'row',
@@ -355,6 +364,7 @@ const styles = StyleSheet.create({
   },
   fullBoard: {
     flex: 1,
+    alignItems: 'center',
     gap: SPACING.md,
   },
 });

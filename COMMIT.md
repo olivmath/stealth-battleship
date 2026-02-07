@@ -1,0 +1,1 @@
+veja quanta coisa em diff, organize tudo em diversos commits que tenha relacao entre si e sejam pequenos pra gente rastrer bugs. faça todos os commits pra mim     

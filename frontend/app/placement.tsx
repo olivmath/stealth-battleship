@@ -17,7 +17,7 @@ import ShipPreview from '../src/components/Ship/ShipPreview';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { useSettings } from '../src/hooks/useStorage';
-import { getShipDefinitions } from '../src/constants/game';
+import { getShipDefinitions, getShipStyle } from '../src/constants/game';
 import { ShipDefinition, Orientation, Position } from '../src/types/game';
 import { calculatePositions, validatePlacement } from '../src/engine/shipPlacement';
 import { autoPlaceShips } from '../src/engine/shipPlacement';
@@ -224,6 +224,7 @@ export default function PlacementScreen() {
                   const key = `${rowIndex},${colIndex}`;
                   const isPreview = previewSet.has(key);
                   const isInvalidPreview = isPreview && !previewValid;
+                  const shipColor = cell.shipId ? getShipStyle(cell.shipId).color : undefined;
 
                   return (
                     <Cell
@@ -232,6 +233,7 @@ export default function PlacementScreen() {
                       size={CELL_SIZE}
                       isPreview={isPreview}
                       isInvalid={isInvalidPreview}
+                      shipColor={shipColor}
                       disabled
                     />
                   );

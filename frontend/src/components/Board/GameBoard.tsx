@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import Cell from './Cell';
 import CoordinateLabels from './CoordinateLabels';
 import { Board, Position } from '../../types/game';
-import { GRID_SIZE } from '../../constants/game';
+import { GRID_SIZE, getShipStyle } from '../../constants/game';
 import { COLORS, SPACING } from '../../constants/theme';
 
 interface Props {
@@ -54,6 +54,8 @@ export default function GameBoard({
             {row.map((cell, colIndex) => {
               const isPreview = previewSet.has(`${rowIndex},${colIndex}`);
               const displayState = !showShips && cell.state === 'ship' ? 'empty' : cell.state;
+              const isShipVisible = showShips || cell.state === 'hit' || cell.state === 'sunk';
+              const shipColor = isShipVisible && cell.shipId ? getShipStyle(cell.shipId).color : undefined;
 
               return (
                 <Cell
@@ -65,6 +67,7 @@ export default function GameBoard({
                   row={rowIndex}
                   col={colIndex}
                   isOpponent={isOpponent}
+                  shipColor={shipColor}
                   onPress={
                     onCellPress
                       ? () => onCellPress({ row: rowIndex, col: colIndex })
