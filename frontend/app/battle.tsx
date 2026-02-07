@@ -1,7 +1,8 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
+import NavalButton from '../src/components/UI/NavalButton';
 import GameBoard from '../src/components/Board/GameBoard';
 import TurnIndicator from '../src/components/Battle/TurnIndicator';
 import FleetStatus from '../src/components/Battle/FleetStatus';
@@ -27,20 +28,6 @@ export default function BattleScreen() {
   const gridSize = state.settings.gridSize;
   const isSwipeMode = state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
-
-  // Auto-switch tab when turn changes (user can still manually switch)
-  useEffect(() => {
-    if (!isSwipeMode) return;
-    if (!state.isPlayerTurn) {
-      // Player just attacked: stay on enemy board 2s to see result, then show player board
-      const timer = setTimeout(() => setSwipeView('player'), 2000);
-      return () => clearTimeout(timer);
-    } else {
-      // Bot just attacked: stay on player board 2s to see bot's attack, then show enemy board
-      const timer = setTimeout(() => setSwipeView('enemy'), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.isPlayerTurn, isSwipeMode]);
 
   // Sunk ship modal state
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
@@ -147,6 +134,28 @@ export default function BattleScreen() {
     };
   }, [state.isPlayerTurn, state.phase]);
 
+  const handleSurrender = () => {
+    Alert.alert(
+      'Surrender',
+      'Are you sure you want to surrender this battle?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Surrender',
+          style: 'destructive',
+          onPress: () => {
+            if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+            const matchStats = computeMatchStats(state.tracking, state.opponentShips, state.playerShips, false, gridSize);
+            dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
+            updateStatsAfterGame(false, matchStats);
+            saveMatchToHistory(false, matchStats, gridSize);
+            router.replace('/gameover');
+          },
+        },
+      ]
+    );
+  };
+
   // --- Swipe mode ---
   if (isSwipeMode) {
     return (
@@ -182,6 +191,7 @@ export default function BattleScreen() {
                 disabled={!state.isPlayerTurn}
                 showShips={false}
                 gridSize={gridSize}
+                isOpponent
               />
               <FleetStatus ships={state.opponentShips} label="ENEMY FLEET" />
             </View>
@@ -196,6 +206,7 @@ export default function BattleScreen() {
               <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
             </View>
           )}
+          <NavalButton title="SURRENDER" onPress={handleSurrender} variant="danger" />
         </View>
         <SunkShipModal visible={showSunkModal} ship={sunkShip} />
       </GradientContainer>
@@ -218,6 +229,7 @@ export default function BattleScreen() {
             disabled={!state.isPlayerTurn}
             showShips={false}
             gridSize={gridSize}
+            isOpponent
           />
         </View>
 
@@ -236,6 +248,8 @@ export default function BattleScreen() {
             gridSize={gridSize}
           />
         </View>
+
+        <NavalButton title="SURRENDER" onPress={handleSurrender} variant="danger" />
       </ScrollView>
       <SunkShipModal visible={showSunkModal} ship={sunkShip} />
     </GradientContainer>
