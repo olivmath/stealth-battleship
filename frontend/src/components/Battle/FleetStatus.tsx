@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   // Compact styles
   compactContainer: {
-    // Removed flex: 1 to allow content to determine height, removing empty space
+    alignSelf: 'flex-end',
     padding: 4,
     borderRadius: 4,
     borderWidth: 1,
