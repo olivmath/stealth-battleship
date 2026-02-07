@@ -24,6 +24,9 @@ function ToggleOption({
       style={[styles.option, selected && styles.optionSelected]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="radio"
+      accessibilityLabel={`${label}. ${description}`}
+      accessibilityState={{ checked: selected }}
     >
       <View style={styles.optionRow}>
         <View style={[styles.radio, selected && styles.radioSelected]}>

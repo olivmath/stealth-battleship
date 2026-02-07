@@ -57,6 +57,8 @@ export default function LoginScreen() {
             autoCapitalize="words"
             returnKeyType="go"
             onSubmitEditing={handleEnter}
+            accessibilityLabel="Commander name"
+            accessibilityHint="Enter your name to begin"
           />
           <NavalButton
             title="ENTER BATTLE"

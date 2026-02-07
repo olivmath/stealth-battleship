@@ -13,7 +13,13 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
   const dateStr = new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   return (
-    <TouchableOpacity style={itemStyles.item} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={itemStyles.item}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, score ${match.score}`}
+    >
       <View style={itemStyles.left}>
         <Text style={[itemStyles.result, isVictory ? itemStyles.win : itemStyles.loss]}>
           {isVictory ? 'W' : 'L'}

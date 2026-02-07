@@ -85,6 +85,14 @@ export default function MenuScreen() {
             }}
             variant="secondary"
           />
+          <NavalButton
+            title="LOGOUT"
+            onPress={() => {
+              haptics.light();
+              router.replace('/');
+            }}
+            variant="danger"
+          />
         </View>
       </View>
     </GradientContainer>

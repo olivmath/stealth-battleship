@@ -144,10 +144,10 @@ export default function MatchDetailScreen() {
 
         {/* Back */}
         <NavalButton
-          title="BACK TO BASE"
+          title="BACK TO HISTORY"
           onPress={() => {
             haptics.light();
-            router.replace('/menu');
+            router.replace('/match-history');
           }}
           variant="secondary"
         />

@@ -291,7 +291,9 @@ export default function TutorialScreen() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>TUTORIAL</Text>
+          <TouchableOpacity onPress={() => { haptics.light(); router.replace('/menu'); }} hitSlop={16}>
+            <Text style={styles.backText}>{'< MENU'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleSkip} hitSlop={16}>
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
@@ -352,11 +354,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(30, 58, 95, 0.4)',
   },
-  headerTitle: {
-    fontFamily: FONTS.heading,
-    fontSize: 14,
-    color: COLORS.text.primary,
-    letterSpacing: 3,
+  backText: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: COLORS.accent.gold,
   },
   skipText: {
     fontFamily: FONTS.body,
