@@ -40,6 +40,21 @@ export const ROW_LABELS = getRowLabels(6);
 export const AI_DELAY_MIN = 600;
 export const AI_DELAY_MAX = 1200;
 
+// --- Ship-specific visual styles ---
+export const SHIP_STYLES: Record<string, { color: string; label: string }> = {
+  carrier: { color: '#3b82f6', label: 'Carrier' },
+  battleship: { color: '#ef4444', label: 'Battleship' },
+  cruiser: { color: '#22c55e', label: 'Cruiser' },
+  submarine: { color: '#8b5cf6', label: 'Submarine' },
+  destroyer: { color: '#f59e0b', label: 'Destroyer' },
+  patrol: { color: '#06b6d4', label: 'Patrol Boat' },
+};
+
+export function getShipStyle(shipId: string): { color: string; label: string } {
+  const prefix = shipId.replace(/-\d+$/, '');
+  return SHIP_STYLES[prefix] ?? { color: '#4a5568', label: 'Unknown' };
+}
+
 // --- Difficulty configuration ---
 
 export interface DifficultyConfig {

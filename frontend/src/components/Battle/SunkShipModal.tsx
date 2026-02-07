@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, Easing, StyleSheet, Modal } from 'react-native';
 import { PlacedShip } from '../../types/game';
+import { getShipStyle } from '../../constants/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 interface Props {
@@ -12,6 +13,9 @@ export default function SunkShipModal({ visible, ship }: Props) {
   const translateY = useRef(new Animated.Value(0)).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+
+  const shipStyle = ship ? getShipStyle(ship.id) : null;
+  const shipColor = shipStyle?.color ?? COLORS.grid.ship;
 
   useEffect(() => {
     if (visible) {
@@ -80,11 +84,17 @@ export default function SunkShipModal({ visible, ship }: Props) {
           accessibilityRole="alert"
           accessibilityLabel={`Ship sunk! ${ship?.name ?? 'Unknown'} destroyed`}
         >
-          <Text style={styles.label}>SHIP SUNK!</Text>
+          <Text style={[styles.label, { color: shipColor }]}>SHIP SUNK!</Text>
           <Text style={styles.shipName}>{ship.name}</Text>
           <View style={styles.shipGraphic}>
             {Array.from({ length: ship.size }).map((_, i) => (
-              <View key={i} style={styles.shipCell} />
+              <View
+                key={i}
+                style={[
+                  styles.shipCell,
+                  { backgroundColor: shipColor, borderColor: shipColor },
+                ]}
+              />
             ))}
           </View>
         </Animated.View>
@@ -107,7 +117,6 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: FONTS.heading,
     fontSize: 14,
-    color: COLORS.accent.fire,
     letterSpacing: 3,
   },
   shipName: {
@@ -124,8 +133,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 4,
-    backgroundColor: COLORS.grid.ship,
     borderWidth: 1,
-    borderColor: COLORS.grid.shipLight,
   },
 });
