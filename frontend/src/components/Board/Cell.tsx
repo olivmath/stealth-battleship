@@ -13,6 +13,7 @@ interface Props {
   row?: number;
   col?: number;
   isOpponent?: boolean;
+  shipColor?: string;
 }
 
 function getCellLabel(row: number | undefined, col: number | undefined, state: CellState): string {
@@ -22,12 +23,18 @@ function getCellLabel(row: number | undefined, col: number | undefined, state: C
   return `${letter}${num}, ${state}`;
 }
 
-function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, row, col, isOpponent }: Props) {
+function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, row, col, isOpponent, shipColor }: Props) {
+  const baseBgColor = shipColor && state === 'ship'
+    ? shipColor
+    : shipColor && state === 'sunk'
+      ? `${shipColor}33`
+      : getCellColor(state);
+
   const bgColor = isInvalid
     ? 'rgba(239, 68, 68, 0.3)'
     : isPreview
       ? 'rgba(245, 158, 11, 0.3)'
-      : getCellColor(state);
+      : baseBgColor;
 
   const borderColor = isInvalid
     ? COLORS.accent.fire
@@ -36,7 +43,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
       : state === 'hit'
         ? COLORS.accent.fire
         : state === 'sunk'
-          ? COLORS.accent.fireDark
+          ? shipColor ?? COLORS.accent.fireDark
           : COLORS.grid.border;
 
   const label = getCellLabel(row, col, state);
@@ -70,7 +77,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
         </View>
       )}
       {state === 'sunk' && (
-        <View style={styles.sunkMarker}>
+        <View style={[styles.sunkMarker, shipColor ? { backgroundColor: shipColor } : undefined]}>
           <Text style={styles.sunkMarkerText}>X</Text>
         </View>
       )}
