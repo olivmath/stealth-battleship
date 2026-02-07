@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   option: {
-    width: 52,
-    height: 52,
+    width: 68,
+    height: 68,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,

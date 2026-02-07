@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
   shipItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     padding: SPACING.sm,
     minHeight: 44,
     borderRadius: 4,
