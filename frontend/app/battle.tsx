@@ -51,7 +51,7 @@ export default function BattleScreen() {
   const showSunkAnimation = useCallback((ship: PlacedShip) => {
     setSunkShip(ship);
     setShowSunkModal(true);
-    setTimeout(() => setShowSunkModal(false), 1500);
+    setTimeout(() => setShowSunkModal(false), 2000);
   }, []);
 
   const handlePlayerAttack = useCallback((position: Position) => {

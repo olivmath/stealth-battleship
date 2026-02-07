@@ -25,12 +25,11 @@ quero alterar o comportamento seguinte:
 
 onde eu consigo ver todos os ranks?
 
-# Game over
-
-Teve ter corer diverentes para a vitória e a derrota.
-na vitoria jogue confetes
-
 # Modal de ship destroyed
 
 - demore 1 s
-- uma cor para cada tipo de navio
+- uma estilo para cada tipo de navio
+
+# History
+
+mostra o nivel se foi facil ou dificil em cada linha

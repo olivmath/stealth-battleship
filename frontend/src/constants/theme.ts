@@ -9,6 +9,7 @@ export const COLORS = {
     goldDark: '#d97706',
     fire: '#f87171',
     fireDark: '#b91c1c',
+    victory: '#22c55e',
   },
   grid: {
     border: '#1e3a5f',

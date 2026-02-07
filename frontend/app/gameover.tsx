@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, gap: SPACING.lg },
   header: { alignItems: 'center', marginTop: SPACING.xl },
   result: { fontFamily: FONTS.heading, fontSize: 42, letterSpacing: 6 },
-  victory: { color: COLORS.accent.gold },
+  victory: { color: COLORS.accent.victory },
   defeat: { color: COLORS.accent.fire },
   subtitle: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.secondary, marginTop: SPACING.sm },
   divider: { width: 80, height: 2, marginTop: SPACING.md, opacity: 0.6 },
