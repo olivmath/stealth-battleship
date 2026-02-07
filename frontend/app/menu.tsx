@@ -8,6 +8,7 @@ import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { MENU_MODEL_ID } from '../src/constants/ships3d';
 
 export default function MenuScreen() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function MenuScreen() {
           <View style={styles.divider} />
         </View>
 
-        <SketchfabModel modelId="f5167e6802f74494a959ecfc5c5e51f0" height={200} />
+        <SketchfabModel modelId={MENU_MODEL_ID} height={200} />
 
         {/* Actions */}
         <View style={styles.actions}>
@@ -58,8 +59,10 @@ export default function MenuScreen() {
           />
           <NavalButton
             title="PvP ONLINE"
+            subtitle="coming soon"
             onPress={() => {}}
             disabled
+            style={{ borderStyle: 'dashed' }}
           />
           <NavalButton
             title="MATCH HISTORY"
@@ -89,7 +92,7 @@ export default function MenuScreen() {
             title="LOGOUT"
             onPress={() => {
               haptics.light();
-              router.replace('/');
+              router.replace('/login');
             }}
             variant="danger"
           />
@@ -131,13 +134,5 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: SPACING.md,
-  },
-  comingSoon: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 11,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
-    letterSpacing: 1,
-    opacity: 0.5,
   },
 });
