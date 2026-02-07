@@ -124,14 +124,10 @@ Two configurable view modes (persisted in Settings):
   - Shots to Win / Total Shots
   - Ships Survived (visual: ship icons green/red)
 - **Battle Report** (expandable detail section):
-  - Kill Efficiency per ship (bar chart: ideal vs actual shots)
-  - First Blood Turn
+  - Kill Efficiency per ship (bar: gold = ideal shots, red = extra shots)
   - Longest Hit Streak
-  - Perfect Kills count
-  - Hunt vs Target ratio
-  - Overkill Shots
-  - Turns to Win/Lose
-  - Damage Taken (hits on your board)
+  - First Blood Turn
+  - Perfect Kills (N / total ships)
 - **XP Earned** display with level progress
 - Level-up notification if threshold crossed
 - "Play Again" → Placement
