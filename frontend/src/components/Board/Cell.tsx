@@ -9,20 +9,25 @@ interface Props {
   onPress?: () => void;
   disabled?: boolean;
   isPreview?: boolean;
+  isInvalid?: boolean;
 }
 
-function CellComponent({ state, size, onPress, disabled, isPreview }: Props) {
-  const bgColor = isPreview
-    ? 'rgba(245, 158, 11, 0.3)'
-    : getCellColor(state);
+function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid }: Props) {
+  const bgColor = isInvalid
+    ? 'rgba(239, 68, 68, 0.3)'
+    : isPreview
+      ? 'rgba(245, 158, 11, 0.3)'
+      : getCellColor(state);
 
-  const borderColor = isPreview
-    ? COLORS.accent.gold
-    : state === 'hit'
-      ? COLORS.accent.fire
-      : state === 'sunk'
-        ? COLORS.accent.fireDark
-        : COLORS.grid.border;
+  const borderColor = isInvalid
+    ? COLORS.accent.fire
+    : isPreview
+      ? COLORS.accent.gold
+      : state === 'hit'
+        ? COLORS.accent.fire
+        : state === 'sunk'
+          ? COLORS.accent.fireDark
+          : COLORS.grid.border;
 
   return (
     <TouchableOpacity
