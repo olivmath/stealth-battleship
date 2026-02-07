@@ -28,6 +28,20 @@ export default function BattleScreen() {
   const isSwipeMode = state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
 
+  // Auto-switch tab when turn changes (user can still manually switch)
+  useEffect(() => {
+    if (!isSwipeMode) return;
+    if (!state.isPlayerTurn) {
+      // Player just attacked: stay on enemy board 2s to see result, then show player board
+      const timer = setTimeout(() => setSwipeView('player'), 2000);
+      return () => clearTimeout(timer);
+    } else {
+      // Bot just attacked: stay on player board 2s to see bot's attack, then show enemy board
+      const timer = setTimeout(() => setSwipeView('enemy'), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.isPlayerTurn, isSwipeMode]);
+
   // Sunk ship modal state
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
   const [showSunkModal, setShowSunkModal] = useState(false);

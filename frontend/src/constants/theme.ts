@@ -7,7 +7,7 @@ export const COLORS = {
   accent: {
     gold: '#f59e0b',
     goldDark: '#d97706',
-    fire: '#ef4444',
+    fire: '#f87171',
     fireDark: '#b91c1c',
   },
   grid: {

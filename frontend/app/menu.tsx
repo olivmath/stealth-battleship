@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import RotatingShip from '../src/components/UI/RotatingShip';
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -46,6 +47,8 @@ export default function MenuScreen() {
           <Text style={styles.name}>{state.playerName}</Text>
           <View style={styles.divider} />
         </View>
+
+        <RotatingShip />
 
         {/* Actions */}
         <View style={styles.actions}>
