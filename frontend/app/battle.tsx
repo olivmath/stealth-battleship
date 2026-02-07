@@ -71,7 +71,7 @@ export default function BattleScreen() {
     else if (result === 'sunk') {
       haptics.sunk();
       const sunk = newShips.find(s => s.id === shipId);
-      if (sunk) showSunkAnimation(sunk);
+      if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
     }
 
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
@@ -126,7 +126,7 @@ export default function BattleScreen() {
       else if (result === 'sunk') {
         haptics.sunk();
         const sunk = newShips.find(s => s.id === shipId);
-        if (sunk) showSunkAnimation(sunk);
+        if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
       }
 
       const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
@@ -220,7 +220,13 @@ export default function BattleScreen() {
               <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
             </View>
           )}
-          <NavalButton title="SURRENDER" onPress={handleSurrender} variant="danger" />
+          <NavalButton
+            title="SURRENDER"
+            onPress={handleSurrender}
+            variant="danger"
+            size="small"
+            accessibilityHint="Forfeit the current battle"
+          />
         </View>
         <SunkShipModal visible={showSunkModal} ship={sunkShip} />
       </GradientContainer>
@@ -265,9 +271,13 @@ export default function BattleScreen() {
           </View>
         </View>
 
-        <TouchableOpacity onPress={handleSurrender} style={styles.surrenderCompact}>
-          <Text style={styles.surrenderText}>SURRENDER</Text>
-        </TouchableOpacity>
+        <NavalButton
+          title="SURRENDER"
+          onPress={handleSurrender}
+          variant="danger"
+          size="small"
+          accessibilityHint="Forfeit the current battle"
+        />
       </View>
       <SunkShipModal visible={showSunkModal} ship={sunkShip} />
     </GradientContainer>
@@ -316,16 +326,6 @@ const styles = StyleSheet.create({
   fleetColumn: {
     flex: 1,
     gap: SPACING.xs,
-  },
-  surrenderCompact: {
-    paddingVertical: SPACING.xs,
-    alignItems: 'center',
-  },
-  surrenderText: {
-    fontFamily: FONTS.heading,
-    fontSize: 10,
-    color: COLORS.accent.fire,
-    letterSpacing: 2,
   },
   // Swipe mode styles
   swipeTabs: {
