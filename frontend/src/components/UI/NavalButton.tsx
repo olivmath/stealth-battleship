@@ -4,6 +4,7 @@ import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 interface Props {
   title: string;
+  subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger' | 'success';
@@ -13,7 +14,7 @@ interface Props {
   accessibilityHint?: string;
 }
 
-export default function NavalButton({ title, onPress, disabled, variant = 'primary', size = 'default', style, accessibilityLabel, accessibilityHint }: Props) {
+export default function NavalButton({ title, subtitle, onPress, disabled, variant = 'primary', size = 'default', style, accessibilityLabel, accessibilityHint }: Props) {
   const borderColor = disabled
     ? COLORS.ui.disabledBorder
     : variant === 'danger'
@@ -44,6 +45,9 @@ export default function NavalButton({ title, onPress, disabled, variant = 'prima
       ]}>
         {title}
       </Text>
+      {subtitle && (
+        <Text style={styles.subtitle}>{subtitle}</Text>
+      )}
     </TouchableOpacity>
   );
 }
@@ -80,5 +84,13 @@ const styles = StyleSheet.create({
   },
   successText: {
     color: '#22c55e',
+  },
+  subtitle: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    marginTop: 2,
+    opacity: 0.6,
   },
 });
