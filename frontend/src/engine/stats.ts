@@ -4,7 +4,9 @@ import {
   PlacedShip,
   ShipKillEfficiency,
   LevelInfo,
+  DifficultyLevel,
 } from '../types/game';
+import { DIFFICULTY_CONFIG } from '../constants/game';
 
 const RANKS = [
   { rank: 'Recruit', xp: 0, motto: 'Every admiral started here' },
@@ -23,7 +25,8 @@ export function calculateScore(
   shotsToWin: number,
   perfectKills: number,
   overkillShots: number,
-  gridSize: number = 6
+  gridSize: number = 6,
+  difficulty: DifficultyLevel = 'normal'
 ): number {
   const basePoints = won ? 1000 : 200;
   const accuracyBonus = Math.round(accuracy * 5);
@@ -32,7 +35,9 @@ export function calculateScore(
   const perfectKillBonus = perfectKills * 150;
   const overkillPenalty = overkillShots * 50;
 
-  return Math.max(0, basePoints + accuracyBonus + speedBonus + perfectKillBonus - overkillPenalty);
+  const raw = basePoints + accuracyBonus + speedBonus + perfectKillBonus - overkillPenalty;
+  const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
+  return Math.max(0, Math.round(raw * multiplier));
 }
 
 export function computeMatchStats(
@@ -40,7 +45,8 @@ export function computeMatchStats(
   opponentShips: PlacedShip[],
   playerShips: PlacedShip[],
   won: boolean,
-  gridSize: number = 6
+  gridSize: number = 6,
+  difficulty: DifficultyLevel = 'normal'
 ): MatchStats {
   const shotsFired = tracking.playerShots.length;
   const shotsHit = tracking.playerShots.filter(s => s.result !== 'miss').length;
@@ -72,7 +78,7 @@ export function computeMatchStats(
 
   const shipsSurvived = playerShips.filter(s => !s.isSunk).length;
 
-  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0, gridSize);
+  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0, gridSize, difficulty);
 
   return {
     score,

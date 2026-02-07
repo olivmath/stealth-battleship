@@ -1,5 +1,5 @@
-import { AIState, Position, Board, PlacedShip, AttackResult } from '../types/game';
-import { GRID_SIZE } from '../constants/game';
+import { AIState, Position, Board, PlacedShip, AttackResult, DifficultyLevel } from '../types/game';
+import { GRID_SIZE, DIFFICULTY_CONFIG } from '../constants/game';
 import { isValidPosition, posKey, processAttack } from './board';
 
 export function createInitialAIState(): AIState {
@@ -40,6 +40,22 @@ function getOrthogonalNeighbors(pos: Position, fired: Set<string>, gridSize: num
   return deltas
     .map(([dr, dc]) => ({ row: pos.row + dr, col: pos.col + dc }))
     .filter(p => isValidPosition(p.row, p.col, gridSize) && !fired.has(posKey(p)));
+}
+
+function pickCenterWeighted(targets: Position[], gridSize: number): Position {
+  const center = (gridSize - 1) / 2;
+  const maxDist = center * Math.SQRT2;
+  const weights = targets.map(t => {
+    const dist = Math.sqrt((t.row - center) ** 2 + (t.col - center) ** 2);
+    return maxDist - dist + 1;
+  });
+  const total = weights.reduce((a, b) => a + b, 0);
+  let rand = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) return targets[i];
+  }
+  return targets[targets.length - 1];
 }
 
 function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
@@ -85,8 +101,10 @@ export function computeAIMove(
   ai: AIState,
   board: Board,
   ships: PlacedShip[],
-  gridSize: number = GRID_SIZE
+  gridSize: number = GRID_SIZE,
+  difficulty: DifficultyLevel = 'normal'
 ): { position: Position; newAI: AIState } {
+  const config = DIFFICULTY_CONFIG[difficulty];
   const newAI: AIState = {
     mode: ai.mode,
     hitStack: [...ai.hitStack],
@@ -107,11 +125,21 @@ export function computeAIMove(
   }
 
   if (newAI.mode === 'hunt' || (newAI.mode === 'target' && newAI.targetQueue.length === 0 && newAI.hitStack.length === 0)) {
-    let targets = getCheckerboardTargets(newAI.firedPositions, gridSize);
-    if (targets.length === 0) {
+    let targets: Position[];
+    if (config.useCheckerboard) {
+      targets = getCheckerboardTargets(newAI.firedPositions, gridSize);
+      if (targets.length === 0) {
+        targets = getAllAvailableTargets(newAI.firedPositions, gridSize);
+      }
+    } else {
       targets = getAllAvailableTargets(newAI.firedPositions, gridSize);
     }
-    position = targets[Math.floor(Math.random() * targets.length)];
+
+    if (config.centerWeight) {
+      position = pickCenterWeighted(targets, gridSize);
+    } else {
+      position = targets[Math.floor(Math.random() * targets.length)];
+    }
     newAI.mode = 'hunt';
   }
 
@@ -125,8 +153,10 @@ export function updateAIAfterAttack(
   result: AttackResult,
   sunkShipId?: string,
   ships?: PlacedShip[],
-  gridSize: number = GRID_SIZE
+  gridSize: number = GRID_SIZE,
+  difficulty: DifficultyLevel = 'normal'
 ): AIState {
+  const config = DIFFICULTY_CONFIG[difficulty];
   const newAI: AIState = {
     mode: ai.mode,
     hitStack: [...ai.hitStack],
@@ -146,7 +176,9 @@ export function updateAIAfterAttack(
     newAI.hitStack.push(position);
     const neighbors = getOrthogonalNeighbors(position, newAI.firedPositions, gridSize);
     newAI.targetQueue.push(...neighbors);
-    newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
+    if (config.useAxisDetection) {
+      newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
+    }
     return newAI;
   }
 
@@ -165,7 +197,9 @@ export function updateAIAfterAttack(
         const neighbors = getOrthogonalNeighbors(hit, newAI.firedPositions, gridSize);
         newAI.targetQueue.push(...neighbors);
       }
-      newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
+      if (config.useAxisDetection) {
+        newAI.targetQueue = detectAxisAndFilter(newAI.hitStack, newAI.targetQueue, newAI.firedPositions, gridSize);
+      }
     } else {
       newAI.mode = 'hunt';
       newAI.targetQueue = [];
