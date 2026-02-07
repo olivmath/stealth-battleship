@@ -134,5 +134,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: SPACING.md,
+    marginTop: 'auto',
   },
 });

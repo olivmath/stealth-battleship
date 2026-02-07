@@ -121,6 +121,7 @@ export default function MatchHistoryScreen() {
             router.replace('/menu');
           }}
           variant="secondary"
+          style={{ marginTop: 'auto' }}
         />
       </View>
     </GradientContainer>
