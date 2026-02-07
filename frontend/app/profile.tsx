@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import RankList from '../src/components/Profile/RankList';
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -106,7 +107,7 @@ export default function ProfileScreen() {
 
   return (
     <GradientContainer>
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>COMMANDER PROFILE</Text>
           <Text style={styles.name}>{state.playerName}</Text>
@@ -153,6 +154,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <RankList totalXP={stats.totalXP} />
+
         <NavalButton
           title="BACK TO BASE"
           onPress={() => {
@@ -160,9 +163,8 @@ export default function ProfileScreen() {
             router.replace('/menu');
           }}
           variant="secondary"
-          style={{ marginTop: 'auto' }}
         />
-      </View>
+      </ScrollView>
     </GradientContainer>
   );
 }
@@ -171,7 +173,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: SPACING.lg,
+  },
+  scrollContent: {
     gap: SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   header: {
     alignItems: 'center',
