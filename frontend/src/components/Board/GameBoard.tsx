@@ -142,7 +142,6 @@ export default function GameBoard({
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'center',
   },
   headerRow: {
     flexDirection: 'row',

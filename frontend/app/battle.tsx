@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'rea
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import GameBoard from '../src/components/Board/GameBoard';
+import GameBoard, { getLabelSize, computeCellSize } from '../src/components/Board/GameBoard';
 import TurnIndicator from '../src/components/Battle/TurnIndicator';
 import FleetStatus from '../src/components/Battle/FleetStatus';
+import BattleStats from '../src/components/Battle/BattleStats';
 import SunkShipModal from '../src/components/Battle/SunkShipModal';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -33,8 +34,13 @@ export default function BattleScreen() {
   const isSwipeMode = state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
 
+  // Compute actual enemy grid width for alignment
+  const FULL_LABEL = getLabelSize('full');
+  const mainCellSize = computeCellSize(CONTENT_WIDTH, 'full', gridSize);
+  const GRID_TOTAL_WIDTH = mainCellSize * gridSize + FULL_LABEL;
+
   // Mini-map sizing
-  const MINI_MAX_WIDTH = Math.floor(CONTENT_WIDTH * 0.75);
+  const MINI_MAX_WIDTH = Math.floor(GRID_TOTAL_WIDTH * 0.75);
 
   // Auto-switch to the relevant board when turn changes (swipe mode)
   useEffect(() => {
@@ -246,40 +252,43 @@ export default function BattleScreen() {
       <View style={styles.container}>
         <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
 
-        {/* Main enemy grid */}
-        <View style={styles.mainGridSection}>
-          <Text style={styles.sectionLabel}>ENEMY WATERS</Text>
-          <GameBoard
-            board={state.opponentBoard}
-            onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
-            disabled={!state.isPlayerTurn}
-            showShips={false}
-            gridSize={gridSize}
-            isOpponent
-            maxWidth={CONTENT_WIDTH}
-            variant="full"
-          />
-        </View>
-
-        <View style={{ height: 16 }} />
-
-        {/* Bottom panel: mini-map + fleet status */}
-        <View style={styles.bottomPanel}>
-          <View style={styles.miniMapColumn}>
+        <View style={{ width: GRID_TOTAL_WIDTH }}>
+          {/* Main enemy grid */}
+          <View style={styles.mainGridSection}>
+            <Text style={styles.sectionLabel}>ENEMY WATERS</Text>
             <GameBoard
-              board={state.playerBoard}
-              showShips
-              disabled
+              board={state.opponentBoard}
+              onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
+              disabled={!state.isPlayerTurn}
+              showShips={false}
               gridSize={gridSize}
-              maxWidth={MINI_MAX_WIDTH}
-              variant="mini"
-              colLabelsBottom
+              isOpponent
+              maxWidth={GRID_TOTAL_WIDTH}
+              variant="full"
             />
-            <Text style={styles.miniLabel}>YOUR WATERS</Text>
           </View>
-          <View style={styles.fleetColumn}>
-            <FleetStatus ships={state.opponentShips} label="ENEMY" compact />
-            <FleetStatus ships={state.playerShips} label="YOURS" compact />
+
+          <View style={{ height: 16 }} />
+
+          {/* Bottom panel: mini-map + fleet status */}
+          <View style={styles.bottomPanel}>
+            <View style={styles.miniMapColumn}>
+              <GameBoard
+                board={state.playerBoard}
+                showShips
+                disabled
+                gridSize={gridSize}
+                maxWidth={MINI_MAX_WIDTH}
+                variant="mini"
+                colLabelsBottom
+              />
+              <Text style={styles.miniLabel}>YOUR WATERS</Text>
+            </View>
+            <View style={styles.fleetColumn}>
+              <FleetStatus ships={state.opponentShips} label="ENEMY" compact />
+              <FleetStatus ships={state.playerShips} label="YOURS" compact />
+              <BattleStats tracking={state.tracking} />
+            </View>
           </View>
         </View>
 
@@ -306,7 +315,7 @@ const styles = StyleSheet.create({
   },
   // Stacked mode
   mainGridSection: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   sectionLabel: {
     fontFamily: FONTS.heading,
