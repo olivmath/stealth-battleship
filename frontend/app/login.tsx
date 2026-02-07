@@ -68,7 +68,7 @@ export default function LoginScreen() {
           />
         </View>
 
-        <Text style={styles.version}>v1.0.0 • VISUAL MVP</Text>
+        <Text style={styles.version}>v0.4.1 • VISUAL MVP</Text>
       </KeyboardAvoidingView>
     </GradientContainer>
   );

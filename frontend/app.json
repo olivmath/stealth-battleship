@@ -2,7 +2,7 @@
   "expo": {
     "name": "Battleship ZK",
     "slug": "battleship-zk",
-    "version": "1.0.0",
+    "version": "0.4.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
