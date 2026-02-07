@@ -1,7 +1,19 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { GameState, GameAction, Board, PlacedShip } from '../types/game';
+import { GameState, GameAction, BattleTracking } from '../types/game';
 import { createEmptyBoard } from '../engine/board';
 import { createInitialAIState } from '../engine/ai';
+
+function createInitialTracking(): BattleTracking {
+  return {
+    turnNumber: 0,
+    playerShots: [],
+    aiShots: [],
+    currentStreak: 0,
+    longestStreak: 0,
+    shipFirstHitTurn: {},
+    shipSunkTurn: {},
+  };
+}
 
 const initialState: GameState = {
   playerName: '',
@@ -13,9 +25,9 @@ const initialState: GameState = {
   isPlayerTurn: true,
   winner: null,
   ai: createInitialAIState(),
-  stats: { wins: 0, losses: 0, totalShots: 0, totalHits: 0 },
-  shotsFired: 0,
-  shotsHit: 0,
+  stats: { wins: 0, losses: 0, totalShots: 0, totalHits: 0, totalXP: 0 },
+  tracking: createInitialTracking(),
+  lastMatchStats: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -61,13 +73,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isPlayerTurn: true,
         winner: null,
         ai: createInitialAIState(),
-        shotsFired: 0,
-        shotsHit: 0,
+        tracking: createInitialTracking(),
+        lastMatchStats: null,
       };
 
     case 'PLAYER_ATTACK': {
       const newBoard = state.opponentBoard.map(r => r.map(c => ({ ...c })));
       const { row, col } = action.position;
+      const newTurn = state.tracking.turnNumber + 1;
 
       if (action.result === 'miss') {
         newBoard[row][col] = { state: 'miss', shipId: null };
@@ -90,19 +103,50 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return s;
       });
 
+      // Update tracking
+      const newStreak = action.result !== 'miss'
+        ? state.tracking.currentStreak + 1
+        : 0;
+      const newLongest = Math.max(state.tracking.longestStreak, newStreak);
+
+      const newFirstHit = { ...state.tracking.shipFirstHitTurn };
+      if (action.shipId && action.result === 'hit' && !newFirstHit[action.shipId]) {
+        newFirstHit[action.shipId] = newTurn;
+      }
+      // For sunk, if we never recorded first hit (edge: first hit = sunk on size 1? no, min size 2)
+      if (action.shipId && action.result === 'sunk' && !newFirstHit[action.shipId]) {
+        newFirstHit[action.shipId] = newTurn;
+      }
+
+      const newSunkTurn = { ...state.tracking.shipSunkTurn };
+      if (action.shipId && action.result === 'sunk') {
+        newSunkTurn[action.shipId] = newTurn;
+      }
+
       return {
         ...state,
         opponentBoard: newBoard,
         opponentShips: newShips,
         isPlayerTurn: false,
-        shotsFired: state.shotsFired + 1,
-        shotsHit: state.shotsHit + (action.result !== 'miss' ? 1 : 0),
+        tracking: {
+          ...state.tracking,
+          turnNumber: newTurn,
+          playerShots: [
+            ...state.tracking.playerShots,
+            { turn: newTurn, position: action.position, result: action.result, shipId: action.shipId },
+          ],
+          currentStreak: newStreak,
+          longestStreak: newLongest,
+          shipFirstHitTurn: newFirstHit,
+          shipSunkTurn: newSunkTurn,
+        },
       };
     }
 
     case 'AI_ATTACK': {
       const newBoard = state.playerBoard.map(r => r.map(c => ({ ...c })));
       const { row, col } = action.position;
+      const newTurn = state.tracking.turnNumber + 1;
 
       if (action.result === 'miss') {
         newBoard[row][col] = { state: 'miss', shipId: null };
@@ -131,6 +175,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         playerShips: newShips,
         isPlayerTurn: true,
         ai: action.aiState,
+        tracking: {
+          ...state.tracking,
+          turnNumber: newTurn,
+          aiShots: [
+            ...state.tracking.aiShots,
+            { turn: newTurn, position: action.position, result: action.result, shipId: action.shipId },
+          ],
+        },
       };
     }
 
@@ -139,6 +191,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         phase: 'gameOver',
         winner: action.winner,
+        lastMatchStats: action.matchStats,
       };
 
     case 'RESET_GAME':
@@ -152,8 +205,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isPlayerTurn: true,
         winner: null,
         ai: createInitialAIState(),
-        shotsFired: 0,
-        shotsHit: 0,
+        tracking: createInitialTracking(),
+        lastMatchStats: null,
       };
 
     default:

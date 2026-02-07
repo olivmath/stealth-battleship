@@ -48,7 +48,73 @@ export interface PlayerStats {
   losses: number;
   totalShots: number;
   totalHits: number;
+  totalXP: number;
 }
+
+// --- Battle Tracking (raw data recorded during gameplay) ---
+
+export interface ShotRecord {
+  turn: number;
+  position: Position;
+  result: AttackResult;
+  shipId?: string;
+}
+
+export interface BattleTracking {
+  turnNumber: number;
+  playerShots: ShotRecord[];
+  aiShots: ShotRecord[];
+  currentStreak: number;
+  longestStreak: number;
+  shipFirstHitTurn: Record<string, number>;
+  shipSunkTurn: Record<string, number>;
+}
+
+// --- Derived stats (computed at game end) ---
+
+export interface ShipKillEfficiency {
+  shipId: string;
+  shipName: string;
+  shipSize: number;
+  idealShots: number;
+  actualShots: number;
+}
+
+export interface MatchStats {
+  score: number;
+  accuracy: number;
+  shotsFired: number;
+  shotsHit: number;
+  shotsToWin: number;
+  shipsSurvived: number;
+  totalShips: number;
+  longestStreak: number;
+  firstBloodTurn: number;
+  perfectKills: number;
+  killEfficiency: ShipKillEfficiency[];
+}
+
+export interface MatchRecord {
+  id: string;
+  date: string;
+  result: 'victory' | 'defeat';
+  score: number;
+  gridSize: number;
+  stats: MatchStats;
+}
+
+// --- Player level ---
+
+export interface LevelInfo {
+  rank: string;
+  currentXP: number;
+  xpForCurrentRank: number;
+  xpForNextRank: number;
+  progress: number;
+  motto: string;
+}
+
+// --- Game state ---
 
 export interface GameState {
   playerName: string;
@@ -61,8 +127,8 @@ export interface GameState {
   winner: 'player' | 'opponent' | null;
   ai: AIState;
   stats: PlayerStats;
-  shotsFired: number;
-  shotsHit: number;
+  tracking: BattleTracking;
+  lastMatchStats: MatchStats | null;
 }
 
 export type GameAction =
@@ -73,5 +139,5 @@ export type GameAction =
   | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board }
   | { type: 'PLAYER_ATTACK'; position: Position; result: AttackResult; shipId?: string }
   | { type: 'AI_ATTACK'; position: Position; result: AttackResult; shipId?: string; aiState: AIState }
-  | { type: 'END_GAME'; winner: 'player' | 'opponent' }
+  | { type: 'END_GAME'; winner: 'player' | 'opponent'; matchStats: MatchStats }
   | { type: 'RESET_GAME' };

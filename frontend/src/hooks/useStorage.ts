@@ -27,6 +27,7 @@ export function usePlayerStats() {
     losses: 0,
     totalShots: 0,
     totalHits: 0,
+    totalXP: 0,
   });
   const [loading, setLoading] = useState(true);
 

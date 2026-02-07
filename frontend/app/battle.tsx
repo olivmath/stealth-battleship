@@ -9,9 +9,10 @@ import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { processAttack, checkWinCondition } from '../src/engine/board';
 import { computeAIMove, updateAIAfterAttack } from '../src/engine/ai';
-import { updateStatsAfterGame } from '../src/storage/scores';
+import { computeMatchStats } from '../src/engine/stats';
+import { updateStatsAfterGame, saveMatchToHistory } from '../src/storage/scores';
 import { Position } from '../src/types/game';
-import { AI_DELAY_MIN, AI_DELAY_MAX } from '../src/constants/game';
+import { AI_DELAY_MIN, AI_DELAY_MAX, GRID_SIZE } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 export default function BattleScreen() {
@@ -26,7 +27,7 @@ export default function BattleScreen() {
     const cell = state.opponentBoard[position.row][position.col];
     if (cell.state !== 'empty' && cell.state !== 'ship') return;
 
-    const { newBoard, newShips, result, shipId } = processAttack(
+    const { newShips, result, shipId } = processAttack(
       state.opponentBoard,
       state.opponentShips,
       position
@@ -40,12 +41,37 @@ export default function BattleScreen() {
 
     if (checkWinCondition(newShips)) {
       setTimeout(() => {
-        dispatch({ type: 'END_GAME', winner: 'player' });
-        updateStatsAfterGame(true, state.shotsFired + 1, state.shotsHit + (result !== 'miss' ? 1 : 0));
+        // Compute stats from the updated tracking (after this dispatch processes)
+        // We need to account for the shot we just fired
+        const updatedTracking = {
+          ...state.tracking,
+          turnNumber: state.tracking.turnNumber + 1,
+          playerShots: [
+            ...state.tracking.playerShots,
+            { turn: state.tracking.turnNumber + 1, position, result, shipId },
+          ],
+          currentStreak: result !== 'miss' ? state.tracking.currentStreak + 1 : 0,
+          longestStreak: result !== 'miss'
+            ? Math.max(state.tracking.longestStreak, state.tracking.currentStreak + 1)
+            : state.tracking.longestStreak,
+          shipFirstHitTurn: { ...state.tracking.shipFirstHitTurn },
+          shipSunkTurn: { ...state.tracking.shipSunkTurn },
+        };
+        if (shipId && !updatedTracking.shipFirstHitTurn[shipId]) {
+          updatedTracking.shipFirstHitTurn[shipId] = updatedTracking.turnNumber;
+        }
+        if (shipId && result === 'sunk') {
+          updatedTracking.shipSunkTurn[shipId] = updatedTracking.turnNumber;
+        }
+
+        const matchStats = computeMatchStats(updatedTracking, newShips, state.playerShips, true);
+        dispatch({ type: 'END_GAME', winner: 'player', matchStats });
+        updateStatsAfterGame(true, matchStats);
+        saveMatchToHistory(true, matchStats, GRID_SIZE);
         router.replace('/gameover');
       }, 500);
     }
-  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.shotsFired, state.shotsHit, dispatch, haptics, router]);
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.playerShips, state.tracking, dispatch, haptics, router]);
 
   useEffect(() => {
     if (state.isPlayerTurn || state.phase !== 'battle') return;
@@ -70,8 +96,10 @@ export default function BattleScreen() {
 
       if (checkWinCondition(newShips)) {
         setTimeout(() => {
-          dispatch({ type: 'END_GAME', winner: 'opponent' });
-          updateStatsAfterGame(false, state.shotsFired, state.shotsHit);
+          const matchStats = computeMatchStats(state.tracking, state.opponentShips, newShips, false);
+          dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
+          updateStatsAfterGame(false, matchStats);
+          saveMatchToHistory(false, matchStats, GRID_SIZE);
           router.replace('/gameover');
         }, 500);
       }

@@ -1,0 +1,118 @@
+import {
+  BattleTracking,
+  MatchStats,
+  PlacedShip,
+  ShipKillEfficiency,
+  LevelInfo,
+} from '../types/game';
+import { GRID_SIZE } from '../constants/game';
+
+const RANKS = [
+  { rank: 'Recruit', xp: 0, motto: 'Every admiral started here' },
+  { rank: 'Ensign', xp: 2000, motto: 'Learning the tides' },
+  { rank: 'Lieutenant', xp: 6000, motto: 'A steady hand on the helm' },
+  { rank: 'Commander', xp: 15000, motto: 'Fear follows your fleet' },
+  { rank: 'Captain', xp: 30000, motto: 'Master of the seven seas' },
+  { rank: 'Admiral', xp: 60000, motto: 'Legend of naval warfare' },
+];
+
+export function calculateScore(
+  won: boolean,
+  accuracy: number,
+  shotsToWin: number,
+  perfectKills: number,
+  overkillShots: number
+): number {
+  const basePoints = won ? 1000 : 200;
+  const accuracyBonus = Math.round(accuracy * 5);
+  const maxShots = GRID_SIZE * GRID_SIZE;
+  const speedBonus = won ? Math.max(0, (maxShots - shotsToWin) * 30) : 0;
+  const perfectKillBonus = perfectKills * 150;
+  const overkillPenalty = overkillShots * 50;
+
+  return Math.max(0, basePoints + accuracyBonus + speedBonus + perfectKillBonus - overkillPenalty);
+}
+
+export function computeMatchStats(
+  tracking: BattleTracking,
+  opponentShips: PlacedShip[],
+  playerShips: PlacedShip[],
+  won: boolean
+): MatchStats {
+  const shotsFired = tracking.playerShots.length;
+  const shotsHit = tracking.playerShots.filter(s => s.result !== 'miss').length;
+  const accuracy = shotsFired > 0 ? Math.round((shotsHit / shotsFired) * 100) : 0;
+  const shotsToWin = won ? shotsFired : 0;
+
+  // Kill Efficiency
+  const killEfficiency: ShipKillEfficiency[] = opponentShips
+    .filter(s => s.isSunk)
+    .map(ship => {
+      const firstHit = tracking.shipFirstHitTurn[ship.id] ?? 0;
+      const sunkAt = tracking.shipSunkTurn[ship.id] ?? 0;
+      // Count player shots between firstHit and sunk turns (inclusive)
+      const shotsInRange = tracking.playerShots.filter(
+        s => s.turn >= firstHit && s.turn <= sunkAt
+      ).length;
+      return {
+        shipId: ship.id,
+        shipName: ship.name,
+        shipSize: ship.size,
+        idealShots: ship.size,
+        actualShots: Math.max(shotsInRange, ship.size),
+      };
+    });
+
+  // Perfect Kills
+  const perfectKills = killEfficiency.filter(k => k.actualShots === k.idealShots).length;
+
+  // First Blood Turn
+  const firstHitTurns = Object.values(tracking.shipFirstHitTurn);
+  const firstBloodTurn = firstHitTurns.length > 0 ? Math.min(...firstHitTurns) : 0;
+
+  // Ships survived
+  const shipsSurvived = playerShips.filter(s => !s.isSunk).length;
+
+  // Score
+  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0);
+
+  return {
+    score,
+    accuracy,
+    shotsFired,
+    shotsHit,
+    shotsToWin,
+    shipsSurvived,
+    totalShips: playerShips.length,
+    longestStreak: tracking.longestStreak,
+    firstBloodTurn,
+    perfectKills,
+    killEfficiency,
+  };
+}
+
+export function getLevelInfo(totalXP: number): LevelInfo {
+  let currentRank = RANKS[0];
+  let nextRank = RANKS[1];
+
+  for (let i = RANKS.length - 1; i >= 0; i--) {
+    if (totalXP >= RANKS[i].xp) {
+      currentRank = RANKS[i];
+      nextRank = RANKS[i + 1] ?? RANKS[i];
+      break;
+    }
+  }
+
+  const xpInRank = totalXP - currentRank.xp;
+  const xpRange = nextRank.xp - currentRank.xp;
+  const progress = xpRange > 0 ? Math.min(xpInRank / xpRange, 1) : 1;
+
+  return {
+    rank: currentRank.rank,
+    currentXP: totalXP,
+    xpForCurrentRank: currentRank.xp,
+    xpForNextRank: nextRank.xp,
+    progress,
+    motto: currentRank.motto,
+  };
+}
