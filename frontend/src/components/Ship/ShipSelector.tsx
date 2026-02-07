@@ -30,6 +30,9 @@ export default function ShipSelector({ ships, placedShipIds, selectedShipId, onS
               onPress={() => !isPlaced && onSelect(ship)}
               disabled={isPlaced}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${ship.name}, size ${ship.size}${isPlaced ? ', placed' : isSelected ? ', selected' : ''}`}
+              accessibilityState={{ disabled: isPlaced, selected: isSelected }}
             >
               <View style={styles.shipCells}>
                 {Array.from({ length: ship.size }).map((_, i) => (
@@ -56,7 +59,8 @@ export default function ShipSelector({ ships, placedShipIds, selectedShipId, onS
 
 const styles = StyleSheet.create({
   container: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.sm,
   },
   title: {
     fontFamily: FONTS.heading,
@@ -66,12 +70,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   shipList: {
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
   shipItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.sm,
+    minHeight: 44,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
