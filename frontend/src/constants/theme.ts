@@ -19,15 +19,15 @@ export const COLORS = {
   cell: {
     empty: 'rgba(30, 58, 95, 0.3)',
     ship: '#4a5568',
-    hit: '#ef4444',
-    miss: '#2d3748',
-    sunk: '#7f1d1d',
+    hit: '#f87171',
+    miss: '#4a5568',
+    sunk: '#b91c1c',
   },
   text: {
     primary: '#e2e8f0',
     secondary: '#94a3b8',
     accent: '#f59e0b',
-    danger: '#ef4444',
+    danger: '#f87171',
   },
   ui: {
     buttonBg: 'rgba(30, 58, 95, 0.8)',
