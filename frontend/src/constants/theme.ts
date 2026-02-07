@@ -20,7 +20,7 @@ export const COLORS = {
     empty: 'rgba(30, 58, 95, 0.3)',
     ship: '#4a5568',
     hit: '#f87171',
-    miss: '#4a5568',
+    miss: '#1e3a5f',
     sunk: '#b91c1c',
   },
   text: {
