@@ -14,7 +14,7 @@ import { computeAIMove, updateAIAfterAttack } from '../src/engine/ai';
 import { computeMatchStats } from '../src/engine/stats';
 import { updateStatsAfterGame, saveMatchToHistory } from '../src/storage/scores';
 import { Position, PlacedShip } from '../src/types/game';
-import { AI_DELAY_MIN, AI_DELAY_MAX } from '../src/constants/game';
+import { DIFFICULTY_CONFIG } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -26,8 +26,23 @@ export default function BattleScreen() {
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const gridSize = state.settings.gridSize;
+  const difficulty = state.settings.difficulty;
+  const diffConfig = DIFFICULTY_CONFIG[difficulty];
   const isSwipeMode = state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
+
+  // Auto-switch to the relevant board when turn changes
+  useEffect(() => {
+    if (!isSwipeMode) return;
+    if (!state.isPlayerTurn) {
+      // Bot's turn: show player board immediately so player sees the incoming attack
+      setSwipeView('player');
+    } else {
+      // Player's turn: wait 1s so player can see the bot's attack result, then switch
+      const timer = setTimeout(() => setSwipeView('enemy'), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.isPlayerTurn, isSwipeMode]);
 
   // Sunk ship modal state
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
@@ -84,10 +99,10 @@ export default function BattleScreen() {
           updatedTracking.shipSunkTurn[shipId] = updatedTracking.turnNumber;
         }
 
-        const matchStats = computeMatchStats(updatedTracking, newShips, state.playerShips, true, gridSize);
+        const matchStats = computeMatchStats(updatedTracking, newShips, state.playerShips, true, gridSize, difficulty);
         dispatch({ type: 'END_GAME', winner: 'player', matchStats });
         updateStatsAfterGame(true, matchStats);
-        saveMatchToHistory(true, matchStats, gridSize);
+        saveMatchToHistory(true, matchStats, gridSize, difficulty);
         router.replace('/gameover');
       }, 500);
     }
@@ -96,10 +111,10 @@ export default function BattleScreen() {
   useEffect(() => {
     if (state.isPlayerTurn || state.phase !== 'battle') return;
 
-    const delay = AI_DELAY_MIN + Math.random() * (AI_DELAY_MAX - AI_DELAY_MIN);
+    const delay = diffConfig.delayMin + Math.random() * (diffConfig.delayMax - diffConfig.delayMin);
 
     aiTimerRef.current = setTimeout(() => {
-      const { position, newAI } = computeAIMove(state.ai, state.playerBoard, state.playerShips, gridSize);
+      const { position, newAI } = computeAIMove(state.ai, state.playerBoard, state.playerShips, gridSize, difficulty);
       const { newShips, result, shipId } = processAttack(
         state.playerBoard,
         state.playerShips,
@@ -114,16 +129,16 @@ export default function BattleScreen() {
         if (sunk) showSunkAnimation(sunk);
       }
 
-      const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize);
+      const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
 
       dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: updatedAI });
 
       if (checkWinCondition(newShips)) {
         setTimeout(() => {
-          const matchStats = computeMatchStats(state.tracking, state.opponentShips, newShips, false, gridSize);
+          const matchStats = computeMatchStats(state.tracking, state.opponentShips, newShips, false, gridSize, difficulty);
           dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
           updateStatsAfterGame(false, matchStats);
-          saveMatchToHistory(false, matchStats, gridSize);
+          saveMatchToHistory(false, matchStats, gridSize, difficulty);
           router.replace('/gameover');
         }, 500);
       }
@@ -145,10 +160,10 @@ export default function BattleScreen() {
           style: 'destructive',
           onPress: () => {
             if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-            const matchStats = computeMatchStats(state.tracking, state.opponentShips, state.playerShips, false, gridSize);
+            const matchStats = computeMatchStats(state.tracking, state.opponentShips, state.playerShips, false, gridSize, difficulty);
             dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
             updateStatsAfterGame(false, matchStats);
-            saveMatchToHistory(false, matchStats, gridSize);
+            saveMatchToHistory(false, matchStats, gridSize, difficulty);
             router.replace('/gameover');
           },
         },
