@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
-import NavalButton from '../src/components/UI/NavalButton';
+import { MiniGrid, MiniCell } from '../src/components/Tutorial/MiniGrid';
+import { ShipShape } from '../src/components/Tutorial/ShipShape';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
@@ -22,121 +23,6 @@ interface TutorialSlide {
   description: string;
   illustration: React.ReactNode;
 }
-
-// --- Mini grid illustrations rendered with Views ---
-
-function MiniCell({ type, size = 18 }: { type: 'empty' | 'ship' | 'hit' | 'miss' | 'sunk' | 'water'; size?: number }) {
-  const colors: Record<string, string> = {
-    empty: 'rgba(30, 58, 95, 0.3)',
-    ship: COLORS.grid.ship,
-    hit: COLORS.accent.fire,
-    miss: COLORS.cell.miss,
-    sunk: COLORS.cell.sunk,
-    water: 'rgba(30, 58, 95, 0.15)',
-  };
-  const borderColors: Record<string, string> = {
-    empty: COLORS.grid.border,
-    ship: COLORS.grid.shipLight,
-    hit: COLORS.accent.fireDark,
-    miss: '#3d4758',
-    sunk: COLORS.accent.fireDark,
-    water: 'rgba(30, 58, 95, 0.3)',
-  };
-  return (
-    <View style={{
-      width: size,
-      height: size,
-      backgroundColor: colors[type],
-      borderWidth: 1,
-      borderColor: borderColors[type],
-      borderRadius: type === 'hit' || type === 'miss' ? 2 : 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      {type === 'hit' && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#ff6b6b' }} />}
-      {type === 'miss' && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#64748b', opacity: 0.7 }} />}
-      {type === 'sunk' && <View style={{ width: 10, height: 10, backgroundColor: '#991b1b', transform: [{ rotate: '45deg' }] }} />}
-    </View>
-  );
-}
-
-function MiniGrid({ cells }: { cells: ('empty' | 'ship' | 'hit' | 'miss' | 'sunk' | 'water')[][] }) {
-  return (
-    <View style={gridStyles.container}>
-      {cells.map((row, ri) => (
-        <View key={ri} style={gridStyles.row}>
-          {row.map((cell, ci) => (
-            <MiniCell key={`${ri}-${ci}`} type={cell} />
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const gridStyles = StyleSheet.create({
-  container: {
-    borderWidth: 1,
-    borderColor: COLORS.grid.border,
-    alignSelf: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-  },
-});
-
-// --- Ship shape illustration ---
-
-function ShipShape({ length, label }: { length: number; label: string }) {
-  return (
-    <View style={shipStyles.row}>
-      <View style={shipStyles.cells}>
-        {Array.from({ length }).map((_, i) => (
-          <View key={i} style={[
-            shipStyles.cell,
-            i === 0 && shipStyles.cellFirst,
-            i === length - 1 && shipStyles.cellLast,
-          ]} />
-        ))}
-      </View>
-      <Text style={shipStyles.label}>{label}</Text>
-    </View>
-  );
-}
-
-const shipStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cells: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  cell: {
-    width: 22,
-    height: 22,
-    backgroundColor: COLORS.grid.ship,
-    borderWidth: 1,
-    borderColor: COLORS.grid.shipLight,
-  },
-  cellFirst: {
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 6,
-  },
-  cellLast: {
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-  label: {
-    fontFamily: FONTS.body,
-    fontSize: 13,
-    color: COLORS.text.secondary,
-  },
-});
-
-// --- Slide data ---
 
 const SLIDES: TutorialSlide[] = [
   {
@@ -250,6 +136,7 @@ export default function TutorialScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const isFirst = activeIndex === 0;
   const isLast = activeIndex === SLIDES.length - 1;
 
   const onViewableItemsChanged = useRef(
@@ -262,19 +149,25 @@ export default function TutorialScreen() {
 
   const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
-  const handleNext = () => {
+  const goToPlacement = useCallback(() => {
+    haptics.light();
+    router.replace('/placement');
+  }, [haptics, router]);
+
+  const handleBack = useCallback(() => {
+    if (isFirst) return;
+    haptics.light();
+    flatListRef.current?.scrollToIndex({ index: activeIndex - 1, animated: true });
+  }, [isFirst, activeIndex, haptics]);
+
+  const handleNext = useCallback(() => {
     haptics.light();
     if (isLast) {
       router.replace('/placement');
     } else {
       flatListRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
     }
-  };
-
-  const handleSkip = () => {
-    haptics.light();
-    router.replace('/placement');
-  };
+  }, [isLast, activeIndex, haptics, router]);
 
   const renderSlide = ({ item }: { item: TutorialSlide }) => (
     <View style={styles.slide}>
@@ -289,17 +182,6 @@ export default function TutorialScreen() {
   return (
     <GradientContainer>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => { haptics.light(); router.replace('/menu'); }} hitSlop={16}>
-            <Text style={styles.backText}>{'< MENU'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleSkip} hitSlop={16}>
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Carousel */}
         <FlatList
           ref={flatListRef}
           data={SLIDES}
@@ -318,23 +200,52 @@ export default function TutorialScreen() {
           })}
         />
 
-        {/* Pagination + Button */}
         <View style={styles.footer}>
-          <View style={styles.pagination}>
-            {SLIDES.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  i === activeIndex ? styles.dotActive : styles.dotInactive,
-                ]}
-              />
-            ))}
+          {/* Nav row: BACK — dots — NEXT */}
+          <View style={styles.navRow}>
+            <TouchableOpacity
+              onPress={handleBack}
+              style={styles.navButton}
+              disabled={isFirst}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Previous slide"
+              accessibilityState={{ disabled: isFirst }}
+            >
+              <Text style={[styles.navText, isFirst && styles.navTextHidden]}>BACK</Text>
+            </TouchableOpacity>
+
+            <View style={styles.pagination}>
+              {SLIDES.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+
+            <TouchableOpacity
+              onPress={handleNext}
+              style={styles.navButton}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={isLast ? 'Start battle' : 'Next slide'}
+            >
+              <Text style={[styles.navText, styles.navTextPrimary]}>
+                {isLast ? 'START' : 'NEXT'}
+              </Text>
+            </TouchableOpacity>
           </View>
-          <NavalButton
-            title={isLast ? 'START BATTLE' : 'NEXT'}
-            onPress={handleNext}
-          />
+
+          {/* Skip */}
+          <TouchableOpacity
+            onPress={goToPlacement}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Skip tutorial"
+          >
+            <Text style={styles.skipText}>SKIP TUTORIAL</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </GradientContainer>
@@ -344,25 +255,6 @@ export default function TutorialScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(30, 58, 95, 0.4)',
-  },
-  backText: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.accent.gold,
-  },
-  skipText: {
-    fontFamily: FONTS.body,
-    fontSize: 15,
-    color: COLORS.accent.gold,
   },
   slide: {
     width: SCREEN_WIDTH,
@@ -394,7 +286,30 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
-    gap: SPACING.lg,
+    gap: SPACING.md,
+    alignItems: 'center',
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  navButton: {
+    width: 64,
+    alignItems: 'center',
+  },
+  navText: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+  },
+  navTextPrimary: {
+    color: COLORS.accent.gold,
+  },
+  navTextHidden: {
+    opacity: 0,
   },
   pagination: {
     flexDirection: 'row',
@@ -411,5 +326,11 @@ const styles = StyleSheet.create({
   },
   dotInactive: {
     backgroundColor: 'rgba(148, 163, 184, 0.3)',
+  },
+  skipText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
   },
 });
