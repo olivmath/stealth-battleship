@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PlayerStats, MatchRecord, MatchStats, GameSettings } from '../types/game';
+import { PlayerStats, MatchRecord, MatchStats, GameSettings, DifficultyLevel } from '../types/game';
 
 const USER_KEY = '@battleship_user';
 const SCORES_KEY = '@battleship_scores';
@@ -9,6 +9,7 @@ const SETTINGS_KEY = '@battleship_settings';
 const DEFAULT_SETTINGS: GameSettings = {
   gridSize: 6,
   battleView: 'stacked',
+  difficulty: 'normal',
 };
 
 export async function getSettings(): Promise<GameSettings> {
@@ -77,7 +78,8 @@ export async function getMatchHistory(): Promise<MatchRecord[]> {
 export async function saveMatchToHistory(
   won: boolean,
   matchStats: MatchStats,
-  gridSize: number
+  gridSize: number,
+  difficulty: DifficultyLevel = 'normal'
 ): Promise<MatchRecord> {
   const history = await getMatchHistory();
   const record: MatchRecord = {
@@ -86,6 +88,7 @@ export async function saveMatchToHistory(
     result: won ? 'victory' : 'defeat',
     score: matchStats.score,
     gridSize,
+    difficulty,
     stats: matchStats,
   };
   history.unshift(record);
