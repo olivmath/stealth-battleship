@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import { MiniGrid, MiniCell } from '../src/components/Tutorial/MiniGrid';
 import { ShipShape } from '../src/components/Tutorial/ShipShape';
+import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
+import { getShipDefinitions } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -24,120 +26,129 @@ interface TutorialSlide {
   illustration: React.ReactNode;
 }
 
-const SLIDES: TutorialSlide[] = [
-  {
-    id: '1',
-    title: 'How to Play\nBattleship',
-    description: 'Sink all enemy ships before they sink yours. Each player has a hidden fleet on a 6x6 grid.',
-    illustration: (
-      <View style={{ alignItems: 'center', gap: 16 }}>
-        <MiniGrid cells={[
-          ['water','water','water','water','water','water'],
-          ['water','ship','ship','water','water','water'],
-          ['water','water','water','water','water','water'],
-          ['water','water','water','ship','ship','ship'],
-          ['water','water','water','water','water','water'],
-          ['water','ship','ship','water','water','water'],
-        ]} />
-        <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
-          Hidden fleet on your grid
-        </Text>
-      </View>
-    ),
-  },
-  {
-    id: '2',
-    title: 'Your Fleet',
-    description: 'You command 3 ships. Place them horizontally or vertically on your grid before battle begins.',
-    illustration: (
-      <View style={{ alignItems: 'center', gap: 14 }}>
-        <ShipShape length={2} label="Patrol Boat" />
-        <ShipShape length={2} label="Patrol Boat" />
-        <ShipShape length={3} label="Destroyer" />
-        <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ fontFamily: FONTS.body, fontSize: 22, color: COLORS.text.accent }}>7</Text>
-          <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 13, color: COLORS.text.secondary }}>total cells to find</Text>
+function buildSlides(gridSize: 6 | 10): TutorialSlide[] {
+  const shipDefs = getShipDefinitions(gridSize);
+  const totalCells = shipDefs.reduce((sum, s) => sum + s.size, 0);
+  const shipCount = shipDefs.length;
+
+  return [
+    {
+      id: '1',
+      title: 'How to Play\nBattleship',
+      description: `Sink all enemy ships before they sink yours. Each player has a hidden fleet on a ${gridSize}x${gridSize} grid.`,
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 16 }}>
+          <MiniGrid cells={[
+            ['water','water','water','water','water','water'],
+            ['water','ship','ship','water','water','water'],
+            ['water','water','water','water','water','water'],
+            ['water','water','water','ship','ship','ship'],
+            ['water','water','water','water','water','water'],
+            ['water','ship','ship','water','water','water'],
+          ]} />
+          <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
+            Hidden fleet on your grid
+          </Text>
         </View>
-      </View>
-    ),
-  },
-  {
-    id: '3',
-    title: 'Take Your Shot',
-    description: 'Tap a cell on the enemy grid to fire. You will see a hit (fire) or a miss (gray dot). Then the enemy fires back.',
-    illustration: (
-      <View style={{ alignItems: 'center', gap: 12 }}>
-        <MiniGrid cells={[
-          ['empty','empty','miss','empty','empty','empty'],
-          ['empty','empty','empty','empty','hit','empty'],
-          ['miss','empty','empty','empty','hit','empty'],
-          ['empty','empty','miss','empty','empty','empty'],
-          ['empty','empty','empty','empty','empty','miss'],
-          ['empty','miss','empty','empty','empty','empty'],
-        ]} />
-        <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MiniCell type="hit" size={16} />
-            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Hit</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MiniCell type="miss" size={16} />
-            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Miss</Text>
+      ),
+    },
+    {
+      id: '2',
+      title: 'Your Fleet',
+      description: `You command ${shipCount} ships. Place them horizontally or vertically on your grid before battle begins.`,
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 14 }}>
+          {shipDefs.map((ship, i) => (
+            <ShipShape key={`${ship.id}-${i}`} length={ship.size} label={ship.name} />
+          ))}
+          <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontFamily: FONTS.body, fontSize: 22, color: COLORS.text.accent }}>{totalCells}</Text>
+            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 13, color: COLORS.text.secondary }}>total cells to find</Text>
           </View>
         </View>
-      </View>
-    ),
-  },
-  {
-    id: '4',
-    title: 'Sink the Ship',
-    description: 'When every cell of a ship is hit, it sinks! The ship turns dark red. Sink all 3 ships to win.',
-    illustration: (
-      <View style={{ alignItems: 'center', gap: 12 }}>
-        <MiniGrid cells={[
-          ['empty','miss','empty','empty','miss','empty'],
-          ['empty','empty','empty','empty','sunk','empty'],
-          ['miss','empty','hit','empty','sunk','empty'],
-          ['empty','empty','hit','empty','sunk','empty'],
-          ['empty','empty','empty','empty','empty','miss'],
-          ['empty','miss','empty','empty','empty','empty'],
-        ]} />
-        <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MiniCell type="hit" size={16} />
-            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Damaged</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <MiniCell type="sunk" size={16} />
-            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Sunk</Text>
+      ),
+    },
+    {
+      id: '3',
+      title: 'Take Your Shot',
+      description: 'Tap a cell on the enemy grid to fire. You will see a hit (fire) or a miss (blue dot). Then the enemy fires back.',
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 12 }}>
+          <MiniGrid cells={[
+            ['empty','empty','miss','empty','empty','empty'],
+            ['empty','empty','empty','empty','hit','empty'],
+            ['miss','empty','empty','empty','hit','empty'],
+            ['empty','empty','miss','empty','empty','empty'],
+            ['empty','empty','empty','empty','empty','miss'],
+            ['empty','miss','empty','empty','empty','empty'],
+          ]} />
+          <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MiniCell type="hit" size={16} />
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Hit</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MiniCell type="miss" size={16} />
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Miss</Text>
+            </View>
           </View>
         </View>
-      </View>
-    ),
-  },
-  {
-    id: '5',
-    title: 'Ready,\nCommander?',
-    description: 'Place your fleet strategically. Spread your ships to make them harder to find. Good luck!',
-    illustration: (
-      <View style={{ alignItems: 'center', gap: 8 }}>
-        <Text style={{ fontSize: 64 }}>{'??????'}</Text>
-        <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.accent, letterSpacing: 2 }}>
-          DEPLOY YOUR FLEET
-        </Text>
-      </View>
-    ),
-  },
-];
+      ),
+    },
+    {
+      id: '4',
+      title: 'Sink the Ship',
+      description: `When every cell of a ship is hit, it sinks! The ship turns dark red. Sink all ${shipCount} ships to win.`,
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 12 }}>
+          <MiniGrid cells={[
+            ['empty','miss','empty','empty','miss','empty'],
+            ['empty','empty','empty','empty','sunk','empty'],
+            ['miss','empty','hit','empty','sunk','empty'],
+            ['empty','empty','hit','empty','sunk','empty'],
+            ['empty','empty','empty','empty','empty','miss'],
+            ['empty','miss','empty','empty','empty','empty'],
+          ]} />
+          <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MiniCell type="hit" size={16} />
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Damaged</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MiniCell type="sunk" size={16} />
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Sunk</Text>
+            </View>
+          </View>
+        </View>
+      ),
+    },
+    {
+      id: '5',
+      title: 'Ready,\nCommander?',
+      description: 'Place your fleet strategically. Spread your ships to make them harder to find. Good luck!',
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 8 }}>
+          <Text style={{ fontSize: 64 }}>{'??????'}</Text>
+          <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.accent, letterSpacing: 2 }}>
+            DEPLOY YOUR FLEET
+          </Text>
+        </View>
+      ),
+    },
+  ];
+}
 
 export default function TutorialScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const { state } = useGame();
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const slides = useMemo(() => buildSlides(state.settings.gridSize), [state.settings.gridSize]);
+
   const isFirst = activeIndex === 0;
-  const isLast = activeIndex === SLIDES.length - 1;
+  const isLast = activeIndex === slides.length - 1;
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -184,7 +195,7 @@ export default function TutorialScreen() {
       <View style={styles.container}>
         <FlatList
           ref={flatListRef}
-          data={SLIDES}
+          data={slides}
           renderItem={renderSlide}
           keyExtractor={item => item.id}
           horizontal
@@ -201,7 +212,6 @@ export default function TutorialScreen() {
         />
 
         <View style={styles.footer}>
-          {/* Nav row: BACK — dots — NEXT */}
           <View style={styles.navRow}>
             <TouchableOpacity
               onPress={handleBack}
@@ -216,7 +226,7 @@ export default function TutorialScreen() {
             </TouchableOpacity>
 
             <View style={styles.pagination}>
-              {SLIDES.map((_, i) => (
+              {slides.map((_, i) => (
                 <View
                   key={i}
                   style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
@@ -237,7 +247,6 @@ export default function TutorialScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Skip */}
           <TouchableOpacity
             onPress={goToPlacement}
             hitSlop={12}
@@ -285,7 +294,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    marginTop: 'auto',
     gap: SPACING.md,
     alignItems: 'center',
   },
