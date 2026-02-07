@@ -17,6 +17,7 @@ interface Props {
   isOpponent?: boolean;
   maxWidth: number;
   variant: Variant;
+  colLabelsBottom?: boolean;
 }
 
 const LABEL_SIZES: Record<Variant, number> = {
@@ -48,6 +49,7 @@ export default function GameBoard({
   isOpponent = false,
   maxWidth,
   variant,
+  colLabelsBottom = false,
 }: Props) {
   const effectiveGridSize = gridSize ?? board.length ?? 6;
   const labelSize = LABEL_SIZES[variant];
@@ -59,28 +61,31 @@ export default function GameBoard({
 
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
+  const colLabelRow = (
+    <View style={styles.headerRow}>
+      {colLabels.map(label => (
+        <Text
+          key={label}
+          style={[
+            styles.label,
+            {
+              width: cellSize,
+              height: labelSize,
+              lineHeight: labelSize,
+              fontSize,
+            },
+          ]}
+        >
+          {label}
+        </Text>
+      ))}
+      <View style={{ width: labelSize, height: labelSize }} />
+    </View>
+  );
+
   return (
     <View style={styles.container} accessible accessibilityLabel={isOpponent ? 'Enemy grid' : 'Your grid'}>
-      {/* Header row: column labels + empty corner */}
-      <View style={styles.headerRow}>
-        {colLabels.map(label => (
-          <Text
-            key={label}
-            style={[
-              styles.label,
-              {
-                width: cellSize,
-                height: labelSize,
-                lineHeight: labelSize,
-                fontSize,
-              },
-            ]}
-          >
-            {label}
-          </Text>
-        ))}
-        <View style={{ width: labelSize, height: labelSize }} />
-      </View>
+      {!colLabelsBottom && colLabelRow}
 
       {/* Data rows: cells + row label on right */}
       <View style={styles.gridBody}>
@@ -129,6 +134,8 @@ export default function GameBoard({
           </View>
         ))}
       </View>
+
+      {colLabelsBottom && colLabelRow}
     </View>
   );
 }
