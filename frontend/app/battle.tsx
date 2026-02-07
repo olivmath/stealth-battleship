@@ -15,11 +15,11 @@ import { computeMatchStats } from '../src/engine/stats';
 import { updateStatsAfterGame, saveMatchToHistory } from '../src/storage/scores';
 import { Position, PlacedShip } from '../src/types/game';
 import { DIFFICULTY_CONFIG } from '../src/constants/game';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { COLORS, FONTS } from '../src/constants/theme';
 
+const SCREEN_PADDING = 16;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CONTAINER_PADDING = SPACING.md;
-const AVAILABLE_WIDTH = SCREEN_WIDTH - CONTAINER_PADDING * 2;
+const CONTENT_WIDTH = Math.min(SCREEN_WIDTH - SCREEN_PADDING * 2, 400);
 
 export default function BattleScreen() {
   const router = useRouter();
@@ -33,14 +33,15 @@ export default function BattleScreen() {
   const isSwipeMode = state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
 
-  // Auto-switch to the relevant board when turn changes
+  // Mini-map sizing
+  const MINI_MAX_WIDTH = Math.floor(CONTENT_WIDTH * 0.48);
+
+  // Auto-switch to the relevant board when turn changes (swipe mode)
   useEffect(() => {
     if (!isSwipeMode) return;
     if (!state.isPlayerTurn) {
-      // Bot's turn: show player board immediately so player sees the incoming attack
       setSwipeView('player');
     } else {
-      // Player's turn: wait 1s so player can see the bot's attack result, then switch
       const timer = setTimeout(() => setSwipeView('enemy'), 1000);
       return () => clearTimeout(timer);
     }
@@ -200,7 +201,7 @@ export default function BattleScreen() {
           </View>
 
           {swipeView === 'enemy' ? (
-            <View style={styles.fullBoard}>
+            <View style={styles.swipeBoard}>
               <GameBoard
                 board={state.opponentBoard}
                 onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
@@ -208,18 +209,20 @@ export default function BattleScreen() {
                 showShips={false}
                 gridSize={gridSize}
                 isOpponent
-                maxWidth={AVAILABLE_WIDTH}
+                maxWidth={CONTENT_WIDTH}
+                variant="full"
               />
               <FleetStatus ships={state.opponentShips} label="ENEMY FLEET" />
             </View>
           ) : (
-            <View style={styles.fullBoard}>
+            <View style={styles.swipeBoard}>
               <GameBoard
                 board={state.playerBoard}
                 showShips
                 disabled
                 gridSize={gridSize}
-                maxWidth={AVAILABLE_WIDTH}
+                maxWidth={CONTENT_WIDTH}
+                variant="full"
               />
               <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
             </View>
@@ -238,14 +241,13 @@ export default function BattleScreen() {
   }
 
   // --- Stacked mode (default) ---
-  const miniBoardWidth = Math.floor((AVAILABLE_WIDTH - SPACING.sm) * 0.5);
-
   return (
     <GradientContainer>
-      <View style={styles.stackedContainer}>
+      <View style={styles.container}>
         <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
 
-        <View style={styles.enemySection}>
+        {/* Main enemy grid */}
+        <View style={styles.mainGridSection}>
           <Text style={styles.sectionLabel}>ENEMY WATERS</Text>
           <GameBoard
             board={state.opponentBoard}
@@ -254,20 +256,22 @@ export default function BattleScreen() {
             showShips={false}
             gridSize={gridSize}
             isOpponent
-            maxWidth={AVAILABLE_WIDTH}
+            maxWidth={CONTENT_WIDTH}
+            variant="full"
           />
         </View>
 
-        <View style={styles.bottomStrip}>
-          <View style={styles.miniMapSection}>
+        {/* Bottom panel: mini-map + fleet status */}
+        <View style={styles.bottomPanel}>
+          <View style={styles.miniMapColumn}>
             <Text style={styles.miniLabel}>YOUR WATERS</Text>
             <GameBoard
               board={state.playerBoard}
               showShips
               disabled
               gridSize={gridSize}
-              maxWidth={miniBoardWidth}
-              hideLabels
+              maxWidth={MINI_MAX_WIDTH}
+              variant="mini"
             />
           </View>
           <View style={styles.fleetColumn}>
@@ -292,22 +296,14 @@ export default function BattleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    overflow: 'hidden',
+    padding: SCREEN_PADDING,
+    gap: 4,
   },
-  // Stacked mode styles
-  stackedContainer: {
-    flex: 1,
-    padding: SPACING.md,
-    gap: SPACING.xs,
-    overflow: 'hidden',
-  },
-  enemySection: {
+  // Stacked mode
+  mainGridSection: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACING.xs,
   },
   sectionLabel: {
     fontFamily: FONTS.heading,
@@ -316,13 +312,15 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
     alignSelf: 'stretch',
+    marginBottom: 2,
   },
-  bottomStrip: {
+  bottomPanel: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: 8,
     alignItems: 'flex-start',
   },
-  miniMapSection: {
+  miniMapColumn: {
+    alignItems: 'center',
     gap: 2,
   },
   miniLabel: {
@@ -334,16 +332,16 @@ const styles = StyleSheet.create({
   },
   fleetColumn: {
     flex: 1,
-    gap: SPACING.xs,
+    gap: 4,
   },
-  // Swipe mode styles
+  // Swipe mode
   swipeTabs: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: 8,
   },
   swipeTab: {
     flex: 1,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 8,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     borderRadius: 4,
@@ -362,9 +360,9 @@ const styles = StyleSheet.create({
   swipeTabTextActive: {
     color: COLORS.accent.gold,
   },
-  fullBoard: {
+  swipeBoard: {
     flex: 1,
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: 16,
   },
 });
