@@ -6,7 +6,6 @@ import {
   Dimensions,
   GestureResponderEvent,
   Alert,
-  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
@@ -194,11 +193,7 @@ export default function PlacementScreen() {
 
   return (
     <GradientContainer>
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={styles.container}>
         <Text style={styles.title}>DEPLOY FLEET</Text>
         <Text style={styles.subtitle}>
           {selectedShip
@@ -281,18 +276,15 @@ export default function PlacementScreen() {
             style={styles.actionButton}
           />
         </View>
-      </ScrollView>
+      </View>
     </GradientContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
     flex: 1,
-  },
-  content: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
   },
   title: {
     fontFamily: FONTS.heading,
