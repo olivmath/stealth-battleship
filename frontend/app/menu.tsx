@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import RotatingShip from '../src/components/UI/RotatingShip';
+import SketchfabModel from '../src/components/UI/SketchfabModel';
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -48,7 +48,7 @@ export default function MenuScreen() {
           <View style={styles.divider} />
         </View>
 
-        <RotatingShip />
+        <SketchfabModel modelId="f5167e6802f74494a959ecfc5c5e51f0" height={200} />
 
         {/* Actions */}
         <View style={styles.actions}>
