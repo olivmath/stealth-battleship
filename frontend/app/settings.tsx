@@ -5,7 +5,7 @@ import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { GridSizeOption, BattleViewMode } from '../src/types/game';
+import { GridSizeOption, BattleViewMode, DifficultyLevel } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 function ToggleOption({
@@ -58,6 +58,11 @@ export default function SettingsScreen() {
     update({ ...settings, battleView: mode });
   };
 
+  const handleDifficulty = (level: DifficultyLevel) => {
+    haptics.light();
+    update({ ...settings, difficulty: level });
+  };
+
   return (
     <GradientContainer>
       <View style={styles.container}>
@@ -96,6 +101,28 @@ export default function SettingsScreen() {
               description="Full-size board, swipe to switch"
               selected={settings.battleView === 'swipe'}
               onPress={() => handleBattleView('swipe')}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>DIFFICULTY</Text>
+            <ToggleOption
+              label="EASY"
+              description="Relaxed AI • 0.5x XP"
+              selected={settings.difficulty === 'easy'}
+              onPress={() => handleDifficulty('easy')}
+            />
+            <ToggleOption
+              label="NORMAL"
+              description="Standard AI • 1x XP"
+              selected={settings.difficulty === 'normal'}
+              onPress={() => handleDifficulty('normal')}
+            />
+            <ToggleOption
+              label="HARD"
+              description="Aggressive AI • 1.5x XP"
+              selected={settings.difficulty === 'hard'}
+              onPress={() => handleDifficulty('hard')}
             />
           </View>
         </View>
