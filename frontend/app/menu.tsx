@@ -31,7 +31,7 @@ export default function MenuScreen() {
   const handleStartBattle = () => {
     haptics.light();
     dispatch({ type: 'RESET_GAME' });
-    router.replace('/placement');
+    router.replace('/tutorial');
   };
 
   return (
