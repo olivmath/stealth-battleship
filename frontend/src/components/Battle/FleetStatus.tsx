@@ -144,7 +144,6 @@ const styles = StyleSheet.create({
   },
   // Compact styles
   compactContainer: {
-    alignSelf: 'flex-end',
     padding: 4,
     borderRadius: 4,
     borderWidth: 1,
@@ -164,11 +163,11 @@ const styles = StyleSheet.create({
   compactShipRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   compactShipCells: {
     flexDirection: 'row',
     gap: 1,
-    marginRight: 6,
   },
   compactCell: {
     width: 7,
@@ -176,9 +175,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   compactShipName: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 11,
+    fontFamily: FONTS.body,
+    fontSize: 10,
     color: COLORS.text.primary,
-    flexShrink: 1,
+    textAlign: 'right',
+    flex: 1,
   },
 });
