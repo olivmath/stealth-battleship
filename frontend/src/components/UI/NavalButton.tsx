@@ -7,7 +7,7 @@ interface Props {
   subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger' | 'success';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'pvp';
   size?: 'default' | 'small';
   style?: ViewStyle;
   accessibilityLabel?: string;
@@ -21,7 +21,9 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
       ? COLORS.accent.fire
       : variant === 'success'
         ? '#22c55e'
-        : COLORS.ui.buttonBorder;
+        : variant === 'pvp'
+          ? '#22d3ee'
+          : COLORS.ui.buttonBorder;
 
   const bgColor = disabled ? COLORS.ui.disabledBg : COLORS.ui.buttonBg;
 
@@ -42,6 +44,7 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
         disabled && styles.disabledText,
         variant === 'danger' && styles.dangerText,
         variant === 'success' && styles.successText,
+        variant === 'pvp' && styles.pvpText,
       ]}>
         {title}
       </Text>
@@ -84,6 +87,9 @@ const styles = StyleSheet.create({
   },
   successText: {
     color: '#22c55e',
+  },
+  pvpText: {
+    color: '#22d3ee',
   },
   subtitle: {
     fontFamily: FONTS.bodyLight,
