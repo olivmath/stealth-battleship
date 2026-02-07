@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
@@ -71,7 +71,7 @@ export default function SettingsScreen() {
           <View style={styles.divider} />
         </View>
 
-        <View style={styles.sections}>
+        <ScrollView style={styles.sections} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>GRID SIZE</Text>
             <ToggleOption
@@ -125,7 +125,7 @@ export default function SettingsScreen() {
               onPress={() => handleDifficulty('hard')}
             />
           </View>
-        </View>
+        </ScrollView>
 
         <View style={styles.actions}>
           <NavalButton
@@ -166,10 +166,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   sections: {
-    gap: SPACING.xl,
+    flex: 1,
+    marginTop: SPACING.md,
   },
   section: {
     gap: SPACING.sm,
+    marginBottom: SPACING.xl,
   },
   sectionTitle: {
     fontFamily: FONTS.heading,
@@ -231,6 +233,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actions: {
-    marginBottom: SPACING.xl,
+    marginTop: 'auto',
   },
 });
