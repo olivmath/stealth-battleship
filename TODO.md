@@ -29,3 +29,8 @@ onde eu consigo ver todos os ranks?
 
 Teve ter corer diverentes para a vitória e a derrota.
 na vitoria jogue confetes
+
+# Modal de ship destroyed
+
+- demore 1 s
+- uma cor para cada tipo de navio

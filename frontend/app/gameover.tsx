@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useGame } from '../src/context/GameContext';
@@ -160,6 +161,16 @@ export default function GameOverScreen() {
 
   return (
     <GradientContainer>
+      {isVictory && (
+        <ConfettiCannon
+          count={200}
+          origin={{ x: -10, y: 0 }}
+          autoStart={true}
+          fadeOut={true}
+          fallSpeed={3000}
+          explosionSpeed={350}
+        />
+      )}
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
