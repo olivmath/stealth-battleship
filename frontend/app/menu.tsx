@@ -54,6 +54,11 @@ export default function MenuScreen() {
             onPress={handleStartBattle}
           />
           <NavalButton
+            title="PvP ONLINE"
+            onPress={() => {}}
+            disabled
+          />
+          <NavalButton
             title="MATCH HISTORY"
             onPress={() => {
               haptics.light();
@@ -77,12 +82,6 @@ export default function MenuScreen() {
             }}
             variant="secondary"
           />
-          <NavalButton
-            title="PvP ONLINE"
-            onPress={() => {}}
-            disabled
-          />
-          <Text style={styles.comingSoon}>COMING SOON — ZK PROOF MULTIPLAYER</Text>
         </View>
       </View>
     </GradientContainer>
