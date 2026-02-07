@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 import RadarSpinner from './RadarSpinner';
+import { getSketchfabViewerHtml } from '../../constants/ships3d';
 
 interface Props {
   modelId: string;
@@ -12,14 +13,15 @@ interface Props {
 export default function SketchfabModel({ modelId, height = 200, style }: Props) {
   const [loading, setLoading] = useState(true);
 
-  const uri = `https://sketchfab.com/models/${modelId}/embed?autostart=1&autospin=0.5&ui_controls=0&ui_infos=0&ui_stop=0&ui_watermark=0&transparent=1`;
+  const html = useMemo(() => getSketchfabViewerHtml(modelId), [modelId]);
 
   return (
     <View style={[styles.container, { height }, style]}>
       <WebView
-        source={{ uri }}
+        source={{ html }}
         style={styles.webview}
         onLoadEnd={() => setLoading(false)}
+        originWhitelist={['*']}
         allowsInlineMediaPlayback
         javaScriptEnabled
         scrollEnabled={false}
