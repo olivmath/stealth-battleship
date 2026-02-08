@@ -9,13 +9,15 @@ import {
   ViewToken,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import { MiniGrid, MiniCell } from '../src/components/Tutorial/MiniGrid';
 import { ShipShape } from '../src/components/Tutorial/ShipShape';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getShipDefinitionsForRank } from '../src/constants/game';
+import { getShipDefinitionsForRank, RANK_PROGRESSION } from '../src/constants/game';
 import { getLevelInfo } from '../src/engine/stats';
+import { setTutorialSeen } from '../src/storage/scores';
 import { ShipDefinition } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
@@ -28,15 +30,15 @@ interface TutorialSlide {
   illustration: React.ReactNode;
 }
 
-function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlide[] {
+function buildSlides(gridSize: number, shipDefs: ShipDefinition[], t: (key: string, opts?: any) => string): TutorialSlide[] {
   const totalCells = shipDefs.reduce((sum, s) => sum + s.size, 0);
   const shipCount = shipDefs.length;
 
   return [
     {
       id: '1',
-      title: 'How to Play\nBattleship',
-      description: `Sink all enemy ships before they sink yours. Each player has a hidden fleet on a ${gridSize}x${gridSize} grid.`,
+      title: t('tutorial.title'),
+      description: t('tutorial.intro', { gridSize }),
       illustration: (
         <View style={{ alignItems: 'center', gap: 16 }}>
           <MiniGrid cells={[
@@ -48,31 +50,30 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
             ['water','ship','ship','water','water','water'],
           ]} />
           <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
-            Hidden fleet on your grid
+            {t('tutorial.fleet')}
           </Text>
         </View>
       ),
     },
     {
       id: '2',
-      title: 'Your Fleet',
-      description: `You command ${shipCount} ships. Place them horizontally or vertically on your grid before battle begins.`,
+      title: t('tutorial.yourFleet'),
+      description: t('tutorial.fleetDesc', { shipCount }),
       illustration: (
         <View style={{ alignItems: 'center', gap: 14 }}>
           {shipDefs.map((ship, i) => (
             <ShipShape key={`${ship.id}-${i}`} length={ship.size} label={ship.name} />
           ))}
           <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontFamily: FONTS.body, fontSize: 22, color: COLORS.text.accent }}>{totalCells}</Text>
-            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 13, color: COLORS.text.secondary }}>total cells to find</Text>
+            <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 13, color: COLORS.text.secondary }}>{t('tutorial.totalCells', { totalCells })}</Text>
           </View>
         </View>
       ),
     },
     {
       id: '3',
-      title: 'Take Your Shot',
-      description: 'Tap a cell on the enemy grid to fire. You will see a hit (fire) or a miss (blue dot). Then the enemy fires back.',
+      title: t('tutorial.shot'),
+      description: t('tutorial.shotDesc'),
       illustration: (
         <View style={{ alignItems: 'center', gap: 12 }}>
           <MiniGrid cells={[
@@ -86,11 +87,11 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
           <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MiniCell type="hit" size={16} />
-              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Hit</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.hit')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MiniCell type="miss" size={16} />
-              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Miss</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.miss')}</Text>
             </View>
           </View>
         </View>
@@ -98,8 +99,8 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
     },
     {
       id: '4',
-      title: 'Sink the Ship',
-      description: `When every cell of a ship is hit, it sinks! The ship turns dark red. Sink all ${shipCount} ships to win.`,
+      title: t('tutorial.sink'),
+      description: t('tutorial.sinkDesc', { shipCount }),
       illustration: (
         <View style={{ alignItems: 'center', gap: 12 }}>
           <MiniGrid cells={[
@@ -113,11 +114,11 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
           <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MiniCell type="hit" size={16} />
-              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Damaged</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.damaged')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MiniCell type="sunk" size={16} />
-              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>Sunk</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.sunk')}</Text>
             </View>
           </View>
         </View>
@@ -125,13 +126,112 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
     },
     {
       id: '5',
-      title: 'Ready,\nCommander?',
-      description: 'Place your fleet strategically. Spread your ships to make them harder to find. Good luck!',
+      title: t('tutorial.placement'),
+      description: t('tutorial.placementDesc'),
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 12 }}>
+          <MiniGrid cells={[
+            ['empty','empty','empty','empty','empty','empty'],
+            ['empty','ship','ship','ship','empty','empty'],
+            ['empty','empty','empty','empty','empty','empty'],
+            ['empty','empty','empty','empty','ship','empty'],
+            ['empty','empty','empty','empty','ship','empty'],
+            ['empty','empty','empty','empty','empty','empty'],
+          ]} />
+          <View style={{ flexDirection: 'row', gap: 24, marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.secondary }}>{'↔'}</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.placementH')}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.secondary }}>{'↕'}</Text>
+              <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>{t('tutorial.placementV')}</Text>
+            </View>
+          </View>
+          <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.accent, letterSpacing: 1 }}>
+            {t('tutorial.placementAuto')}
+          </Text>
+        </View>
+      ),
+    },
+    {
+      id: '6',
+      title: t('tutorial.scoring'),
+      description: t('tutorial.scoringDesc'),
+      illustration: (
+        <View style={{ alignItems: 'center', gap: 14 }}>
+          <View style={{ gap: 12, width: '100%', paddingHorizontal: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.accent.fire, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, color: '#fff' }}>{'+'}</Text>
+              </View>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.primary }}>{t('tutorial.accuracyBonus')}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.accent.gold, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, color: '#fff' }}>{'⚡'}</Text>
+              </View>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.primary }}>{t('tutorial.speedBonus')}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.accent.victory, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, color: '#fff' }}>{'★'}</Text>
+              </View>
+              <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.primary }}>{t('tutorial.perfectKill')}</Text>
+            </View>
+          </View>
+          <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 11, color: COLORS.text.secondary, textAlign: 'center', marginTop: 4 }}>
+            {t('tutorial.diffMultiplier')}
+          </Text>
+        </View>
+      ),
+    },
+    {
+      id: '7',
+      title: t('tutorial.ranks'),
+      description: t('tutorial.ranksDesc'),
+      illustration: (() => {
+        const keyRanks = [
+          RANK_PROGRESSION[0],
+          RANK_PROGRESSION[2],
+          RANK_PROGRESSION[5],
+        ];
+        return (
+          <View style={{ alignItems: 'center', gap: 0 }}>
+            {keyRanks.map((rc, i) => (
+              <View key={rc.rank} style={{ alignItems: 'center' }}>
+                {i > 0 && (
+                  <View style={{ width: 2, height: 16, backgroundColor: COLORS.accent.gold, opacity: 0.4 }} />
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6, paddingHorizontal: 16, borderRadius: 8, backgroundColor: i === 2 ? COLORS.overlay.goldGlow : 'transparent' }}>
+                  <Text style={{ fontFamily: FONTS.heading, fontSize: 12, color: i === 2 ? COLORS.accent.gold : COLORS.text.primary, width: 100 }}>
+                    {t(`ranks.${rc.rank}`)}
+                  </Text>
+                  <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
+                    {t('tutorial.rankGrid', { gridSize: rc.gridSize })}
+                  </Text>
+                  <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
+                    {'|'}
+                  </Text>
+                  <Text style={{ fontFamily: FONTS.bodyLight, fontSize: 12, color: COLORS.text.secondary }}>
+                    {rc.ships.length} {rc.ships.length === 1 ? 'ship' : t('rankList.ships', { count: rc.ships.length }).replace(/^\d+\s*/, '')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        );
+      })(),
+    },
+    {
+      id: '8',
+      title: t('tutorial.ready'),
+      description: t('tutorial.readyDesc'),
       illustration: (
         <View style={{ alignItems: 'center', gap: 8 }}>
           <Text style={{ fontSize: 64 }}>{'??????'}</Text>
           <Text style={{ fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.accent, letterSpacing: 2 }}>
-            DEPLOY YOUR FLEET
+            {t('tutorial.deploy')}
           </Text>
         </View>
       ),
@@ -142,13 +242,14 @@ function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlid
 export default function TutorialScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const { t } = useTranslation();
   const { state } = useGame();
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const level = getLevelInfo(state.stats.totalXP);
   const shipDefs = getShipDefinitionsForRank(level.rank);
-  const slides = useMemo(() => buildSlides(state.settings.gridSize, shipDefs), [state.settings.gridSize, level.rank]);
+  const slides = useMemo(() => buildSlides(state.settings.gridSize, shipDefs, t), [state.settings.gridSize, level.rank, t]);
 
   const isFirst = activeIndex === 0;
   const isLast = activeIndex === slides.length - 1;
@@ -165,6 +266,7 @@ export default function TutorialScreen() {
 
   const goToPlacement = useCallback(() => {
     haptics.light();
+    setTutorialSeen(true);
     router.replace('/placement');
   }, [haptics, router]);
 
@@ -177,6 +279,7 @@ export default function TutorialScreen() {
   const handleNext = useCallback(() => {
     haptics.light();
     if (isLast) {
+      setTutorialSeen(true);
       router.replace('/placement');
     } else {
       flatListRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
@@ -225,7 +328,7 @@ export default function TutorialScreen() {
               accessibilityLabel="Previous slide"
               accessibilityState={{ disabled: isFirst }}
             >
-              <Text style={[styles.navText, isFirst && styles.navTextHidden]}>BACK</Text>
+              <Text style={[styles.navText, isFirst && styles.navTextHidden]}>{t('tutorial.back')}</Text>
             </TouchableOpacity>
 
             <View style={styles.pagination}>
@@ -245,7 +348,7 @@ export default function TutorialScreen() {
               accessibilityLabel={isLast ? 'Start battle' : 'Next slide'}
             >
               <Text style={[styles.navText, styles.navTextPrimary]}>
-                {isLast ? 'START' : 'NEXT'}
+                {isLast ? t('tutorial.start') : t('tutorial.next')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -256,7 +359,7 @@ export default function TutorialScreen() {
             accessibilityRole="button"
             accessibilityLabel="Skip tutorial"
           >
-            <Text style={styles.skipText}>SKIP TUTORIAL</Text>
+            <Text style={styles.skipText}>{t('tutorial.skip')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -329,9 +432,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   dotActive: {
     backgroundColor: COLORS.accent.gold,
