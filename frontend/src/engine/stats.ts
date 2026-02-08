@@ -57,17 +57,15 @@ export function computeMatchStats(
   const killEfficiency: ShipKillEfficiency[] = opponentShips
     .filter(s => s.isSunk)
     .map(ship => {
-      const firstHit = tracking.shipFirstHitTurn[ship.id] ?? 0;
-      const sunkAt = tracking.shipSunkTurn[ship.id] ?? 0;
-      const shotsInRange = tracking.playerShots.filter(
-        s => s.turn >= firstHit && s.turn <= sunkAt
+      const shotsAtShip = tracking.playerShots.filter(
+        s => s.shipId === ship.id
       ).length;
       return {
         shipId: ship.id,
         shipName: ship.name,
         shipSize: ship.size,
         idealShots: ship.size,
-        actualShots: Math.max(shotsInRange, ship.size),
+        actualShots: Math.max(shotsAtShip, ship.size),
       };
     });
 
@@ -78,7 +76,11 @@ export function computeMatchStats(
 
   const shipsSurvived = playerShips.filter(s => !s.isSunk).length;
 
-  const score = calculateScore(won, accuracy, shotsFired, perfectKills, 0, gridSize, difficulty);
+  const overkillShots = killEfficiency.reduce(
+    (sum, k) => sum + Math.max(0, k.actualShots - k.idealShots), 0
+  );
+
+  const score = calculateScore(won, accuracy, shotsFired, perfectKills, overkillShots, gridSize, difficulty);
 
   return {
     score,

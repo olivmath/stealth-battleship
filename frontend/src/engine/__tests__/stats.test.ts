@@ -166,7 +166,7 @@ describe('computeMatchStats', () => {
     expect(stats.firstBloodTurn).toBe(0);
   });
 
-  it('computes kill efficiency for sunk ships', () => {
+  it('computes kill efficiency for sunk ships (counts only shots at that ship)', () => {
     const tracking = makeTracking({
       playerShots: [
         { turn: 1, position: { row: 0, col: 0 }, result: 'hit', shipId: 'a' },
@@ -183,7 +183,8 @@ describe('computeMatchStats', () => {
     expect(stats.killEfficiency).toHaveLength(1);
     expect(stats.killEfficiency[0].shipName).toBe('a');
     expect(stats.killEfficiency[0].idealShots).toBe(2);
-    expect(stats.killEfficiency[0].actualShots).toBeGreaterThanOrEqual(2);
+    // Only 2 shots targeted ship 'a' (the miss had no shipId), so actualShots = 2
+    expect(stats.killEfficiency[0].actualShots).toBe(2);
   });
 
   it('counts perfect kills', () => {
@@ -198,6 +199,30 @@ describe('computeMatchStats', () => {
 
     const opponentShips = [makeShip('a', 2, true)];
     const stats = computeMatchStats(tracking, opponentShips, [], true, 6, 'normal');
+    expect(stats.perfectKills).toBe(1);
+  });
+
+  it('kill efficiency counts only shots that hit the ship (no false overkill)', () => {
+    // Ship of size 2: only 2 shots actually targeted ship 'a'
+    // The 3 misses should NOT inflate actualShots
+    const tracking = makeTracking({
+      playerShots: [
+        { turn: 1, position: { row: 0, col: 0 }, result: 'hit', shipId: 'a' },
+        { turn: 2, position: { row: 1, col: 0 }, result: 'miss' },
+        { turn: 3, position: { row: 2, col: 0 }, result: 'miss' },
+        { turn: 4, position: { row: 3, col: 0 }, result: 'miss' },
+        { turn: 5, position: { row: 0, col: 1 }, result: 'sunk', shipId: 'a' },
+      ],
+      shipFirstHitTurn: { a: 1 },
+      shipSunkTurn: { a: 5 },
+    });
+
+    const opponentShips = [makeShip('a', 2, true)];
+    const stats = computeMatchStats(tracking, opponentShips, [], true, 6, 'normal');
+
+    // Only 2 shots had shipId 'a', so actualShots = idealShots = 2 (perfect kill)
+    expect(stats.killEfficiency[0].actualShots).toBe(2);
+    expect(stats.killEfficiency[0].idealShots).toBe(2);
     expect(stats.perfectKills).toBe(1);
   });
 
