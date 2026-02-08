@@ -4,11 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts, Orbitron_400Regular, Orbitron_700Bold } from '@expo-google-fonts/orbitron';
 import { Rajdhani_400Regular, Rajdhani_600SemiBold } from '@expo-google-fonts/rajdhani';
 import { View, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { GameProvider } from '../src/context/GameContext';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { COLORS } from '../src/constants/theme';
-import { MENU_MODEL_ID, getSketchfabViewerHtml } from '../src/constants/ships3d';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -36,15 +34,6 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       />
-      {/* Hidden WebView to preload 3D model into cache during splash/login */}
-      <View style={styles.preloader} pointerEvents="none">
-        <WebView
-          source={{ html: getSketchfabViewerHtml(MENU_MODEL_ID) }}
-          originWhitelist={['*']}
-          javaScriptEnabled
-          style={{ width: 1, height: 1 }}
-        />
-      </View>
     </GameProvider>
   );
 }
@@ -55,12 +44,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.background.dark,
-  },
-  preloader: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    opacity: 0,
-    overflow: 'hidden',
   },
 });
