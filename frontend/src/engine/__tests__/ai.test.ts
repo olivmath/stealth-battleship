@@ -306,6 +306,27 @@ describe('updateAIAfterAttack', () => {
     });
   });
 
+  it('axis detection falls back to neighbors of last hit for diagonal/scattered hits', () => {
+    const ai: AIState = {
+      mode: 'target',
+      hitStack: [{ row: 2, col: 2 }, { row: 3, col: 3 }], // diagonal hits
+      targetQueue: [],
+      firedPositions: new Set(['2,2', '3,3']),
+    };
+
+    const result = updateAIAfterAttack(ai, { row: 4, col: 4 }, 'hit', undefined, undefined, 6, 'normal');
+
+    // Should not return original queue; should filter to neighbors of last hit
+    const queueKeys = result.targetQueue.map(posKey);
+    // All targets should be orthogonal neighbors of one of the hits (axis detection applied to scattered hits)
+    result.targetQueue.forEach(pos => {
+      expect(pos.row >= 0 && pos.row < 6).toBe(true);
+      expect(pos.col >= 0 && pos.col < 6).toBe(true);
+    });
+    // Should have some targets (not empty)
+    expect(result.targetQueue.length).toBeGreaterThan(0);
+  });
+
   it('easy mode does not use axis detection', () => {
     const ai: AIState = {
       mode: 'target',

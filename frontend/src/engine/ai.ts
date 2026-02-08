@@ -94,7 +94,9 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
     return filtered;
   }
 
-  return queue;
+  // Diagonal/scattered hits: fallback to orthogonal neighbors of the last hit
+  const lastHit = hits[hits.length - 1];
+  return getOrthogonalNeighbors(lastHit, fired, gridSize);
 }
 
 export function computeAIMove(
