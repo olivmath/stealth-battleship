@@ -13,14 +13,14 @@ export const TURN_TIMER_SECONDS = 10;
 
 export function generateMockAttack(
   board: Board,
-  firedPositions: Set<string>,
+  firedPositions: string[],
   gridSize: number
 ): Position {
   const available: Position[] = [];
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
       const key = posKey({ row, col });
-      if (!firedPositions.has(key)) {
+      if (!firedPositions.includes(key)) {
         available.push({ row, col });
       }
     }

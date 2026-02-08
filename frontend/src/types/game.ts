@@ -40,7 +40,7 @@ export interface AIState {
   mode: AIMode;
   hitStack: Position[];
   targetQueue: Position[];
-  firedPositions: Set<string>;
+  firedPositions: string[];
 }
 
 export interface PlayerStats {

@@ -7,15 +7,15 @@ export function createInitialAIState(): AIState {
     mode: 'hunt',
     hitStack: [],
     targetQueue: [],
-    firedPositions: new Set<string>(),
+    firedPositions: [],
   };
 }
 
-function getCheckerboardTargets(fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
+function getCheckerboardTargets(fired: string[], gridSize: number = GRID_SIZE): Position[] {
   const targets: Position[] = [];
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if ((row + col) % 2 === 0 && !fired.has(posKey({ row, col }))) {
+      if ((row + col) % 2 === 0 && !fired.includes(posKey({ row, col }))) {
         targets.push({ row, col });
       }
     }
@@ -23,11 +23,11 @@ function getCheckerboardTargets(fired: Set<string>, gridSize: number = GRID_SIZE
   return targets;
 }
 
-function getAllAvailableTargets(fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
+function getAllAvailableTargets(fired: string[], gridSize: number = GRID_SIZE): Position[] {
   const targets: Position[] = [];
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
-      if (!fired.has(posKey({ row, col }))) {
+      if (!fired.includes(posKey({ row, col }))) {
         targets.push({ row, col });
       }
     }
@@ -35,11 +35,11 @@ function getAllAvailableTargets(fired: Set<string>, gridSize: number = GRID_SIZE
   return targets;
 }
 
-function getOrthogonalNeighbors(pos: Position, fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
+function getOrthogonalNeighbors(pos: Position, fired: string[], gridSize: number = GRID_SIZE): Position[] {
   const deltas = [[-1, 0], [1, 0], [0, -1], [0, 1]];
   return deltas
     .map(([dr, dc]) => ({ row: pos.row + dr, col: pos.col + dc }))
-    .filter(p => isValidPosition(p.row, p.col, gridSize) && !fired.has(posKey(p)));
+    .filter(p => isValidPosition(p.row, p.col, gridSize) && !fired.includes(posKey(p)));
 }
 
 function pickCenterWeighted(targets: Position[], gridSize: number): Position {
@@ -58,7 +58,7 @@ function pickCenterWeighted(targets: Position[], gridSize: number): Position {
   return targets[targets.length - 1];
 }
 
-function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<string>, gridSize: number = GRID_SIZE): Position[] {
+function detectAxisAndFilter(hits: Position[], queue: Position[], fired: string[], gridSize: number = GRID_SIZE): Position[] {
   if (hits.length < 2) return queue;
 
   const sameRow = hits.every(h => h.row === hits[0].row);
@@ -70,10 +70,10 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
     const minCol = Math.min(...cols);
     const maxCol = Math.max(...cols);
     const filtered: Position[] = [];
-    if (minCol - 1 >= 0 && !fired.has(posKey({ row, col: minCol - 1 }))) {
+    if (minCol - 1 >= 0 && !fired.includes(posKey({ row, col: minCol - 1 }))) {
       filtered.push({ row, col: minCol - 1 });
     }
-    if (maxCol + 1 < gridSize && !fired.has(posKey({ row, col: maxCol + 1 }))) {
+    if (maxCol + 1 < gridSize && !fired.includes(posKey({ row, col: maxCol + 1 }))) {
       filtered.push({ row, col: maxCol + 1 });
     }
     return filtered;
@@ -85,10 +85,10 @@ function detectAxisAndFilter(hits: Position[], queue: Position[], fired: Set<str
     const minRow = Math.min(...rows);
     const maxRow = Math.max(...rows);
     const filtered: Position[] = [];
-    if (minRow - 1 >= 0 && !fired.has(posKey({ row: minRow - 1, col }))) {
+    if (minRow - 1 >= 0 && !fired.includes(posKey({ row: minRow - 1, col }))) {
       filtered.push({ row: minRow - 1, col });
     }
-    if (maxRow + 1 < gridSize && !fired.has(posKey({ row: maxRow + 1, col }))) {
+    if (maxRow + 1 < gridSize && !fired.includes(posKey({ row: maxRow + 1, col }))) {
       filtered.push({ row: maxRow + 1, col });
     }
     return filtered;
@@ -111,17 +111,17 @@ export function computeAIMove(
     mode: ai.mode,
     hitStack: [...ai.hitStack],
     targetQueue: [...ai.targetQueue],
-    firedPositions: new Set(ai.firedPositions),
+    firedPositions: [...ai.firedPositions],
   };
 
   let position: Position;
 
   if (newAI.mode === 'target' && newAI.targetQueue.length > 0) {
     position = newAI.targetQueue.shift()!;
-    while (newAI.firedPositions.has(posKey(position)) && newAI.targetQueue.length > 0) {
+    while (newAI.firedPositions.includes(posKey(position)) && newAI.targetQueue.length > 0) {
       position = newAI.targetQueue.shift()!;
     }
-    if (newAI.firedPositions.has(posKey(position))) {
+    if (newAI.firedPositions.includes(posKey(position))) {
       newAI.mode = 'hunt';
     }
   }
@@ -145,7 +145,7 @@ export function computeAIMove(
     newAI.mode = 'hunt';
   }
 
-  newAI.firedPositions.add(posKey(position!));
+  newAI.firedPositions.push(posKey(position!));
   return { position: position!, newAI };
 }
 
@@ -163,7 +163,7 @@ export function updateAIAfterAttack(
     mode: ai.mode,
     hitStack: [...ai.hitStack],
     targetQueue: [...ai.targetQueue],
-    firedPositions: new Set(ai.firedPositions),
+    firedPositions: [...ai.firedPositions],
   };
 
   if (result === 'miss') {
@@ -189,7 +189,7 @@ export function updateAIAfterAttack(
     if (sunkShip) {
       const sunkKeys = new Set(sunkShip.positions.map(posKey));
       newAI.hitStack = newAI.hitStack.filter(h => !sunkKeys.has(posKey(h)));
-      newAI.targetQueue = newAI.targetQueue.filter(t => !newAI.firedPositions.has(posKey(t)));
+      newAI.targetQueue = newAI.targetQueue.filter(t => !newAI.firedPositions.includes(posKey(t)));
     }
 
     if (newAI.hitStack.length > 0) {

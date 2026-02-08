@@ -17,7 +17,7 @@ function makeAIWithFired(positions: string[]): AIState {
     mode: 'hunt',
     hitStack: [],
     targetQueue: [],
-    firedPositions: new Set(positions),
+    firedPositions: positions,
   };
 }
 
@@ -33,7 +33,7 @@ describe('createInitialAIState', () => {
     const state = createInitialAIState();
     expect(state.hitStack).toHaveLength(0);
     expect(state.targetQueue).toHaveLength(0);
-    expect(state.firedPositions.size).toBe(0);
+    expect(state.firedPositions.length).toBe(0);
   });
 });
 
@@ -54,23 +54,23 @@ describe('computeAIMove', () => {
   it('never fires at the same position twice', () => {
     const { board, ships } = setupBoardWithShip();
     let ai = createInitialAIState();
-    const firedPositions = new Set<string>();
+    const firedPositions: string[] = [];
 
     for (let i = 0; i < 36; i++) {
       const { position, newAI } = computeAIMove(ai, board, ships, 6, 'normal');
       const key = posKey(position);
-      expect(firedPositions.has(key)).toBe(false);
-      firedPositions.add(key);
+      expect(firedPositions.includes(key)).toBe(false);
+      firedPositions.push(key);
       ai = newAI;
     }
   });
 
-  it('adds fired position to firedPositions set', () => {
+  it('adds fired position to firedPositions', () => {
     const { board, ships } = setupBoardWithShip();
     const ai = createInitialAIState();
     const { position, newAI } = computeAIMove(ai, board, ships, 6, 'normal');
 
-    expect(newAI.firedPositions.has(posKey(position))).toBe(true);
+    expect(newAI.firedPositions.includes(posKey(position))).toBe(true);
   });
 
   it('uses target queue when in target mode', () => {
@@ -79,7 +79,7 @@ describe('computeAIMove', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [{ row: 2, col: 3 }],
-      firedPositions: new Set(['2,2']),
+      firedPositions: ['2,2'],
     };
 
     const { position } = computeAIMove(ai, board, ships, 6, 'normal');
@@ -92,7 +92,7 @@ describe('computeAIMove', () => {
       mode: 'target',
       hitStack: [],
       targetQueue: [],
-      firedPositions: new Set(['2,2']),
+      firedPositions: ['2,2'],
     };
 
     const { newAI } = computeAIMove(ai, board, ships, 6, 'normal');
@@ -105,7 +105,7 @@ describe('computeAIMove', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [{ row: 1, col: 2 }, { row: 3, col: 2 }],
-      firedPositions: new Set(['2,2', '1,2']), // 1,2 already fired
+      firedPositions: ['2,2', '1,2'], // 1,2 already fired
     };
 
     const { position } = computeAIMove(ai, board, ships, 6, 'normal');
@@ -130,7 +130,7 @@ describe('computeAIMove', () => {
       const { newAI } = computeAIMove(ai, board, ships, 6, 'easy');
       ai = newAI;
     }
-    expect(ai.firedPositions.size).toBe(36);
+    expect(ai.firedPositions.length).toBe(36);
   });
 });
 
@@ -191,7 +191,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }, { row: 2, col: 3 }],
       targetQueue: [{ row: 2, col: 4 }],
-      firedPositions: new Set(['2,2', '2,3']),
+      firedPositions: ['2,2', '2,3'],
     };
 
     const result = updateAIAfterAttack(
@@ -222,7 +222,7 @@ describe('updateAIAfterAttack', () => {
         { row: 4, col: 4 }, // another ship hit
       ],
       targetQueue: [],
-      firedPositions: new Set(['2,2', '2,3', '4,4']),
+      firedPositions: ['2,2', '2,3', '4,4'],
     };
 
     const result = updateAIAfterAttack(
@@ -250,7 +250,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'hunt',
       hitStack: [],
       targetQueue: [],
-      firedPositions: new Set(['1,2', '3,2']),
+      firedPositions: ['1,2', '3,2'],
     };
 
     const result = updateAIAfterAttack(ai, { row: 2, col: 2 }, 'hit', undefined, undefined, 6, 'normal');
@@ -265,7 +265,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [{ row: 2, col: 3 }],
-      firedPositions: new Set(['2,2', '1,2']),
+      firedPositions: ['2,2', '1,2'],
     };
 
     const result = updateAIAfterAttack(ai, { row: 1, col: 2 }, 'miss');
@@ -278,7 +278,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [],
-      firedPositions: new Set(['2,2']),
+      firedPositions: ['2,2'],
     };
 
     // Second hit on same row → axis detected
@@ -295,7 +295,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [],
-      firedPositions: new Set(['2,2']),
+      firedPositions: ['2,2'],
     };
 
     // Second hit on same col → vertical axis
@@ -311,7 +311,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }, { row: 3, col: 3 }], // diagonal hits
       targetQueue: [],
-      firedPositions: new Set(['2,2', '3,3']),
+      firedPositions: ['2,2', '3,3'],
     };
 
     const result = updateAIAfterAttack(ai, { row: 4, col: 4 }, 'hit', undefined, undefined, 6, 'normal');
@@ -332,7 +332,7 @@ describe('updateAIAfterAttack', () => {
       mode: 'target',
       hitStack: [{ row: 2, col: 2 }],
       targetQueue: [],
-      firedPositions: new Set(['2,2']),
+      firedPositions: ['2,2'],
     };
 
     const result = updateAIAfterAttack(ai, { row: 2, col: 3 }, 'hit', undefined, undefined, 6, 'easy');

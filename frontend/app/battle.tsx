@@ -47,7 +47,7 @@ export default function BattleScreen() {
   const gameoverRoute = isPvP ? '/gameover?mode=pvp' : '/gameover';
 
   // PvP: track fired positions for mock opponent
-  const firedPositionsRef = useRef(new Set<string>());
+  const firedPositionsRef = useRef<string[]>([]);
 
   // Compute actual enemy grid width for alignment
   const FULL_LABEL = getLabelSize('full');
@@ -110,7 +110,7 @@ export default function BattleScreen() {
       opponentTimerRef.current = setTimeout(() => {
         const position = generateMockAttack(state.playerBoard, firedPositionsRef.current, gridSize);
         if (!position) return;
-        firedPositionsRef.current.add(posKey(position));
+        firedPositionsRef.current.push(posKey(position));
 
         const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
         if (result === 'miss') haptics.light();
