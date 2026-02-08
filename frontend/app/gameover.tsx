@@ -36,6 +36,8 @@ export default function GameOverScreen() {
   const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
   const gridSize = state.settings.gridSize;
 
+  const [prevLevel, setPrevLevel] = useState<ReturnType<typeof getLevelInfo> | null>(null);
+
   // Track level-up
   useEffect(() => {
     refresh();
@@ -49,6 +51,7 @@ export default function GameOverScreen() {
       const levelBefore = getLevelInfo(xpBefore);
       const levelAfter = getLevelInfo(stats.totalXP);
       if (levelAfter.rank !== levelBefore.rank) {
+        setPrevLevel(levelBefore);
         haptics.sunk();
         setTimeout(() => setShowLevelUp(true), 800);
         setTimeout(() => setShowLevelUp(false), 3500);
@@ -60,6 +63,12 @@ export default function GameOverScreen() {
 
   const handlePlayAgain = () => {
     haptics.light();
+    // Re-derive gridSize from current rank before resetting
+    if (currentLevel.gridSize !== state.settings.gridSize) {
+      const updated = { ...state.settings, gridSize: currentLevel.gridSize };
+      dispatch({ type: 'LOAD_SETTINGS', settings: updated });
+      import('../src/storage/scores').then(m => m.saveSettings(updated));
+    }
     dispatch({ type: 'RESET_GAME' });
     router.replace(isPvP ? '/placement?mode=pvp' : '/placement');
   };
@@ -244,7 +253,7 @@ export default function GameOverScreen() {
           <NavalButton title="RETURN TO BASE" onPress={handleMenu} variant="secondary" />
         </View>
       </ScrollView>
-      <LevelUpModal visible={showLevelUp} levelInfo={currentLevel} />
+      <LevelUpModal visible={showLevelUp} levelInfo={currentLevel} previousLevelInfo={prevLevel ?? undefined} />
     </GradientContainer>
   );
 }

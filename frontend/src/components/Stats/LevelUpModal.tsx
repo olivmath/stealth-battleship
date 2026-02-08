@@ -6,10 +6,14 @@ import { COLORS, FONTS, SPACING } from '../../constants/theme';
 interface Props {
   visible: boolean;
   levelInfo: LevelInfo;
+  previousLevelInfo?: LevelInfo;
 }
 
-export default function LevelUpModal({ visible, levelInfo }: Props) {
+export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: Props) {
   if (!visible) return null;
+
+  const gridChanged = previousLevelInfo && previousLevelInfo.gridSize !== levelInfo.gridSize;
+
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.backdrop}>
@@ -17,6 +21,17 @@ export default function LevelUpModal({ visible, levelInfo }: Props) {
           <Text style={styles.label}>RANK UP!</Text>
           <Text style={styles.rank}>{levelInfo.rank.toUpperCase()}</Text>
           <Text style={styles.motto}>{levelInfo.motto}</Text>
+          {gridChanged && (
+            <Text style={styles.unlock}>NEW GRID: {levelInfo.gridSize}x{levelInfo.gridSize}</Text>
+          )}
+          <View style={styles.fleetList}>
+            <Text style={styles.fleetTitle}>YOUR FLEET</Text>
+            {levelInfo.ships.map((s, i) => (
+              <Text key={`${s.id}-${i}`} style={styles.fleetItem}>
+                {s.name} ({s.size})
+              </Text>
+            ))}
+          </View>
         </View>
       </View>
     </Modal>
@@ -56,5 +71,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.secondary,
     fontStyle: 'italic',
+  },
+  unlock: {
+    fontFamily: FONTS.heading,
+    fontSize: 14,
+    color: COLORS.accent.victory,
+    letterSpacing: 2,
+    marginTop: SPACING.xs,
+  },
+  fleetList: {
+    alignItems: 'center',
+    gap: 2,
+    marginTop: SPACING.sm,
+  },
+  fleetTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  fleetItem: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.text.primary,
   },
 });
