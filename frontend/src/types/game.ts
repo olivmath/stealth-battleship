@@ -140,7 +140,7 @@ export interface GameState {
   opponentShips: PlacedShip[];
   isPlayerTurn: boolean;
   winner: 'player' | 'opponent' | null;
-  ai: AIState;
+  opponent: AIState;
   stats: PlayerStats;
   tracking: BattleTracking;
   lastMatchStats: MatchStats | null;
@@ -155,6 +155,6 @@ export type GameAction =
   | { type: 'REMOVE_SHIP'; shipId: string }
   | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board }
   | { type: 'PLAYER_ATTACK'; position: Position; result: AttackResult; shipId?: string }
-  | { type: 'AI_ATTACK'; position: Position; result: AttackResult; shipId?: string; aiState: AIState }
+  | { type: 'OPPONENT_ATTACK'; position: Position; result: AttackResult; shipId?: string; opponentState: AIState }
   | { type: 'END_GAME'; winner: 'player' | 'opponent'; matchStats: MatchStats }
   | { type: 'RESET_GAME' };

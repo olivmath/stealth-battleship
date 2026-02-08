@@ -26,7 +26,7 @@ const initialState: GameState = {
   opponentShips: [],
   isPlayerTurn: true,
   winner: null,
-  ai: createInitialAIState(),
+  opponent: createInitialAIState(),
   stats: { wins: 0, losses: 0, totalShots: 0, totalHits: 0, totalXP: 0 },
   tracking: createInitialTracking(),
   lastMatchStats: null,
@@ -78,7 +78,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         opponentShips: action.opponentShips,
         isPlayerTurn: true,
         winner: null,
-        ai: createInitialAIState(),
+        opponent: createInitialAIState(),
         tracking: createInitialTracking(),
         lastMatchStats: null,
       };
@@ -145,7 +145,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'AI_ATTACK': {
+    case 'OPPONENT_ATTACK': {
       const newBoard = state.playerBoard.map(r => r.map(c => ({ ...c })));
       const { row, col } = action.position;
       const newTurn = state.tracking.turnNumber + 1;
@@ -181,7 +181,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         playerBoard: newBoard,
         playerShips: newShips,
         isPlayerTurn: true,
-        ai: action.aiState,
+        opponent: action.opponentState,
         tracking: {
           ...state.tracking,
           turnNumber: newTurn,
@@ -214,7 +214,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         opponentShips: [],
         isPlayerTurn: true,
         winner: null,
-        ai: createInitialAIState(),
+        opponent: createInitialAIState(),
         tracking: createInitialTracking(),
         lastMatchStats: null,
       };

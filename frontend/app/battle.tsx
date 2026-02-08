@@ -120,13 +120,13 @@ export default function BattleScreen() {
           const sunk = newShips.find(s => s.id === shipId);
           if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
         }
-        dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: createInitialAIState() });
+        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: createInitialAIState() });
       }, delay);
     } else {
       // Arcade AI
       const delay = diffConfig.delayMin + Math.random() * (diffConfig.delayMax - diffConfig.delayMin);
       opponentTimerRef.current = setTimeout(() => {
-        const { position, newAI } = computeAIMove(state.ai, state.playerBoard, state.playerShips, gridSize, difficulty);
+        const { position, newAI } = computeAIMove(state.opponent, state.playerBoard, state.playerShips, gridSize, difficulty);
         const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
 
         if (result === 'miss') haptics.light();
@@ -138,7 +138,7 @@ export default function BattleScreen() {
         }
 
         const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
-        dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: updatedAI });
+        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: updatedAI });
       }, delay);
     }
 
