@@ -26,17 +26,29 @@ export function calculateScore(
   perfectKills: number,
   overkillShots: number,
   gridSize: number = 6,
-  difficulty: DifficultyLevel = 'normal'
+  difficulty: DifficultyLevel = 'normal',
+  enemySunkRatio: number = 0
 ): number {
-  const basePoints = won ? 1000 : 200;
+  const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
+
+  if (!won) {
+    // Defeat: lose XP proportionally
+    // basePenalty reduced by how close the player was to winning and accuracy
+    const basePenalty = 300;
+    const progressReduction = Math.round(enemySunkRatio * 200);
+    const accuracyReduction = Math.round(accuracy);
+    const penalty = Math.max(50, basePenalty - progressReduction - accuracyReduction);
+    return -Math.round(penalty * multiplier);
+  }
+
+  const basePoints = 1000;
   const accuracyBonus = Math.round(accuracy * 5);
   const maxShots = gridSize * gridSize;
-  const speedBonus = won ? Math.max(0, (maxShots - shotsToWin) * 30) : 0;
+  const speedBonus = Math.max(0, (maxShots - shotsToWin) * 30);
   const perfectKillBonus = perfectKills * 150;
   const overkillPenalty = overkillShots * 50;
 
   const raw = basePoints + accuracyBonus + speedBonus + perfectKillBonus - overkillPenalty;
-  const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
   return Math.max(0, Math.round(raw * multiplier));
 }
 
@@ -53,19 +65,29 @@ export function computeMatchStats(
   const accuracy = shotsFired > 0 ? Math.round((shotsHit / shotsFired) * 100) : 0;
   const shotsToWin = won ? shotsFired : 0;
 
-  // Kill Efficiency
+  // Kill Efficiency — count all player shots between first hit and sunk turn
   const killEfficiency: ShipKillEfficiency[] = opponentShips
     .filter(s => s.isSunk)
     .map(ship => {
-      const shotsAtShip = tracking.playerShots.filter(
-        s => s.shipId === ship.id
-      ).length;
+      const firstHitTurn = tracking.shipFirstHitTurn[ship.id];
+      const sunkTurn = tracking.shipSunkTurn[ship.id];
+
+      let actualShots: number;
+      if (firstHitTurn != null && sunkTurn != null) {
+        // All player shots in the window [firstHitTurn, sunkTurn]
+        actualShots = tracking.playerShots.filter(
+          s => s.turn >= firstHitTurn && s.turn <= sunkTurn
+        ).length;
+      } else {
+        actualShots = ship.size;
+      }
+
       return {
         shipId: ship.id,
         shipName: ship.name,
         shipSize: ship.size,
         idealShots: ship.size,
-        actualShots: Math.max(shotsAtShip, ship.size),
+        actualShots: Math.max(actualShots, ship.size),
       };
     });
 
@@ -80,7 +102,10 @@ export function computeMatchStats(
     (sum, k) => sum + Math.max(0, k.actualShots - k.idealShots), 0
   );
 
-  const score = calculateScore(won, accuracy, shotsFired, perfectKills, overkillShots, gridSize, difficulty);
+  const enemySunkCount = opponentShips.filter(s => s.isSunk).length;
+  const enemySunkRatio = opponentShips.length > 0 ? enemySunkCount / opponentShips.length : 0;
+
+  const score = calculateScore(won, accuracy, shotsFired, perfectKills, overkillShots, gridSize, difficulty, enemySunkRatio);
 
   return {
     score,

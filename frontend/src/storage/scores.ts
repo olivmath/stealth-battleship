@@ -71,7 +71,7 @@ export async function updateStatsAfterGame(
     losses: current.losses + (won ? 0 : 1),
     totalShots: current.totalShots + matchStats.shotsFired,
     totalHits: current.totalHits + matchStats.shotsHit,
-    totalXP: current.totalXP + matchStats.score,
+    totalXP: Math.max(0, current.totalXP + matchStats.score),
   };
   await savePlayerStats(updated);
   return updated;

@@ -10,9 +10,11 @@ describe('calculateScore', () => {
     expect(score).toBe(1000);
   });
 
-  it('returns base 200 for defeat', () => {
-    const score = calculateScore(false, 0, 0, 0, 0, 6, 'normal');
-    expect(score).toBe(200);
+  it('returns negative score for defeat (proportional penalty)', () => {
+    // 0% accuracy, 0 enemy ships sunk → max penalty = -300
+    const score = calculateScore(false, 0, 0, 0, 0, 6, 'normal', 0);
+    expect(score).toBe(-300);
+    expect(score).toBeLessThan(0);
   });
 
   it('adds accuracy bonus', () => {
@@ -31,10 +33,15 @@ describe('calculateScore', () => {
     expect(fast).toBeGreaterThan(slow);
   });
 
-  it('no speed bonus for defeat', () => {
-    const defeat = calculateScore(false, 50, 10, 0, 0, 6, 'normal');
-    // base=200, accuracy=250, speed=0 (defeat), perfect=0
-    expect(defeat).toBe(450);
+  it('defeat penalty reduced by accuracy and progress', () => {
+    // 50% accuracy, 0.5 enemy sunk ratio → penalty = max(50, 300 - 100 - 50) = 150
+    const defeat = calculateScore(false, 50, 10, 0, 0, 6, 'normal', 0.5);
+    expect(defeat).toBe(-150);
+    // Worse loss: 0% accuracy, 0 sunk
+    const badDefeat = calculateScore(false, 0, 10, 0, 0, 6, 'normal', 0);
+    expect(badDefeat).toBe(-300);
+    // Bad defeat is more negative than close defeat
+    expect(badDefeat).toBeLessThan(defeat);
   });
 
   it('adds perfect kill bonus', () => {
@@ -49,20 +56,36 @@ describe('calculateScore', () => {
     expect(noOverkill - withOverkill).toBe(250); // 5 * 50
   });
 
-  it('applies difficulty multiplier 0.5x for easy', () => {
+  it('applies difficulty multiplier 0.5x for easy (victory)', () => {
     const easy = calculateScore(true, 50, 36, 0, 0, 6, 'easy');
     const normal = calculateScore(true, 50, 36, 0, 0, 6, 'normal');
     expect(easy).toBe(Math.round(normal * 0.5));
   });
 
-  it('applies difficulty multiplier 1.5x for hard', () => {
+  it('applies difficulty multiplier 1.5x for hard (victory)', () => {
     const hard = calculateScore(true, 50, 36, 0, 0, 6, 'hard');
     const normal = calculateScore(true, 50, 36, 0, 0, 6, 'normal');
     expect(hard).toBe(Math.round(normal * 1.5));
   });
 
-  it('never returns negative score', () => {
-    const score = calculateScore(false, 0, 0, 0, 100, 6, 'normal');
+  it('applies difficulty multiplier to defeat penalty', () => {
+    const easy = calculateScore(false, 0, 0, 0, 0, 6, 'easy', 0);
+    const normal = calculateScore(false, 0, 0, 0, 0, 6, 'normal', 0);
+    const hard = calculateScore(false, 0, 0, 0, 0, 6, 'hard', 0);
+    // Penalty = 300 * multiplier
+    expect(easy).toBe(-150);   // 300 * 0.5
+    expect(normal).toBe(-300); // 300 * 1.0
+    expect(hard).toBe(-450);   // 300 * 1.5
+  });
+
+  it('defeat penalty has minimum of 50 (before multiplier)', () => {
+    // 100% accuracy + all enemy sunk = max reductions → penalty = max(50, 300-200-100) = 50
+    const score = calculateScore(false, 100, 0, 0, 0, 6, 'normal', 1.0);
+    expect(score).toBe(-50);
+  });
+
+  it('victory score never goes below 0', () => {
+    const score = calculateScore(true, 0, 36, 0, 100, 6, 'normal');
     expect(score).toBeGreaterThanOrEqual(0);
   });
 
@@ -168,7 +191,7 @@ describe('computeMatchStats', () => {
     expect(stats.firstBloodTurn).toBe(0);
   });
 
-  it('computes kill efficiency for sunk ships (counts only shots at that ship)', () => {
+  it('computes kill efficiency using shots in the hit-to-sunk window', () => {
     const tracking = makeTracking({
       playerShots: [
         { turn: 1, position: { row: 0, col: 0 }, result: 'hit', shipId: 'a' },
@@ -185,28 +208,31 @@ describe('computeMatchStats', () => {
     expect(stats.killEfficiency).toHaveLength(1);
     expect(stats.killEfficiency[0].shipName).toBe('a');
     expect(stats.killEfficiency[0].idealShots).toBe(2);
-    // Only 2 shots targeted ship 'a' (the miss had no shipId), so actualShots = 2
-    expect(stats.killEfficiency[0].actualShots).toBe(2);
+    // 3 shots in window [turn 1, turn 5] (hit, miss, sunk) → actualShots = 3
+    expect(stats.killEfficiency[0].actualShots).toBe(3);
   });
 
-  it('counts perfect kills', () => {
+  it('counts perfect kills when no misses in window', () => {
+    // 2 consecutive hits with no misses → perfect kill
     const tracking = makeTracking({
       playerShots: [
         { turn: 1, position: { row: 0, col: 0 }, result: 'hit', shipId: 'a' },
-        { turn: 2, position: { row: 0, col: 1 }, result: 'sunk', shipId: 'a' },
+        { turn: 3, position: { row: 0, col: 1 }, result: 'sunk', shipId: 'a' },
       ],
       shipFirstHitTurn: { a: 1 },
-      shipSunkTurn: { a: 2 },
+      shipSunkTurn: { a: 3 },
     });
 
     const opponentShips = [makeShip('a', 2, true)];
     const stats = computeMatchStats(tracking, opponentShips, [], true, 6, 'normal');
+    // Only 2 player shots in window [1, 3] (turns 1 and 3 — turn 2 was opponent)
+    expect(stats.killEfficiency[0].actualShots).toBe(2);
     expect(stats.perfectKills).toBe(1);
   });
 
-  it('kill efficiency counts only shots that hit the ship (no false overkill)', () => {
-    // Ship of size 2: only 2 shots actually targeted ship 'a'
-    // The 3 misses should NOT inflate actualShots
+  it('kill efficiency counts misses in the hunt window as overkill', () => {
+    // Ship of size 2: hit at turn 1, 3 misses, sunk at turn 5
+    // All 5 shots are in window [1, 5] → actualShots = 5, not a perfect kill
     const tracking = makeTracking({
       playerShots: [
         { turn: 1, position: { row: 0, col: 0 }, result: 'hit', shipId: 'a' },
@@ -222,10 +248,9 @@ describe('computeMatchStats', () => {
     const opponentShips = [makeShip('a', 2, true)];
     const stats = computeMatchStats(tracking, opponentShips, [], true, 6, 'normal');
 
-    // Only 2 shots had shipId 'a', so actualShots = idealShots = 2 (perfect kill)
-    expect(stats.killEfficiency[0].actualShots).toBe(2);
+    expect(stats.killEfficiency[0].actualShots).toBe(5);
     expect(stats.killEfficiency[0].idealShots).toBe(2);
-    expect(stats.perfectKills).toBe(1);
+    expect(stats.perfectKills).toBe(0);
   });
 
   it('handles 0 accuracy when no shots fired', () => {

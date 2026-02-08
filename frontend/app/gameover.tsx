@@ -46,8 +46,8 @@ export default function GameOverScreen() {
   }, []);
 
   useEffect(() => {
-    if (previousXP === null && stats.totalXP > 0) {
-      const xpBefore = stats.totalXP - xpEarned;
+    if (previousXP === null && stats.totalXP >= 0) {
+      const xpBefore = Math.max(0, stats.totalXP - xpEarned);
       setPreviousXP(xpBefore);
 
       const levelBefore = getLevelInfo(xpBefore);
@@ -117,14 +117,16 @@ export default function GameOverScreen() {
         )}
 
         {/* XP Earned + Level Progress */}
-        <View style={styles.xpContainer}>
+        <View style={[styles.xpContainer, !isVictory && styles.xpContainerDefeat]}>
           <View style={styles.xpRow}>
             <Text style={styles.xpLabel}>{t('gameover.xpEarned')}</Text>
             <View style={styles.xpRight}>
               {!isPvP && multiplier !== 1 && (
                 <Text style={styles.multiplierBadge}>{multiplier}x</Text>
               )}
-              <Text style={styles.xpValue}>+{xpEarned}</Text>
+              <Text style={[styles.xpValue, xpEarned < 0 && styles.xpNegative]}>
+                {xpEarned > 0 ? `+${xpEarned}` : `${xpEarned}`}
+              </Text>
             </View>
           </View>
           <View style={styles.modeRow}>
@@ -310,6 +312,13 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.heading,
     fontSize: 20,
     color: COLORS.accent.gold,
+  },
+  xpNegative: {
+    color: COLORS.accent.fire,
+  },
+  xpContainerDefeat: {
+    borderColor: COLORS.accent.fire,
+    backgroundColor: COLORS.overlay.fireGlow,
   },
   modeRow: {
     marginTop: 4,
