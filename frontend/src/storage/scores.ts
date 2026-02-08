@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { randomUUID } from 'expo-crypto';
 import { PlayerStats, MatchRecord, MatchStats, GameSettings, DifficultyLevel } from '../types/game';
 
 const USER_KEY = '@battleship_user';
@@ -91,7 +92,7 @@ export async function saveMatchToHistory(
 ): Promise<MatchRecord> {
   const history = await getMatchHistory();
   const record: MatchRecord = {
-    id: Date.now().toString(),
+    id: randomUUID(),
     date: new Date().toISOString(),
     result: won ? 'victory' : 'defeat',
     score: matchStats.score,
