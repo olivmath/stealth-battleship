@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { RANKS } from '../../engine/stats';
+import { RANK_PROGRESSION } from '../../constants/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 interface Props {
@@ -25,6 +26,7 @@ export default function RankList({ totalXP }: Props) {
         const isCurrent = i === currentIndex;
         const isPast = i < currentIndex;
         const isFuture = i > currentIndex;
+        const config = RANK_PROGRESSION.find(p => p.rank === r.rank);
 
         return (
           <View
@@ -36,10 +38,10 @@ export default function RankList({ totalXP }: Props) {
             ]}
           >
             <View style={styles.rowLeft}>
-              {isPast && <Text style={styles.check}>✓</Text>}
-              {isCurrent && <Text style={styles.currentDot}>●</Text>}
-              {isFuture && <Text style={styles.futureDot}>○</Text>}
-              <View>
+              {isPast && <Text style={styles.check}>{'\u2713'}</Text>}
+              {isCurrent && <Text style={styles.currentDot}>{'\u25CF'}</Text>}
+              {isFuture && <Text style={styles.futureDot}>{'\u25CB'}</Text>}
+              <View style={styles.rankInfo}>
                 <Text
                   style={[
                     styles.rankName,
@@ -57,6 +59,11 @@ export default function RankList({ totalXP }: Props) {
                 >
                   {r.motto}
                 </Text>
+                {config && (
+                  <Text style={styles.rankMeta}>
+                    {config.gridSize}x{config.gridSize} {'\u2022'} {config.ships.length} ships
+                  </Text>
+                )}
               </View>
             </View>
             <Text
@@ -112,6 +119,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    flex: 1,
   },
   check: {
     fontFamily: FONTS.body,
@@ -134,6 +142,9 @@ const styles = StyleSheet.create({
     width: 18,
     textAlign: 'center',
   },
+  rankInfo: {
+    flex: 1,
+  },
   rankName: {
     fontFamily: FONTS.heading,
     fontSize: 11,
@@ -155,6 +166,13 @@ const styles = StyleSheet.create({
   },
   mottoFuture: {
     color: COLORS.text.secondary,
+  },
+  rankMeta: {
+    fontFamily: FONTS.body,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    marginTop: 2,
+    letterSpacing: 0.5,
   },
   xpThreshold: {
     fontFamily: FONTS.body,
