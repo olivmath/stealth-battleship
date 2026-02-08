@@ -6,7 +6,7 @@ import {
   LevelInfo,
   DifficultyLevel,
 } from '../types/game';
-import { DIFFICULTY_CONFIG } from '../constants/game';
+import { DIFFICULTY_CONFIG, getRankConfig } from '../constants/game';
 
 const RANKS = [
   { rank: 'Recruit', xp: 0, motto: 'Every admiral started here' },
@@ -113,6 +113,8 @@ export function getLevelInfo(totalXP: number): LevelInfo {
   const xpRange = nextRank.xp - currentRank.xp;
   const progress = xpRange > 0 ? Math.min(xpInRank / xpRange, 1) : 1;
 
+  const rankConfig = getRankConfig(currentRank.rank);
+
   return {
     rank: currentRank.rank,
     currentXP: totalXP,
@@ -120,5 +122,7 @@ export function getLevelInfo(totalXP: number): LevelInfo {
     xpForNextRank: nextRank.xp,
     progress,
     motto: currentRank.motto,
+    gridSize: rankConfig.gridSize,
+    ships: rankConfig.ships,
   };
 }

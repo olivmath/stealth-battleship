@@ -1,5 +1,88 @@
 import { ShipDefinition, GridSizeOption, DifficultyLevel } from '../types/game';
 
+// --- Rank progression config ---
+
+export interface RankConfig {
+  rank: string;
+  gridSize: GridSizeOption;
+  ships: ShipDefinition[];
+}
+
+export const RANK_PROGRESSION: RankConfig[] = [
+  {
+    rank: 'Recruit',
+    gridSize: 6,
+    ships: [
+      { id: 'scout-1', name: 'Scout', size: 1 },
+      { id: 'scout-2', name: 'Scout', size: 1 },
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+    ],
+  },
+  {
+    rank: 'Ensign',
+    gridSize: 6,
+    ships: [
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
+    ],
+  },
+  {
+    rank: 'Lieutenant',
+    gridSize: 8,
+    ships: [
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
+      { id: 'cruiser', name: 'Cruiser', size: 4 },
+    ],
+  },
+  {
+    rank: 'Commander',
+    gridSize: 8,
+    ships: [
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer-1', name: 'Destroyer', size: 3 },
+      { id: 'destroyer-2', name: 'Destroyer', size: 3 },
+      { id: 'cruiser', name: 'Cruiser', size: 4 },
+    ],
+  },
+  {
+    rank: 'Captain',
+    gridSize: 10,
+    ships: [
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
+      { id: 'cruiser-1', name: 'Cruiser', size: 4 },
+      { id: 'cruiser-2', name: 'Cruiser', size: 4 },
+      { id: 'carrier', name: 'Carrier', size: 5 },
+    ],
+  },
+  {
+    rank: 'Admiral',
+    gridSize: 10,
+    ships: [
+      { id: 'destroyer', name: 'Destroyer', size: 2 },
+      { id: 'submarine', name: 'Submarine', size: 3 },
+      { id: 'cruiser', name: 'Cruiser', size: 3 },
+      { id: 'battleship', name: 'Battleship', size: 4 },
+      { id: 'carrier', name: 'Carrier', size: 5 },
+    ],
+  },
+];
+
+export function getRankConfig(rank: string): RankConfig {
+  return RANK_PROGRESSION.find(r => r.rank === rank) ?? RANK_PROGRESSION[0];
+}
+
+export function getShipDefinitionsForRank(rank: string): ShipDefinition[] {
+  return getRankConfig(rank).ships;
+}
+
+export function getGridSizeForRank(rank: string): GridSizeOption {
+  return getRankConfig(rank).gridSize;
+}
+
 // --- Default grid (used as fallback) ---
 export const GRID_SIZE = 6;
 
@@ -48,6 +131,7 @@ export const SHIP_STYLES: Record<string, { color: string; label: string }> = {
   submarine: { color: '#8b5cf6', label: 'Submarine' },
   destroyer: { color: '#f59e0b', label: 'Destroyer' },
   patrol: { color: '#06b6d4', label: 'Patrol Boat' },
+  scout: { color: '#a3e635', label: 'Scout' },
 };
 
 export function getShipStyle(shipId: string): { color: string; label: string } {

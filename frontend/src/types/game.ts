@@ -126,7 +126,7 @@ export interface Move {
 
 // --- Settings ---
 
-export type GridSizeOption = 6 | 10;
+export type GridSizeOption = 6 | 8 | 10;
 export type BattleViewMode = 'stacked' | 'swipe';
 export type DifficultyLevel = 'easy' | 'normal' | 'hard';
 
@@ -145,6 +145,8 @@ export interface LevelInfo {
   xpForNextRank: number;
   progress: number;
   motto: string;
+  gridSize: GridSizeOption;
+  ships: ShipDefinition[];
 }
 
 // --- Game state ---
