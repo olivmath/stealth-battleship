@@ -6,6 +6,7 @@ const USER_KEY = '@battleship_user';
 const SCORES_KEY = '@battleship_scores';
 const HISTORY_KEY = '@battleship_history';
 const SETTINGS_KEY = '@battleship_settings';
+const TUTORIAL_KEY = '@battleship_tutorial';
 
 function safeParse<T>(data: string, fallback: T): T {
   try {
@@ -74,6 +75,23 @@ export async function updateStatsAfterGame(
   };
   await savePlayerStats(updated);
   return updated;
+}
+
+// --- Tutorial ---
+
+export async function hasSeenTutorial(): Promise<boolean> {
+  const data = await AsyncStorage.getItem(TUTORIAL_KEY);
+  return data === 'true';
+}
+
+export async function setTutorialSeen(seen: boolean = true): Promise<void> {
+  await AsyncStorage.setItem(TUTORIAL_KEY, seen ? 'true' : 'false');
+}
+
+// --- Player Data ---
+
+export async function clearPlayerData(): Promise<void> {
+  await AsyncStorage.removeItem(USER_KEY);
 }
 
 // --- Match History ---
