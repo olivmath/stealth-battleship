@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { RANKS } from '../../engine/stats';
 import { RANK_PROGRESSION } from '../../constants/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function RankList({ totalXP }: Props) {
+  const { t } = useTranslation();
   // Find index of current rank
   let currentIndex = 0;
   for (let i = RANKS.length - 1; i >= 0; i--) {
@@ -20,7 +22,7 @@ export default function RankList({ totalXP }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ALL RANKS</Text>
+      <Text style={styles.title}>{t('rankList.title')}</Text>
       {[...RANKS].reverse().map((r, ri) => {
         const i = RANKS.length - 1 - ri;
         const isCurrent = i === currentIndex;
@@ -49,7 +51,7 @@ export default function RankList({ totalXP }: Props) {
                     isFuture && styles.rankNameFuture,
                   ]}
                 >
-                  {r.rank.toUpperCase()}
+                  {t('ranks.' + r.rank).toUpperCase()}
                 </Text>
                 <Text
                   style={[
@@ -57,11 +59,11 @@ export default function RankList({ totalXP }: Props) {
                     isFuture && styles.mottoFuture,
                   ]}
                 >
-                  {r.motto}
+                  {t('mottos.' + r.rank)}
                 </Text>
                 {config && (
                   <Text style={styles.rankMeta}>
-                    {config.gridSize}x{config.gridSize} {'\u2022'} {config.ships.length} ships
+                    {config.gridSize}x{config.gridSize} {'\u2022'} {t('rankList.ships', { count: config.ships.length })}
                   </Text>
                 )}
               </View>

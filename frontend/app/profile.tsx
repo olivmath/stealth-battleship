@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RankList from '../src/components/Profile/RankList';
@@ -11,15 +12,16 @@ import { getLevelInfo } from '../src/engine/stats';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 function LevelBadge({ totalXP }: { totalXP: number }) {
+  const { t } = useTranslation();
   const level = getLevelInfo(totalXP);
 
   return (
     <View style={levelStyles.container}>
       <View style={levelStyles.rankRow}>
-        <Text style={levelStyles.rankTitle}>{level.rank.toUpperCase()}</Text>
+        <Text style={levelStyles.rankTitle}>{t('ranks.' + level.rank).toUpperCase()}</Text>
         <Text style={levelStyles.xpText}>{level.currentXP} XP</Text>
       </View>
-      <Text style={levelStyles.motto}>{level.motto}</Text>
+      <Text style={levelStyles.motto}>{t('mottos.' + level.rank)}</Text>
       <View style={levelStyles.progressBg}>
         <View style={[levelStyles.progressFill, { width: `${Math.round(level.progress * 100)}%` }]} />
       </View>
@@ -88,6 +90,7 @@ const levelStyles = StyleSheet.create({
 });
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { state } = useGame();
   const { stats, refresh } = usePlayerStats();
@@ -109,7 +112,7 @@ export default function ProfileScreen() {
     <GradientContainer>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>COMMANDER PROFILE</Text>
+          <Text style={styles.title}>{t('profile.title')}</Text>
           <Text style={styles.name}>{state.playerName}</Text>
           <View style={styles.divider} />
         </View>
@@ -118,38 +121,38 @@ export default function ProfileScreen() {
 
         {/* Combat Record */}
         <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>COMBAT RECORD</Text>
+          <Text style={styles.statsTitle}>{t('profile.combatRecord')}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stats.wins}</Text>
-              <Text style={styles.statLabel}>VICTORIES</Text>
+              <Text style={styles.statLabel}>{t('profile.victories')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stats.losses}</Text>
-              <Text style={styles.statLabel}>DEFEATS</Text>
+              <Text style={styles.statLabel}>{t('profile.defeats')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{winRate}%</Text>
-              <Text style={styles.statLabel}>WIN RATE</Text>
+              <Text style={styles.statLabel}>{t('profile.winRate')}</Text>
             </View>
           </View>
         </View>
 
         {/* Accuracy & Shots */}
         <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>FIRING RECORD</Text>
+          <Text style={styles.statsTitle}>{t('profile.firingRecord')}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{accuracy}%</Text>
-              <Text style={styles.statLabel}>ACCURACY</Text>
+              <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stats.totalShots}</Text>
-              <Text style={styles.statLabel}>TOTAL SHOTS</Text>
+              <Text style={styles.statLabel}>{t('profile.totalShots')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stats.totalHits}</Text>
-              <Text style={styles.statLabel}>TOTAL HITS</Text>
+              <Text style={styles.statLabel}>{t('profile.totalHits')}</Text>
             </View>
           </View>
         </View>
@@ -157,10 +160,10 @@ export default function ProfileScreen() {
         <RankList totalXP={stats.totalXP} />
 
         <NavalButton
-          title="BACK TO BASE"
+          title={t('profile.backToBase')}
           onPress={() => {
             haptics.light();
-            router.replace('/menu');
+            router.back();
           }}
           variant="secondary"
         />

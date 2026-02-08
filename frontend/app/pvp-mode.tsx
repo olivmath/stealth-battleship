@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 export default function PvPModeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const haptics = useHaptics();
 
@@ -14,15 +16,15 @@ export default function PvPModeScreen() {
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>PvP ONLINE</Text>
-          <Text style={styles.subtitle}>Choose your battle mode</Text>
+          <Text style={styles.title}>{t('pvpMode.title')}</Text>
+          <Text style={styles.subtitle}>{t('pvpMode.subtitle')}</Text>
           <View style={styles.divider} />
         </View>
 
         <View style={styles.options}>
           <NavalButton
-            title="RANDOM MATCH"
-            subtitle="Find a random opponent"
+            title={t('pvpMode.random')}
+            subtitle={t('pvpMode.randomSub')}
             variant="pvp"
             onPress={() => {
               haptics.light();
@@ -30,8 +32,8 @@ export default function PvPModeScreen() {
             }}
           />
           <NavalButton
-            title="PLAY WITH FRIEND"
-            subtitle="Create or join a match"
+            title={t('pvpMode.friend')}
+            subtitle={t('pvpMode.friendSub')}
             variant="pvp"
             onPress={() => {
               haptics.light();
@@ -41,7 +43,7 @@ export default function PvPModeScreen() {
         </View>
 
         <NavalButton
-          title="BACK"
+          title={t('pvpMode.back')}
           variant="danger"
           size="small"
           onPress={() => {

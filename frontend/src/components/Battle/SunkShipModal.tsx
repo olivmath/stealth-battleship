@@ -1,5 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing, StyleSheet, Modal } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { PlacedShip } from '../../types/game';
 import { getShipStyle } from '../../constants/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
@@ -7,85 +15,61 @@ import { COLORS, FONTS, SPACING } from '../../constants/theme';
 interface Props {
   visible: boolean;
   ship: PlacedShip | null;
+  onDismiss?: () => void;
 }
 
-export default function SunkShipModal({ visible, ship }: Props) {
-  const translateY = useRef(new Animated.Value(0)).current;
-  const rotate = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(1)).current;
+export default function SunkShipModal({ visible, ship, onDismiss }: Props) {
+  const { t } = useTranslation();
+  const translateY = useSharedValue(0);
+  const rotate = useSharedValue(0);
+  const opacity = useSharedValue(1);
 
   const shipStyle = ship ? getShipStyle(ship.id) : null;
   const shipColor = shipStyle?.color ?? COLORS.grid.ship;
 
   useEffect(() => {
     if (visible) {
-      translateY.setValue(0);
-      rotate.setValue(0);
-      opacity.setValue(1);
+      translateY.value = 0;
+      rotate.value = 0;
+      opacity.value = 1;
 
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(translateY, {
-            toValue: -20,
-            duration: 300,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-          }),
-          Animated.timing(translateY, {
-            toValue: 200,
-            duration: 1000,
-            easing: Easing.in(Easing.quad),
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(rotate, {
-          toValue: 15,
-          duration: 1200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.sequence([
-          Animated.timing(opacity, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start();
+      translateY.value = withSequence(
+        withTiming(-20, { duration: 300, easing: Easing.out(Easing.quad) }),
+        withTiming(200, { duration: 1000, easing: Easing.in(Easing.quad) })
+      );
+
+      rotate.value = withTiming(15, {
+        duration: 1200,
+        easing: Easing.inOut(Easing.quad),
+      });
+
+      opacity.value = withSequence(
+        withTiming(1, { duration: 800 }),
+        withTiming(0, { duration: 400 })
+      );
     }
-  }, [visible, translateY, rotate, opacity]);
+  }, [visible]);
 
-  const rotateInterpolation = rotate.interpolate({
-    inputRange: [0, 360],
-    outputRange: ['0deg', '360deg'],
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
 
   if (!visible || !ship) return null;
 
   return (
     <Modal transparent visible={visible} animationType="none" accessibilityViewIsModal>
-      <View style={styles.backdrop}>
+      <Pressable style={styles.backdrop} onPress={onDismiss}>
         <Animated.View
-          style={[
-            styles.container,
-            {
-              transform: [
-                { translateY },
-                { rotate: rotateInterpolation },
-              ],
-              opacity,
-            },
-          ]}
+          style={[styles.container, animatedStyle]}
           accessibilityRole="alert"
           accessibilityLabel={`Ship sunk! ${ship?.name ?? 'Unknown'} destroyed`}
         >
-          <Text style={[styles.label, { color: shipColor }]}>SHIP SUNK!</Text>
-          <Text style={styles.shipName}>{ship.name}</Text>
+          <Text style={[styles.label, { color: shipColor }]}>{t('battle.shipSunk')}</Text>
+          <Text style={styles.shipName}>{t('ships.' + ship.name)}</Text>
           <View style={styles.shipGraphic}>
             {Array.from({ length: ship.size }).map((_, i) => (
               <View
@@ -98,7 +82,7 @@ export default function SunkShipModal({ visible, ship }: Props) {
             ))}
           </View>
         </Animated.View>
-      </View>
+      </Pressable>
     </Modal>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
@@ -21,6 +22,7 @@ export default function PvPFriendScreen() {
   const router = useRouter();
   const { dispatch } = useGame();
   const haptics = useHaptics();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'select' | 'create' | 'join'>('select');
   const [matchId, setMatchId] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -70,21 +72,21 @@ export default function PvPFriendScreen() {
       <GradientContainer>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>PLAY WITH FRIEND</Text>
-            <Text style={styles.subtitle}>Create a match or join one</Text>
+            <Text style={styles.title}>{t('pvpFriend.title')}</Text>
+            <Text style={styles.subtitle}>{t('pvpFriend.subtitle')}</Text>
             <View style={styles.divider} />
           </View>
 
           <View style={styles.options}>
             <NavalButton
-              title="CREATE MATCH"
-              subtitle="Generate a code to share"
+              title={t('pvpFriend.create')}
+              subtitle={t('pvpFriend.createSub')}
               variant="pvp"
               onPress={handleCreate}
             />
             <NavalButton
-              title="JOIN MATCH"
-              subtitle="Enter a friend's code"
+              title={t('pvpFriend.join')}
+              subtitle={t('pvpFriend.joinSub')}
               variant="pvp"
               onPress={() => {
                 haptics.light();
@@ -94,7 +96,7 @@ export default function PvPFriendScreen() {
           </View>
 
           <NavalButton
-            title="BACK"
+            title={t('pvpFriend.back')}
             variant="danger"
             size="small"
             onPress={() => {
@@ -112,19 +114,19 @@ export default function PvPFriendScreen() {
       <GradientContainer>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.label}>MATCH CODE</Text>
+            <Text style={styles.label}>{t('pvpFriend.matchCode')}</Text>
             <Text style={styles.matchCode}>{matchId}</Text>
-            <Text style={styles.shareText}>Share this code with your friend</Text>
+            <Text style={styles.shareText}>{t('pvpFriend.shareCode')}</Text>
             <View style={styles.divider} />
           </View>
 
           <View style={styles.waitingSection}>
             <RadarSpinner size={80} />
-            <Text style={styles.waitingText}>WAITING FOR FRIEND...</Text>
+            <Text style={styles.waitingText}>{t('pvpFriend.waiting')}</Text>
           </View>
 
           <NavalButton
-            title="CANCEL"
+            title={t('pvpFriend.cancel')}
             variant="danger"
             size="small"
             onPress={handleCancel}
@@ -139,8 +141,8 @@ export default function PvPFriendScreen() {
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>JOIN MATCH</Text>
-          <Text style={styles.subtitle}>Enter the match code</Text>
+          <Text style={styles.title}>{t('pvpFriend.joinTitle')}</Text>
+          <Text style={styles.subtitle}>{t('pvpFriend.enterCode')}</Text>
           <View style={styles.divider} />
         </View>
 
@@ -160,11 +162,11 @@ export default function PvPFriendScreen() {
           {connecting ? (
             <View style={styles.connectingRow}>
               <RadarSpinner size={40} />
-              <Text style={styles.connectingText}>CONNECTING...</Text>
+              <Text style={styles.connectingText}>{t('pvpFriend.connecting')}</Text>
             </View>
           ) : (
             <NavalButton
-              title="JOIN"
+              title={t('pvpFriend.joinBtn')}
               variant="pvp"
               onPress={handleJoin}
               disabled={joinCode.length < 6}
@@ -173,7 +175,7 @@ export default function PvPFriendScreen() {
         </View>
 
         <NavalButton
-          title="BACK"
+          title={t('pvpFriend.back')}
           variant="danger"
           size="small"
           onPress={handleCancel}

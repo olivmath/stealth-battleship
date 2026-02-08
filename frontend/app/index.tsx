@@ -1,14 +1,25 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
+import { getPlayerName } from '../src/storage/scores';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const subtitleFade = useRef(new Animated.Value(0)).current;
+  const [splashDelay, setSplashDelay] = useState<number | null>(null);
+
+  // Check if returning user for shorter splash
+  useEffect(() => {
+    getPlayerName().then(name => {
+      setSplashDelay(name ? 1500 : 3000);
+    });
+  }, []);
 
   useEffect(() => {
     Animated.sequence([
@@ -25,28 +36,30 @@ export default function SplashScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+  }, []);
 
+  useEffect(() => {
+    if (splashDelay === null) return;
     const timer = setTimeout(() => {
       router.replace('/login');
-    }, 3000);
-
+    }, splashDelay);
     return () => clearTimeout(timer);
-  }, []);
+  }, [splashDelay]);
 
   return (
     <GradientContainer>
       <View style={styles.container}>
         <Animated.View style={[styles.header, { opacity: fadeIn }]}>
-          <Text style={styles.title}>BATTLESHIP</Text>
+          <Text style={styles.title}>{t('splash.title')}</Text>
           <View style={styles.divider} />
         </Animated.View>
 
         <Animated.View style={[styles.center, { opacity: subtitleFade }]}>
-          <Text style={styles.subtitle}>ZERO KNOWLEDGE</Text>
+          <Text style={styles.subtitle}>{t('splash.subtitle')}</Text>
           <View style={styles.spinnerWrap}>
             <RadarSpinner size={50} />
           </View>
-          <Text style={styles.loading}>INITIALIZING SYSTEMS...</Text>
+          <Text style={styles.loading}>{t('splash.loading')}</Text>
         </Animated.View>
       </View>
     </GradientContainer>

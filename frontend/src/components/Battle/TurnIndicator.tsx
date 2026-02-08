@@ -1,5 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 interface Props {
@@ -7,6 +14,21 @@ interface Props {
 }
 
 export default function TurnIndicator({ isPlayerTurn }: Props) {
+  const { t } = useTranslation();
+  const pulseOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    pulseOpacity.value = withRepeat(
+      withTiming(0.3, { duration: 800 }),
+      -1,
+      true
+    );
+  }, []);
+
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
   return (
     <View
       style={[styles.container, !isPlayerTurn && styles.enemyContainer]}
@@ -14,9 +36,15 @@ export default function TurnIndicator({ isPlayerTurn }: Props) {
       accessibilityLiveRegion="polite"
       accessibilityLabel={isPlayerTurn ? 'Your turn. Tap a cell to fire.' : 'Enemy is firing. Please wait.'}
     >
-      <View style={[styles.dot, { backgroundColor: isPlayerTurn ? COLORS.accent.gold : COLORS.accent.fire }]} />
+      <Animated.View
+        style={[
+          styles.dot,
+          { backgroundColor: isPlayerTurn ? COLORS.accent.gold : COLORS.accent.fire },
+          dotStyle,
+        ]}
+      />
       <Text style={[styles.text, !isPlayerTurn && styles.enemyText]}>
-        {isPlayerTurn ? 'YOUR TURN' : 'ENEMY FIRING...'}
+        {isPlayerTurn ? t('turnIndicator.yourTurn') : t('turnIndicator.enemyFiring')}
       </Text>
     </View>
   );

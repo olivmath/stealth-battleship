@@ -1,6 +1,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
@@ -14,6 +15,7 @@ import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 import { MENU_MODEL_ID } from '../src/constants/ships3d';
 
 export default function MenuScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { state, dispatch } = useGame();
   const { stats, refresh } = usePlayerStats();
@@ -44,25 +46,42 @@ export default function MenuScreen() {
     if (level.gridSize !== settings.gridSize) {
       const updated = { ...settings, gridSize: level.gridSize };
       dispatch({ type: 'LOAD_SETTINGS', settings: updated });
-      // Persist updated settings (fire-and-forget)
-      import('../src/storage/scores').then(m => m.saveSettings(updated));
+      // Persist updated settings + reset tutorial for new grid (fire-and-forget)
+      import('../src/storage/scores').then(m => {
+        m.saveSettings(updated);
+        m.setTutorialSeen(false);
+      });
     }
   }, [stats?.totalXP]);
 
-  const handleStartBattle = () => {
+  const handleStartBattle = async () => {
     haptics.light();
     dispatch({ type: 'RESET_GAME' });
-    router.replace('/tutorial');
+    const { hasSeenTutorial } = await import('../src/storage/scores');
+    const seen = await hasSeenTutorial();
+    router.replace(seen ? '/placement' : '/tutorial');
   };
 
   return (
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcome}>WELCOME BACK</Text>
+          <Text style={styles.welcome}>{t('menu.welcome')}</Text>
           <Text style={styles.name}>{state.playerName}</Text>
           <View style={styles.divider} />
         </View>
+
+        {/* Stats Row */}
+        {stats && (
+          <View style={styles.statsRow}>
+            <Text style={styles.rankBadge}>{t('ranks.' + getLevelInfo(stats.totalXP).rank).toUpperCase()}</Text>
+            <Text style={styles.winRateText}>
+              {stats.wins + stats.losses > 0
+                ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100)
+                : 0}% {t('menu.winRate')}
+            </Text>
+          </View>
+        )}
 
         <Suspense fallback={<View style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}><RadarSpinner size={40} /></View>}>
           <SketchfabModel modelId={MENU_MODEL_ID} height={200} />
@@ -71,8 +90,13 @@ export default function MenuScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <NavalButton
-            title="PvP ONLINE"
-            subtitle="challenge players"
+            title={t('menu.arcade')}
+            subtitle={t('menu.arcadeSub')}
+            onPress={handleStartBattle}
+          />
+          <NavalButton
+            title={t('menu.pvp')}
+            subtitle={t('menu.pvpSub')}
             variant="pvp"
             onPress={() => {
               haptics.light();
@@ -80,42 +104,54 @@ export default function MenuScreen() {
             }}
           />
           <NavalButton
-            title="ARCADE"
-            subtitle="vs AI opponent"
-            onPress={handleStartBattle}
-          />
-          <NavalButton
-            title="YOUR HISTORY"
+            title={t('menu.history')}
             onPress={() => {
               haptics.light();
-              router.replace('/match-history');
+              router.push('/match-history');
             }}
             variant="secondary"
           />
           <NavalButton
-            title="PROFILE"
+            title={t('menu.profile')}
             onPress={() => {
               haptics.light();
-              router.replace('/profile');
+              router.push('/profile');
             }}
             variant="secondary"
           />
           <NavalButton
-            title="SETTINGS"
+            title={t('menu.settings')}
             onPress={() => {
               haptics.light();
-              router.replace('/settings');
+              router.push('/settings');
             }}
             variant="secondary"
           />
-          <NavalButton
-            title="LOGOUT"
+          <TouchableOpacity
             onPress={() => {
               haptics.light();
-              router.replace('/login');
+              Alert.alert(
+                t('menu.logoutTitle'),
+                t('menu.logoutMsg'),
+                [
+                  { text: t('menu.logoutCancel'), style: 'cancel' },
+                  {
+                    text: t('menu.logoutConfirm'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      const { clearPlayerData } = await import('../src/storage/scores');
+                      await clearPlayerData();
+                      router.replace('/login');
+                    },
+                  },
+                ]
+              );
             }}
-            variant="danger"
-          />
+            style={styles.logoutButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.logoutText}>{t('menu.logout')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </GradientContainer>
@@ -152,8 +188,43 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     opacity: 0.6,
   },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  rankBadge: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.accent.gold,
+    letterSpacing: 2,
+    borderWidth: 1,
+    borderColor: COLORS.accent.gold,
+    borderRadius: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+  },
+  winRateText: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+  },
   actions: {
     gap: SPACING.md,
     marginTop: 'auto',
+  },
+  logoutButton: {
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  logoutText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+    opacity: 0.7,
   },
 });

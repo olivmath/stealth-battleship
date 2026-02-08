@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { PlacedShip } from '../../types/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function FleetStatus({ ships, label, compact = false }: Props) {
+  const { t } = useTranslation();
   const alive = ships.filter(s => !s.isSunk).length;
   const total = ships.length;
 
@@ -24,7 +26,7 @@ export default function FleetStatus({ ships, label, compact = false }: Props) {
             <View
               key={ship.id}
               style={styles.compactShipRow}
-              accessibilityLabel={ship.isSunk ? `${ship.name}: sunk` : `${ship.name}: ${ship.hits} of ${ship.size} hits`}
+              accessibilityLabel={ship.isSunk ? `${t('ships.' + ship.name)}: sunk` : `${t('ships.' + ship.name)}: ${ship.hits} of ${ship.size} hits`}
             >
               <View style={styles.compactShipCells}>
                 {Array.from({ length: ship.size }).map((_, i) => (
@@ -41,7 +43,7 @@ export default function FleetStatus({ ships, label, compact = false }: Props) {
                 style={[styles.compactShipName, ship.isSunk && styles.sunkText]}
                 numberOfLines={1}
               >
-                {ship.name}
+                {t('ships.' + ship.name)}
               </Text>
             </View>
           ))}
@@ -58,7 +60,7 @@ export default function FleetStatus({ ships, label, compact = false }: Props) {
           <View
             key={ship.id}
             style={styles.shipRow}
-            accessibilityLabel={ship.isSunk ? `${ship.name}: sunk` : `${ship.name}: ${ship.hits} of ${ship.size} hits`}
+            accessibilityLabel={ship.isSunk ? `${t('ships.' + ship.name)}: sunk` : `${t('ships.' + ship.name)}: ${ship.hits} of ${ship.size} hits`}
           >
             <View style={styles.shipCells}>
               {Array.from({ length: ship.size }).map((_, i) => (
@@ -72,7 +74,7 @@ export default function FleetStatus({ ships, label, compact = false }: Props) {
               ))}
             </View>
             <Text style={[styles.shipName, ship.isSunk && styles.sunkText]}>
-              {ship.name}
+              {t('ships.' + ship.name)}
             </Text>
           </View>
         ))}

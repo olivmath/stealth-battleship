@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
@@ -14,6 +15,7 @@ export default function PvPLobbyScreen() {
   const router = useRouter();
   const { dispatch } = useGame();
   const haptics = useHaptics();
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<'searching' | 'found'>('searching');
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -44,19 +46,19 @@ export default function PvPLobbyScreen() {
           {phase === 'searching' ? (
             <>
               <RadarSpinner size={120} />
-              <Text style={styles.statusText}>SEARCHING FOR OPPONENT...</Text>
+              <Text style={styles.statusText}>{t('pvpLobby.searching')}</Text>
             </>
           ) : (
             <>
               <OpponentStatus name={MOCK_OPPONENT} status="online" />
-              <Text style={styles.foundText}>OPPONENT FOUND!</Text>
+              <Text style={styles.foundText}>{t('pvpLobby.found')}</Text>
             </>
           )}
         </View>
 
         {phase === 'searching' && (
           <NavalButton
-            title="CANCEL"
+            title={t('pvpLobby.cancel')}
             variant="danger"
             onPress={() => {
               timersRef.current.forEach(clearTimeout);

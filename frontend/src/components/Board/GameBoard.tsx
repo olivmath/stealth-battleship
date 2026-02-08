@@ -18,6 +18,7 @@ interface Props {
   maxWidth: number;
   variant: Variant;
   colLabelsBottom?: boolean;
+  lastAttackPosition?: Position | null;
 }
 
 const LABEL_SIZES: Record<Variant, number> = {
@@ -50,6 +51,7 @@ export default function GameBoard({
   maxWidth,
   variant,
   colLabelsBottom = false,
+  lastAttackPosition,
 }: Props) {
   const effectiveGridSize = gridSize ?? board.length ?? 6;
   const labelSize = LABEL_SIZES[variant];
@@ -98,6 +100,10 @@ export default function GameBoard({
                 const isShipVisible = showShips || cell.state === 'hit' || cell.state === 'sunk';
                 const shipColor = isShipVisible && cell.shipId ? getShipStyle(cell.shipId).color : undefined;
 
+                const isLastAttack = lastAttackPosition
+                  ? lastAttackPosition.row === rowIndex && lastAttackPosition.col === colIndex
+                  : false;
+
                 return (
                   <Cell
                     key={`${rowIndex}-${colIndex}`}
@@ -109,6 +115,7 @@ export default function GameBoard({
                     col={colIndex}
                     isOpponent={isOpponent}
                     shipColor={shipColor}
+                    isLastAttack={isLastAttack}
                     onPress={
                       onCellPress
                         ? () => onCellPress({ row: rowIndex, col: colIndex })

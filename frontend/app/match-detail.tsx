@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -13,6 +14,7 @@ export default function MatchDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const haptics = useHaptics();
+  const { t } = useTranslation();
   const [match, setMatch] = useState<MatchRecord | null>(null);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function MatchDetailScreen() {
     return (
       <GradientContainer>
         <View style={styles.center}>
-          <Text style={styles.loading}>Loading...</Text>
+          <Text style={styles.loading}>{t('matchDetail.loading')}</Text>
         </View>
       </GradientContainer>
     );
@@ -46,18 +48,18 @@ export default function MatchDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.result, isVictory ? styles.victory : styles.defeat]}>
-            {isVictory ? 'VICTORY' : 'DEFEAT'}
+            {isVictory ? t('matchDetail.victory') : t('matchDetail.defeat')}
           </Text>
           <Text style={styles.date}>{dateStr}</Text>
           <Text style={styles.gridLabel}>
-            {match.gridSize}x{match.gridSize} Grid{match.difficulty ? ` • ${match.difficulty.toUpperCase()}` : ''}
+            {match.gridSize}x{match.gridSize} Grid{match.difficulty ? ` • ${t(`difficulty.${match.difficulty}`)}` : ''}
           </Text>
           <View style={[styles.divider, { backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }]} />
         </View>
 
         {/* Score */}
         <View style={styles.scoreContainer}>
-          <Text style={styles.scoreLabel}>SCORE</Text>
+          <Text style={styles.scoreLabel}>{t('matchDetail.score')}</Text>
           <Text style={[styles.scoreValue, isVictory ? styles.victory : styles.defeat]}>
             {ms.score}
           </Text>
@@ -68,26 +70,26 @@ export default function MatchDetailScreen() {
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{ms.accuracy}%</Text>
-              <Text style={styles.statLabel}>ACCURACY</Text>
+              <Text style={styles.statLabel}>{t('matchDetail.accuracy')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{ms.shotsFired}</Text>
-              <Text style={styles.statLabel}>SHOTS FIRED</Text>
+              <Text style={styles.statLabel}>{t('matchDetail.shotsFired')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{ms.shipsSurvived}/{ms.totalShips}</Text>
-              <Text style={styles.statLabel}>SURVIVED</Text>
+              <Text style={styles.statLabel}>{t('matchDetail.survived')}</Text>
             </View>
           </View>
         </View>
 
         {/* Battle Report */}
         <View style={styles.reportContainer}>
-          <Text style={styles.reportTitle}>BATTLE REPORT</Text>
+          <Text style={styles.reportTitle}>{t('matchDetail.battleReport')}</Text>
 
           {ms.killEfficiency.length > 0 && (
             <View style={styles.reportSection}>
-              <Text style={styles.reportSectionTitle}>KILL EFFICIENCY</Text>
+              <Text style={styles.reportSectionTitle}>{t('matchDetail.killEfficiency')}</Text>
               {ms.killEfficiency.map(item => (
                 <KillEfficiencyBar key={item.shipId} item={item} showLegend={false} />
               ))}
@@ -95,17 +97,17 @@ export default function MatchDetailScreen() {
           )}
 
           <View style={styles.reportRow}>
-            <Text style={styles.reportLabel}>Longest Hit Streak</Text>
+            <Text style={styles.reportLabel}>{t('matchDetail.longestStreak')}</Text>
             <Text style={styles.reportValue}>{ms.longestStreak}</Text>
           </View>
           <View style={styles.reportRow}>
-            <Text style={styles.reportLabel}>First Blood</Text>
+            <Text style={styles.reportLabel}>{t('matchDetail.firstBlood')}</Text>
             <Text style={styles.reportValue}>
-              {ms.firstBloodTurn > 0 ? `Turn ${ms.firstBloodTurn}` : '—'}
+              {ms.firstBloodTurn > 0 ? t('matchDetail.turn', { number: ms.firstBloodTurn }) : t('common.dash')}
             </Text>
           </View>
           <View style={styles.reportRow}>
-            <Text style={styles.reportLabel}>Perfect Kills</Text>
+            <Text style={styles.reportLabel}>{t('matchDetail.perfectKills')}</Text>
             <Text style={[styles.reportValue, ms.perfectKills > 0 && styles.perfectText]}>
               {ms.perfectKills} / {ms.killEfficiency.length}
             </Text>
@@ -114,10 +116,10 @@ export default function MatchDetailScreen() {
 
         {/* Back */}
         <NavalButton
-          title="BACK TO HISTORY"
+          title={t('matchDetail.backToHistory')}
           onPress={() => {
             haptics.light();
-            router.replace('/match-history');
+            router.back();
           }}
           variant="secondary"
         />

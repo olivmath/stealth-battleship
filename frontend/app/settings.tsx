@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useSettings, usePlayerStats } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getLevelInfo } from '../src/engine/stats';
 import { BattleViewMode, DifficultyLevel } from '../src/types/game';
+import { saveLanguage } from '../src/i18n';
+import { setTutorialSeen } from '../src/storage/scores';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 function ToggleOption({
@@ -44,8 +47,15 @@ function ToggleOption({
   );
 }
 
+const LANGUAGES = [
+  { code: 'pt-BR', label: 'Portugues' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Espanol' },
+] as const;
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const { settings, update } = useSettings();
   const { stats } = usePlayerStats();
   const haptics = useHaptics();
@@ -61,81 +71,129 @@ export default function SettingsScreen() {
     update({ ...settings, difficulty: level });
   };
 
+  const handleLanguage = (code: string) => {
+    haptics.light();
+    i18n.changeLanguage(code);
+    saveLanguage(code);
+  };
+
   return (
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>SETTINGS</Text>
+          <Text style={styles.title}>{t('settings.title')}</Text>
           <View style={styles.divider} />
         </View>
 
         <ScrollView style={styles.sections} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>GRID & FLEET</Text>
+            <Text style={styles.sectionTitle}>{t('settings.gridFleet')}</Text>
             <View style={styles.readOnlyCard}>
               <View style={styles.readOnlyRow}>
-                <Text style={styles.readOnlyLabel}>RANK</Text>
-                <Text style={styles.readOnlyValue}>{level.rank.toUpperCase()}</Text>
+                <Text style={styles.readOnlyLabel}>{t('settings.rank')}</Text>
+                <Text style={styles.readOnlyValue}>{t('ranks.' + level.rank).toUpperCase()}</Text>
               </View>
               <View style={styles.readOnlyRow}>
-                <Text style={styles.readOnlyLabel}>GRID</Text>
+                <Text style={styles.readOnlyLabel}>{t('settings.grid')}</Text>
                 <Text style={styles.readOnlyValue}>{level.gridSize}x{level.gridSize}</Text>
               </View>
               <View style={styles.readOnlyRow}>
-                <Text style={styles.readOnlyLabel}>FLEET</Text>
+                <Text style={styles.readOnlyLabel}>{t('settings.fleet')}</Text>
                 <Text style={styles.readOnlyValue}>
-                  {level.ships.map(s => `${s.name}(${s.size})`).join(', ')}
+                  {level.ships.map(s => `${t('ships.' + s.name)}(${s.size})`).join(', ')}
                 </Text>
               </View>
-              <Text style={styles.readOnlyHint}>Grid and fleet are unlocked by rank</Text>
+              <Text style={styles.readOnlyHint}>{t('settings.gridHint')}</Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>BATTLE VIEW</Text>
+            <Text style={styles.sectionTitle}>{t('settings.battleView')}</Text>
             <ToggleOption
-              label="STACKED"
-              description="Both boards visible simultaneously"
+              label={t('settings.stacked')}
+              description={t('settings.stackedDesc')}
               selected={settings.battleView === 'stacked'}
               onPress={() => handleBattleView('stacked')}
             />
             <ToggleOption
-              label="SWIPE"
-              description="Full-size board, swipe to switch"
+              label={t('settings.swipe')}
+              description={t('settings.swipeDesc')}
               selected={settings.battleView === 'swipe'}
               onPress={() => handleBattleView('swipe')}
             />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>DIFFICULTY</Text>
+            <Text style={styles.sectionTitle}>{t('settings.difficulty')}</Text>
             <ToggleOption
-              label="EASY"
-              description="Relaxed AI • 0.5x XP"
+              label={t('settings.easy')}
+              description={t('settings.easyDesc')}
               selected={settings.difficulty === 'easy'}
               onPress={() => handleDifficulty('easy')}
             />
             <ToggleOption
-              label="NORMAL"
-              description="Standard AI • 1x XP"
+              label={t('settings.normal')}
+              description={t('settings.normalDesc')}
               selected={settings.difficulty === 'normal'}
               onPress={() => handleDifficulty('normal')}
             />
             <ToggleOption
-              label="HARD"
-              description="Aggressive AI • 1.5x XP"
+              label={t('settings.hard')}
+              description={t('settings.hardDesc')}
               selected={settings.difficulty === 'hard'}
               onPress={() => handleDifficulty('hard')}
             />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('tutorial.title').replace('\n', ' ')}</Text>
+            <TouchableOpacity
+              style={styles.option}
+              onPress={() => {
+                haptics.light();
+                setTutorialSeen(false);
+                router.push('/tutorial');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionText}>
+                <Text style={styles.optionLabel}>{t('settings.reviewTutorial')}</Text>
+                <Text style={styles.optionDesc}>{t('settings.reviewTutorialDesc')}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[styles.option, i18n.language === lang.code && styles.optionSelected]}
+                onPress={() => handleLanguage(lang.code)}
+                activeOpacity={0.7}
+                accessibilityRole="radio"
+                accessibilityLabel={lang.label}
+                accessibilityState={{ checked: i18n.language === lang.code }}
+              >
+                <View style={styles.optionRow}>
+                  <View style={[styles.radio, i18n.language === lang.code && styles.radioSelected]}>
+                    {i18n.language === lang.code && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={[styles.optionLabel, i18n.language === lang.code && styles.optionLabelSelected]}>
+                    {lang.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         </ScrollView>
 
         <View style={styles.actions}>
           <NavalButton
-            title="BACK TO BASE"
+            title={t('settings.backToBase')}
             onPress={() => {
               haptics.light();
-              router.replace('/menu');
+              router.back();
             }}
             variant="secondary"
           />

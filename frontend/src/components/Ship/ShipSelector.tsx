@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ShipDefinition } from '../../types/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
@@ -11,9 +12,11 @@ interface Props {
 }
 
 export default function ShipSelector({ ships, placedShipIds, selectedShipId, onSelect }: Props) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>SELECT SHIP</Text>
+      <Text style={styles.title}>{t('placement.selectShipTitle')}</Text>
       <View style={styles.shipList}>
         {ships.map(ship => {
           const isPlaced = placedShipIds.includes(ship.id);
@@ -31,7 +34,7 @@ export default function ShipSelector({ ships, placedShipIds, selectedShipId, onS
               disabled={isPlaced}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={`${ship.name}, size ${ship.size}${isPlaced ? ', placed' : isSelected ? ', selected' : ''}`}
+              accessibilityLabel={`${t('ships.' + ship.name)}, size ${ship.size}${isPlaced ? ', placed' : isSelected ? ', selected' : ''}`}
               accessibilityState={{ disabled: isPlaced, selected: isSelected }}
             >
               <View style={styles.shipCells}>
@@ -47,7 +50,7 @@ export default function ShipSelector({ ships, placedShipIds, selectedShipId, onS
                 ))}
               </View>
               <Text style={[styles.shipName, isPlaced && styles.placedText]}>
-                {ship.name}
+                {t('ships.' + ship.name)}
               </Text>
             </TouchableOpacity>
           );

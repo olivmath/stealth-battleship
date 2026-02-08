@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { useMatchHistory } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { MatchRecord } from '../src/types/game';
@@ -15,6 +17,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 };
 
 function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () => void }) {
+  const { t } = useTranslation();
   const isVictory = match.result === 'victory';
   const dateStr = new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const difficulty = match.difficulty ?? 'normal';
@@ -30,7 +33,7 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
     >
       <View style={itemStyles.left}>
         <Text style={[itemStyles.result, isVictory ? itemStyles.win : itemStyles.loss]}>
-          {isVictory ? 'W' : 'L'}
+          {isVictory ? t('matchHistory.win') : t('matchHistory.loss')}
         </Text>
         <View>
           <Text style={itemStyles.date}>{dateStr}</Text>
@@ -112,21 +115,26 @@ const itemStyles = StyleSheet.create({
 
 export default function MatchHistoryScreen() {
   const router = useRouter();
-  const { history } = useMatchHistory();
+  const { history, loading } = useMatchHistory();
   const haptics = useHaptics();
+  const { t } = useTranslation();
 
   return (
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>YOUR HISTORY</Text>
+          <Text style={styles.title}>{t('matchHistory.title')}</Text>
           <View style={styles.divider} />
         </View>
 
-        {history.length === 0 ? (
+        {loading ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>NO MATCHES YET</Text>
-            <Text style={styles.emptySubtext}>Complete a battle to see your history</Text>
+            <RadarSpinner size={40} />
+          </View>
+        ) : history.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>{t('matchHistory.empty')}</Text>
+            <Text style={styles.emptySubtext}>{t('matchHistory.emptyDesc')}</Text>
           </View>
         ) : (
           <FlatList
@@ -138,7 +146,7 @@ export default function MatchHistoryScreen() {
                 match={item}
                 onPress={() => {
                   haptics.light();
-                  router.replace({ pathname: '/match-detail', params: { id: item.id } });
+                  router.push({ pathname: '/match-detail', params: { id: item.id } });
                 }}
               />
             )}
@@ -146,10 +154,10 @@ export default function MatchHistoryScreen() {
         )}
 
         <NavalButton
-          title="BACK TO BASE"
+          title={t('matchHistory.backToBase')}
           onPress={() => {
             haptics.light();
-            router.replace('/menu');
+            router.back();
           }}
           variant="secondary"
           style={{ marginTop: 'auto' }}

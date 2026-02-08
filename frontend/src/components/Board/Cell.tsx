@@ -1,5 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { CellState } from '../../types/game';
 import { COLORS, FONTS } from '../../constants/theme';
 
@@ -14,6 +20,7 @@ interface Props {
   col?: number;
   isOpponent?: boolean;
   shipColor?: string;
+  isLastAttack?: boolean;
 }
 
 function getCellLabel(row: number | undefined, col: number | undefined, state: CellState): string {
@@ -23,7 +30,31 @@ function getCellLabel(row: number | undefined, col: number | undefined, state: C
   return `${letter}${num}, ${state}`;
 }
 
-function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, row, col, isOpponent, shipColor }: Props) {
+function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, row, col, isOpponent, shipColor, isLastAttack }: Props) {
+  const flashScale = useSharedValue(1);
+  const flashOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isLastAttack) {
+      flashScale.value = withSequence(
+        withTiming(1.3, { duration: 150 }),
+        withTiming(1, { duration: 150 })
+      );
+      flashOpacity.value = withSequence(
+        withTiming(0.6, { duration: 100 }),
+        withTiming(0, { duration: 200 })
+      );
+    }
+  }, [isLastAttack]);
+
+  const flashStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: flashScale.value }],
+  }));
+
+  const flashOverlayStyle = useAnimatedStyle(() => ({
+    opacity: flashOpacity.value,
+  }));
+
   const baseBgColor = shipColor && state === 'ship'
     ? shipColor
     : shipColor && state === 'sunk'
@@ -49,39 +80,46 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
   const label = getCellLabel(row, col, state);
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.cell,
-        {
-          width: size,
-          height: size,
-          backgroundColor: bgColor,
-          borderColor,
-        },
-      ]}
-      onPress={onPress}
-      disabled={disabled || !onPress}
-      activeOpacity={0.6}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={isOpponent && state === 'empty' ? 'Tap to fire' : undefined}
-    >
-      {state === 'hit' && (
-        <View style={styles.hitMarker}>
-          <Text style={styles.hitMarkerText}>X</Text>
-        </View>
-      )}
-      {state === 'miss' && (
-        <View style={styles.missMarker}>
-          <Text style={styles.missMarkerText}>{'\u2022'}</Text>
-        </View>
-      )}
-      {state === 'sunk' && (
-        <View style={[styles.sunkMarker, shipColor ? { backgroundColor: shipColor } : undefined]}>
-          <Text style={styles.sunkMarkerText}>X</Text>
-        </View>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={flashStyle}>
+      <TouchableOpacity
+        style={[
+          styles.cell,
+          {
+            width: size,
+            height: size,
+            backgroundColor: bgColor,
+            borderColor,
+          },
+        ]}
+        onPress={onPress}
+        disabled={disabled || !onPress}
+        activeOpacity={0.6}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={isOpponent && state === 'empty' ? 'Tap to fire' : undefined}
+      >
+        {state === 'hit' && (
+          <View style={styles.hitMarker}>
+            <Text style={styles.hitMarkerText}>X</Text>
+          </View>
+        )}
+        {state === 'miss' && (
+          <View style={styles.missMarker}>
+            <Text style={styles.missMarkerText}>{'\u2022'}</Text>
+          </View>
+        )}
+        {state === 'sunk' && (
+          <View style={[styles.sunkMarker, shipColor ? { backgroundColor: shipColor } : undefined]}>
+            <Text style={styles.sunkMarkerText}>X</Text>
+          </View>
+        )}
+        {/* Flash overlay for enemy attacks */}
+        <Animated.View
+          style={[styles.flashOverlay, flashOverlayStyle]}
+          pointerEvents="none"
+        />
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -144,6 +182,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     transform: [{ rotate: '-45deg' }],
+  },
+  flashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFFFFF',
   },
 });
 

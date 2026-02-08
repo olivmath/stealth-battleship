@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
@@ -21,11 +22,12 @@ const BOARD_MAX = Math.floor((SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm) / 2);
 export default function GameOverScreen() {
   const router = useRouter();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { t } = useTranslation();
   const isPvP = mode === 'pvp';
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
   const { stats, refresh } = usePlayerStats();
-  const [showReport, setShowReport] = useState(false);
+  const [showReport, setShowReport] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [previousXP, setPreviousXP] = useState<number | null>(null);
 
@@ -79,8 +81,8 @@ export default function GameOverScreen() {
   };
 
   const subtitle = isPvP
-    ? isVictory ? `You defeated ${MOCK_OPPONENT}!` : `${MOCK_OPPONENT} sank your fleet!`
-    : isVictory ? 'Enemy fleet destroyed' : 'Your fleet has been sunk';
+    ? isVictory ? t('gameover.pvpVictoryMsg', { opponent: MOCK_OPPONENT }) : t('gameover.pvpDefeatMsg', { opponent: MOCK_OPPONENT })
+    : isVictory ? t('gameover.victoryMsg') : t('gameover.defeatMsg');
 
   return (
     <GradientContainer>
@@ -98,7 +100,7 @@ export default function GameOverScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.result, isVictory ? styles.victory : styles.defeat]}>
-            {isVictory ? 'VICTORY' : 'DEFEAT'}
+            {isVictory ? t('gameover.victory') : t('gameover.defeat')}
           </Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
           <View style={[styles.divider, { backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }]} />
@@ -107,7 +109,7 @@ export default function GameOverScreen() {
         {/* Score */}
         {ms && (
           <View style={styles.scoreContainer}>
-            <Text style={styles.scoreLabel}>SCORE</Text>
+            <Text style={styles.scoreLabel}>{t('gameover.score')}</Text>
             <Text style={[styles.scoreValue, isVictory ? styles.victory : styles.defeat]}>
               {ms.score}
             </Text>
@@ -117,7 +119,7 @@ export default function GameOverScreen() {
         {/* XP Earned + Level Progress */}
         <View style={styles.xpContainer}>
           <View style={styles.xpRow}>
-            <Text style={styles.xpLabel}>XP EARNED</Text>
+            <Text style={styles.xpLabel}>{t('gameover.xpEarned')}</Text>
             <View style={styles.xpRight}>
               {!isPvP && multiplier !== 1 && (
                 <Text style={styles.multiplierBadge}>{multiplier}x</Text>
@@ -127,11 +129,11 @@ export default function GameOverScreen() {
           </View>
           <View style={styles.modeRow}>
             <Text style={styles.modeLabel}>
-              {isPvP ? 'PvP ONLINE' : difficulty.toUpperCase()}
+              {isPvP ? t('common.pvpOnline') : t('difficulty.' + difficulty)}
             </Text>
           </View>
           <View style={styles.levelRow}>
-            <Text style={styles.levelRank}>{currentLevel.rank.toUpperCase()}</Text>
+            <Text style={styles.levelRank}>{t('ranks.' + currentLevel.rank).toUpperCase()}</Text>
             <Text style={styles.levelXP}>{currentLevel.currentXP} / {currentLevel.xpForNextRank}</Text>
           </View>
           <View style={styles.progressBg}>
@@ -145,11 +147,11 @@ export default function GameOverScreen() {
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{ms.accuracy}%</Text>
-                <Text style={styles.statLabel}>ACCURACY</Text>
+                <Text style={styles.statLabel}>{t('gameover.accuracy')}</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{ms.shotsFired}</Text>
-                <Text style={styles.statLabel}>{isVictory ? 'SHOTS TO WIN' : 'SHOTS FIRED'}</Text>
+                <Text style={styles.statLabel}>{isVictory ? t('gameover.shotsToWin') : t('gameover.shotsFired')}</Text>
               </View>
               <View style={styles.statItem}>
                 <View style={styles.shipsRow}>
@@ -163,7 +165,7 @@ export default function GameOverScreen() {
                     />
                   ))}
                 </View>
-                <Text style={styles.statLabel}>SHIPS SURVIVED</Text>
+                <Text style={styles.statLabel}>{t('gameover.shipsSurvived')}</Text>
               </View>
             </View>
           </View>
@@ -180,7 +182,7 @@ export default function GameOverScreen() {
               }}
               activeOpacity={0.7}
             >
-              <Text style={styles.reportTitle}>BATTLE REPORT</Text>
+              <Text style={styles.reportTitle}>{t('gameover.battleReport')}</Text>
               <Text style={styles.reportArrow}>{showReport ? '\u25B2' : '\u25BC'}</Text>
             </TouchableOpacity>
 
@@ -188,7 +190,7 @@ export default function GameOverScreen() {
               <View style={styles.reportContent}>
                 {ms.killEfficiency.length > 0 && (
                   <View style={styles.reportSection}>
-                    <Text style={styles.reportSectionTitle}>KILL EFFICIENCY</Text>
+                    <Text style={styles.reportSectionTitle}>{t('gameover.killEfficiency')}</Text>
                     {ms.killEfficiency.map(item => (
                       <KillEfficiencyBar key={item.shipId} item={item} />
                     ))}
@@ -196,17 +198,17 @@ export default function GameOverScreen() {
                 )}
 
                 <View style={styles.reportRow}>
-                  <Text style={styles.reportLabel}>Longest Hit Streak</Text>
+                  <Text style={styles.reportLabel}>{t('gameover.longestStreak')}</Text>
                   <Text style={styles.reportValue}>{ms.longestStreak}</Text>
                 </View>
                 <View style={styles.reportRow}>
-                  <Text style={styles.reportLabel}>First Blood</Text>
+                  <Text style={styles.reportLabel}>{t('gameover.firstBlood')}</Text>
                   <Text style={styles.reportValue}>
-                    {ms.firstBloodTurn > 0 ? `Turn ${ms.firstBloodTurn}` : '\u2014'}
+                    {ms.firstBloodTurn > 0 ? t('gameover.turn', { number: ms.firstBloodTurn }) : t('common.dash')}
                   </Text>
                 </View>
                 <View style={styles.reportRow}>
-                  <Text style={styles.reportLabel}>Perfect Kills</Text>
+                  <Text style={styles.reportLabel}>{t('gameover.perfectKills')}</Text>
                   <Text style={[styles.reportValue, ms.perfectKills > 0 && styles.perfectText]}>
                     {ms.perfectKills} / {ms.killEfficiency.length}
                   </Text>
@@ -219,10 +221,10 @@ export default function GameOverScreen() {
         {/* Board Reveal (PvP only) */}
         {isPvP && (
           <View style={styles.boardRevealSection}>
-            <Text style={styles.revealTitle}>BOARD REVEAL</Text>
+            <Text style={styles.revealTitle}>{t('gameover.boardReveal')}</Text>
             <View style={styles.boardsRow}>
               <View style={styles.boardColumn}>
-                <Text style={styles.boardLabel}>YOUR BOARD</Text>
+                <Text style={styles.boardLabel}>{t('gameover.yourBoard')}</Text>
                 <GameBoard
                   board={state.playerBoard}
                   showShips
@@ -233,7 +235,7 @@ export default function GameOverScreen() {
                 />
               </View>
               <View style={styles.boardColumn}>
-                <Text style={styles.boardLabel}>OPPONENT'S BOARD</Text>
+                <Text style={styles.boardLabel}>{t('gameover.opponentBoard')}</Text>
                 <GameBoard
                   board={state.opponentBoard}
                   showShips
@@ -249,8 +251,8 @@ export default function GameOverScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <NavalButton title={isPvP ? 'REMATCH' : 'PLAY AGAIN'} onPress={handlePlayAgain} />
-          <NavalButton title="RETURN TO BASE" onPress={handleMenu} variant="secondary" />
+          <NavalButton title={isPvP ? t('gameover.rematch') : t('gameover.playAgain')} onPress={handlePlayAgain} />
+          <NavalButton title={t('gameover.returnToBase')} onPress={handleMenu} variant="secondary" />
         </View>
       </ScrollView>
       <LevelUpModal visible={showLevelUp} levelInfo={currentLevel} previousLevelInfo={prevLevel ?? undefined} />

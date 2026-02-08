@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../src/storage/scores';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -18,7 +21,10 @@ export default function LoginScreen() {
   useEffect(() => {
     getPlayerName().then(saved => {
       if (saved) {
-        setName(saved);
+        // Auto-login for returning users
+        dispatch({ type: 'SET_PLAYER', name: saved });
+        router.replace('/menu');
+        return;
       }
       setLoading(false);
     });
@@ -32,7 +38,13 @@ export default function LoginScreen() {
     router.replace('/menu');
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <GradientContainer>
+      <View style={styles.loadingContainer}>
+        <RadarSpinner size={50} />
+      </View>
+    </GradientContainer>
+  );
 
   return (
     <GradientContainer>
@@ -41,18 +53,18 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>BATTLESHIP</Text>
-          <Text style={styles.subtitle}>ZERO KNOWLEDGE</Text>
+          <Text style={styles.title}>{t('login.title')}</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
           <View style={styles.divider} />
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>COMMANDER NAME</Text>
+          <Text style={styles.label}>{t('login.label')}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Enter your callsign..."
+            placeholder={t('login.placeholder')}
             placeholderTextColor={COLORS.text.secondary}
             autoCapitalize="words"
             returnKeyType="go"
@@ -61,20 +73,25 @@ export default function LoginScreen() {
             accessibilityHint="Enter your name to begin"
           />
           <NavalButton
-            title="ENTER BATTLE"
+            title={t('login.button')}
             onPress={handleEnter}
             disabled={!name.trim()}
             style={styles.button}
           />
         </View>
 
-        <Text style={styles.version}>v0.4.1 • VISUAL MVP</Text>
+        <Text style={styles.version}>{t('login.version')}</Text>
       </KeyboardAvoidingView>
     </GradientContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

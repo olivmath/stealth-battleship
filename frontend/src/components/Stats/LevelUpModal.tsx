@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LevelInfo } from '../../types/game';
 import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: Props) {
+  const { t } = useTranslation();
+
   if (!visible) return null;
 
   const gridChanged = previousLevelInfo && previousLevelInfo.gridSize !== levelInfo.gridSize;
@@ -18,17 +21,17 @@ export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: 
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.backdrop}>
         <View style={styles.container}>
-          <Text style={styles.label}>RANK UP!</Text>
-          <Text style={styles.rank}>{levelInfo.rank.toUpperCase()}</Text>
-          <Text style={styles.motto}>{levelInfo.motto}</Text>
+          <Text style={styles.label}>{t('levelUp.title')}</Text>
+          <Text style={styles.rank}>{t('ranks.' + levelInfo.rank).toUpperCase()}</Text>
+          <Text style={styles.motto}>{t('mottos.' + levelInfo.rank)}</Text>
           {gridChanged && (
-            <Text style={styles.unlock}>NEW GRID: {levelInfo.gridSize}x{levelInfo.gridSize}</Text>
+            <Text style={styles.unlock}>{t('levelUp.newGrid', { gridSize: levelInfo.gridSize })}</Text>
           )}
           <View style={styles.fleetList}>
-            <Text style={styles.fleetTitle}>YOUR FLEET</Text>
+            <Text style={styles.fleetTitle}>{t('levelUp.yourFleet')}</Text>
             {levelInfo.ships.map((s, i) => (
               <Text key={`${s.id}-${i}`} style={styles.fleetItem}>
-                {s.name} ({s.size})
+                {t('ships.' + s.name)} ({s.size})
               </Text>
             ))}
           </View>

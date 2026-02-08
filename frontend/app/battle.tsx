@@ -24,6 +24,7 @@ import {
 } from '../src/services/pvpMock';
 import { OpponentStrategy, LocalAIStrategy, MockPvPStrategy } from '../src/engine/opponentStrategy';
 import { COLORS, FONTS } from '../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 
 const SCREEN_PADDING = 16;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -35,6 +36,7 @@ export default function BattleScreen() {
   const isPvP = mode === 'pvp';
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
+  const { t } = useTranslation();
   const { endGame } = useGameEffects();
   const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,6 +70,9 @@ export default function BattleScreen() {
       return () => clearTimeout(timer);
     }
   }, [state.isPlayerTurn, isSwipeMode]);
+
+  // Track last enemy attack for flash animation
+  const [lastEnemyAttack, setLastEnemyAttack] = useState<Position | null>(null);
 
   // Sunk ship modal state
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
@@ -116,6 +121,7 @@ export default function BattleScreen() {
       const position = strategy.computeMove(state.playerBoard, state.playerShips, gridSize);
       if (!position) return;
 
+      setLastEnemyAttack(position);
       const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
 
       if (result === 'miss') haptics.light();
@@ -178,12 +184,12 @@ export default function BattleScreen() {
 
   const handleSurrender = () => {
     Alert.alert(
-      'Surrender',
-      isPvP ? 'Are you sure you want to surrender this PvP match?' : 'Are you sure you want to surrender this battle?',
+      t('battle.surrenderTitle'),
+      isPvP ? t('battle.surrenderPvpMsg') : t('battle.surrenderMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('battle.cancel'), style: 'cancel' },
         {
-          text: 'Surrender',
+          text: t('battle.surrenderTitle'),
           style: 'destructive',
           onPress: () => {
             if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
@@ -196,7 +202,7 @@ export default function BattleScreen() {
 
   // PvP custom turn indicator text
   const turnText = isPvP
-    ? state.isPlayerTurn ? 'YOUR TURN' : `${MOCK_OPPONENT.toUpperCase()}'S TURN`
+    ? state.isPlayerTurn ? t('battle.yourTurn') : `${MOCK_OPPONENT.toUpperCase()}'S TURN`
     : undefined;
 
   // --- Swipe mode (arcade only) ---
@@ -212,7 +218,7 @@ export default function BattleScreen() {
               onPress={() => setSwipeView('enemy')}
             >
               <Text style={[styles.swipeTabText, swipeView === 'enemy' && styles.swipeTabTextActive]}>
-                ENEMY WATERS
+                {t('battle.enemyWaters')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -220,7 +226,7 @@ export default function BattleScreen() {
               onPress={() => setSwipeView('player')}
             >
               <Text style={[styles.swipeTabText, swipeView === 'player' && styles.swipeTabTextActive]}>
-                YOUR WATERS
+                {t('battle.yourWaters')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -237,7 +243,7 @@ export default function BattleScreen() {
                 maxWidth={CONTENT_WIDTH}
                 variant="full"
               />
-              <FleetStatus ships={state.opponentShips} label="ENEMY FLEET" />
+              <FleetStatus ships={state.opponentShips} label={t('battle.enemyFleet')} />
             </View>
           ) : (
             <View style={styles.swipeBoard}>
@@ -248,19 +254,20 @@ export default function BattleScreen() {
                 gridSize={gridSize}
                 maxWidth={CONTENT_WIDTH}
                 variant="full"
+                lastAttackPosition={lastEnemyAttack}
               />
-              <FleetStatus ships={state.playerShips} label="YOUR FLEET" />
+              <FleetStatus ships={state.playerShips} label={t('battle.yourFleet')} />
             </View>
           )}
           <NavalButton
-            title="SURRENDER"
+            title={t('battle.surrender')}
             onPress={handleSurrender}
             variant="danger"
             size="small"
             accessibilityHint="Forfeit the current battle"
           />
         </View>
-        <SunkShipModal visible={showSunkModal} ship={sunkShip} />
+        <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
       </GradientContainer>
     );
   }
@@ -294,7 +301,7 @@ export default function BattleScreen() {
         <View style={{ width: GRID_TOTAL_WIDTH }}>
           {/* Main enemy grid */}
           <View style={styles.mainGridSection}>
-            <Text style={styles.sectionLabel}>ENEMY WATERS</Text>
+            <Text style={styles.sectionLabel}>{t('battle.enemyWaters')}</Text>
             <GameBoard
               board={state.opponentBoard}
               onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
@@ -320,12 +327,13 @@ export default function BattleScreen() {
                 maxWidth={MINI_MAX_WIDTH}
                 variant="mini"
                 colLabelsBottom
+                lastAttackPosition={lastEnemyAttack}
               />
-              <Text style={styles.miniLabel}>YOUR WATERS</Text>
+              <Text style={styles.miniLabel}>{t('battle.yourWaters')}</Text>
             </View>
             <View style={styles.fleetColumn}>
-              <FleetStatus ships={state.opponentShips} label="ENEMY" compact />
-              <FleetStatus ships={state.playerShips} label="YOURS" compact />
+              <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
+              <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
               <BattleStats tracking={state.tracking} />
             </View>
           </View>
@@ -334,14 +342,14 @@ export default function BattleScreen() {
         <View style={{ flex: 1 }} />
 
         <NavalButton
-          title="SURRENDER"
+          title={t('battle.surrender')}
           onPress={handleSurrender}
           variant="danger"
           size="small"
           accessibilityHint="Forfeit the current battle"
         />
       </View>
-      <SunkShipModal visible={showSunkModal} ship={sunkShip} />
+      <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
     </GradientContainer>
   );
 }

@@ -26,6 +26,7 @@ import { calculatePositions, validatePlacement, autoPlaceShips } from '../src/en
 import { createEmptyBoard } from '../src/engine/board';
 import { computeBoardCommitment } from '../src/engine/crypto';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const SCREEN_PADDING = 16;
@@ -41,6 +42,7 @@ export default function PlacementScreen() {
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
   const { settings } = useSettings();
+  const { t } = useTranslation();
 
   const gridSize = state.settings.gridSize;
   const level = getLevelInfo(state.stats.totalXP);
@@ -229,14 +231,14 @@ export default function PlacementScreen() {
 
   const handleBack = () => {
     Alert.alert(
-      isPvP ? 'Leave Match' : 'Abandon Mission',
+      isPvP ? t('placement.leaveTitle') : t('placement.abandonTitle'),
       isPvP
-        ? 'Are you sure you want to leave this PvP match?'
-        : 'Are you sure you want to abandon ship placement and return to menu?',
+        ? t('placement.leaveMsg')
+        : t('placement.abandonMsg'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('placement.cancel'), style: 'cancel' },
         {
-          text: isPvP ? 'Leave' : 'Abandon',
+          text: isPvP ? t('placement.leave') : t('placement.abandon'),
           style: 'destructive',
           onPress: () => {
             timersRef.current.forEach(clearTimeout);
@@ -250,12 +252,12 @@ export default function PlacementScreen() {
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
   const subtitleText = isLocked
-    ? (opponentReady ? 'BOTH READY! STARTING...' : 'WAITING FOR OPPONENT...')
+    ? (opponentReady ? t('placement.bothReady') : t('placement.waitingOpponent'))
     : selectedShip
-      ? `Tap grid to position \u2022 Tap ${selectedShip.name} again to rotate`
+      ? t('placement.hint', { shipName: t('ships.' + selectedShip.name) })
       : allPlaced
-        ? isPvP ? 'All ships deployed! Tap READY when done.' : 'All ships deployed! Tap a ship to reposition.'
-        : 'Select a ship below, then drag on the grid';
+        ? isPvP ? t('placement.allDeployedPvp') : t('placement.allDeployed')
+        : t('placement.selectShip');
 
   return (
     <GradientContainer>
@@ -270,7 +272,7 @@ export default function PlacementScreen() {
 
         {/* Header */}
         <View style={[styles.header, isPvP && styles.headerPvP]}>
-          <Text style={styles.title}>DEPLOY FLEET</Text>
+          <Text style={styles.title}>{t('placement.title')}</Text>
           <Text style={styles.subtitle}>{subtitleText}</Text>
           {isLocked && !opponentReady && (
             <View style={styles.waitingRow}>
@@ -374,7 +376,7 @@ export default function PlacementScreen() {
         {/* Action buttons */}
         <View style={styles.actionsRow}>
           <NavalButton
-            title="BACK"
+            title={t('placement.back')}
             onPress={handleBack}
             variant="danger"
             size="small"
@@ -383,14 +385,14 @@ export default function PlacementScreen() {
           {!isLocked && (
             <>
               <NavalButton
-                title="AUTO"
+                title={t('placement.auto')}
                 onPress={handleAutoPlace}
                 variant="secondary"
                 size="small"
                 style={styles.actionButton}
               />
               <NavalButton
-                title="READY"
+                title={t('placement.ready')}
                 onPress={handleReady}
                 disabled={!allPlaced}
                 variant="success"

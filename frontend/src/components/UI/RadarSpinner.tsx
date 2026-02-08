@@ -1,5 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { COLORS } from '../../constants/theme';
 
 interface Props {
@@ -7,25 +14,19 @@ interface Props {
 }
 
 export default function RadarSpinner({ size = 60 }: Props) {
-  const rotation = useRef(new Animated.Value(0)).current;
+  const rotation = useSharedValue(0);
 
   useEffect(() => {
-    const spin = Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
+    rotation.value = withRepeat(
+      withTiming(1, { duration: 2000, easing: Easing.linear }),
+      -1,
+      false
     );
-    spin.start();
-    return () => spin.stop();
-  }, [rotation]);
+  }, []);
 
-  const rotateInterpolation = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value * 360}deg` }],
+  }));
 
   const r = size / 2;
 
@@ -56,7 +57,7 @@ export default function RadarSpinner({ size = 60 }: Props) {
         style={[
           styles.sweepContainer,
           { width: size, height: size },
-          { transform: [{ rotate: rotateInterpolation }] },
+          sweepStyle,
         ]}
       >
         <View
