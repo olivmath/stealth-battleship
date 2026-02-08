@@ -14,7 +14,9 @@ import { MiniGrid, MiniCell } from '../src/components/Tutorial/MiniGrid';
 import { ShipShape } from '../src/components/Tutorial/ShipShape';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getShipDefinitions } from '../src/constants/game';
+import { getShipDefinitionsForRank } from '../src/constants/game';
+import { getLevelInfo } from '../src/engine/stats';
+import { ShipDefinition } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -26,8 +28,7 @@ interface TutorialSlide {
   illustration: React.ReactNode;
 }
 
-function buildSlides(gridSize: 6 | 10): TutorialSlide[] {
-  const shipDefs = getShipDefinitions(gridSize);
+function buildSlides(gridSize: number, shipDefs: ShipDefinition[]): TutorialSlide[] {
   const totalCells = shipDefs.reduce((sum, s) => sum + s.size, 0);
   const shipCount = shipDefs.length;
 
@@ -145,7 +146,9 @@ export default function TutorialScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const slides = useMemo(() => buildSlides(state.settings.gridSize), [state.settings.gridSize]);
+  const level = getLevelInfo(state.stats.totalXP);
+  const shipDefs = getShipDefinitionsForRank(level.rank);
+  const slides = useMemo(() => buildSlides(state.settings.gridSize, shipDefs), [state.settings.gridSize, level.rank]);
 
   const isFirst = activeIndex === 0;
   const isLast = activeIndex === slides.length - 1;

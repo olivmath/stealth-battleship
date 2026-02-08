@@ -7,6 +7,7 @@ import SketchfabModel from '../src/components/UI/SketchfabModel';
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
+import { getLevelInfo } from '../src/engine/stats';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 import { MENU_MODEL_ID } from '../src/constants/ships3d';
 
@@ -33,6 +34,18 @@ export default function MenuScreen() {
       dispatch({ type: 'LOAD_SETTINGS', settings });
     }
   }, [settings, dispatch]);
+
+  // Auto-derive gridSize from rank
+  useEffect(() => {
+    if (!stats) return;
+    const level = getLevelInfo(stats.totalXP);
+    if (level.gridSize !== settings.gridSize) {
+      const updated = { ...settings, gridSize: level.gridSize };
+      dispatch({ type: 'LOAD_SETTINGS', settings: updated });
+      // Persist updated settings (fire-and-forget)
+      import('../src/storage/scores').then(m => m.saveSettings(updated));
+    }
+  }, [stats?.totalXP]);
 
   const handleStartBattle = () => {
     haptics.light();

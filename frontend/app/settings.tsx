@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import { useSettings } from '../src/hooks/useStorage';
+import { useSettings, usePlayerStats } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { GridSizeOption, BattleViewMode, DifficultyLevel } from '../src/types/game';
+import { getLevelInfo } from '../src/engine/stats';
+import { BattleViewMode, DifficultyLevel } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 function ToggleOption({
@@ -46,12 +47,9 @@ function ToggleOption({
 export default function SettingsScreen() {
   const router = useRouter();
   const { settings, update } = useSettings();
+  const { stats } = usePlayerStats();
   const haptics = useHaptics();
-
-  const handleGridSize = (size: GridSizeOption) => {
-    haptics.light();
-    update({ ...settings, gridSize: size });
-  };
+  const level = getLevelInfo(stats.totalXP);
 
   const handleBattleView = (mode: BattleViewMode) => {
     haptics.light();
@@ -73,19 +71,24 @@ export default function SettingsScreen() {
 
         <ScrollView style={styles.sections} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>GRID SIZE</Text>
-            <ToggleOption
-              label="COMPACT 6x6"
-              description="3 ships • Quick matches (~3 min)"
-              selected={settings.gridSize === 6}
-              onPress={() => handleGridSize(6)}
-            />
-            <ToggleOption
-              label="CLASSIC 10x10"
-              description="5 ships • Full battles (~8 min)"
-              selected={settings.gridSize === 10}
-              onPress={() => handleGridSize(10)}
-            />
+            <Text style={styles.sectionTitle}>GRID & FLEET</Text>
+            <View style={styles.readOnlyCard}>
+              <View style={styles.readOnlyRow}>
+                <Text style={styles.readOnlyLabel}>RANK</Text>
+                <Text style={styles.readOnlyValue}>{level.rank.toUpperCase()}</Text>
+              </View>
+              <View style={styles.readOnlyRow}>
+                <Text style={styles.readOnlyLabel}>GRID</Text>
+                <Text style={styles.readOnlyValue}>{level.gridSize}x{level.gridSize}</Text>
+              </View>
+              <View style={styles.readOnlyRow}>
+                <Text style={styles.readOnlyLabel}>FLEET</Text>
+                <Text style={styles.readOnlyValue}>
+                  {level.ships.map(s => `${s.name}(${s.size})`).join(', ')}
+                </Text>
+              </View>
+              <Text style={styles.readOnlyHint}>Grid and fleet are unlocked by rank</Text>
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -231,6 +234,40 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.text.secondary,
     marginTop: 2,
+  },
+  readOnlyCard: {
+    borderWidth: 1,
+    borderColor: COLORS.accent.gold,
+    borderRadius: 4,
+    padding: SPACING.md,
+    backgroundColor: COLORS.overlay.goldSoft,
+    gap: SPACING.sm,
+  },
+  readOnlyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  readOnlyLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+  },
+  readOnlyValue: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.accent.gold,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  readOnlyHint: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
   },
   actions: {
     marginTop: 'auto',

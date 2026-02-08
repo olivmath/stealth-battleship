@@ -19,7 +19,8 @@ import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { useSettings } from '../src/hooks/useStorage';
-import { getShipDefinitions, getShipStyle, getColumnLabels, getRowLabels } from '../src/constants/game';
+import { getShipDefinitions, getShipDefinitionsForRank, getShipStyle, getColumnLabels, getRowLabels } from '../src/constants/game';
+import { getLevelInfo } from '../src/engine/stats';
 import { ShipDefinition, Orientation, Position, GridSizeOption } from '../src/types/game';
 import { calculatePositions, validatePlacement, autoPlaceShips } from '../src/engine/shipPlacement';
 import { createEmptyBoard } from '../src/engine/board';
@@ -42,7 +43,8 @@ export default function PlacementScreen() {
   const { settings } = useSettings();
 
   const gridSize = state.settings.gridSize;
-  const shipDefs = getShipDefinitions(gridSize);
+  const level = getLevelInfo(state.stats.totalXP);
+  const shipDefs = getShipDefinitionsForRank(level.rank);
   const CELL_SIZE = computeCellSize(CONTENT_WIDTH, VARIANT, gridSize);
 
   const colLabels = getColumnLabels(gridSize as GridSizeOption);
