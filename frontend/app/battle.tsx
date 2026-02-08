@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import GameBoard, { getLabelSize, computeCellSize } from '../src/components/Board/GameBoard';
@@ -8,14 +8,22 @@ import TurnIndicator from '../src/components/Battle/TurnIndicator';
 import FleetStatus from '../src/components/Battle/FleetStatus';
 import BattleStats from '../src/components/Battle/BattleStats';
 import SunkShipModal from '../src/components/Battle/SunkShipModal';
+import OpponentStatus from '../src/components/PvP/OpponentStatus';
+import TurnTimer from '../src/components/PvP/TurnTimer';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { processAttack, checkWinCondition } from '../src/engine/board';
-import { computeAIMove, updateAIAfterAttack } from '../src/engine/ai';
-import { computeMatchStats } from '../src/engine/stats';
-import { updateStatsAfterGame, saveMatchToHistory } from '../src/storage/scores';
+import { processAttack, checkWinCondition, posKey } from '../src/engine/board';
+import { computeAIMove, updateAIAfterAttack, createInitialAIState } from '../src/engine/ai';
 import { Position, PlacedShip } from '../src/types/game';
+import { useGameEffects } from '../src/hooks/useGameEffects';
 import { DIFFICULTY_CONFIG } from '../src/constants/game';
+import {
+  MOCK_OPPONENT,
+  OPPONENT_ATTACK_DELAY_MIN,
+  OPPONENT_ATTACK_DELAY_MAX,
+  TURN_TIMER_SECONDS,
+  generateMockAttack,
+} from '../src/services/pvpMock';
 import { COLORS, FONTS } from '../src/constants/theme';
 
 const SCREEN_PADDING = 16;
@@ -24,22 +32,27 @@ const CONTENT_WIDTH = Math.min(SCREEN_WIDTH - SCREEN_PADDING * 2, 400);
 
 export default function BattleScreen() {
   const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isPvP = mode === 'pvp';
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
-  const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { endGame } = useGameEffects();
+  const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const gridSize = state.settings.gridSize;
-  const difficulty = state.settings.difficulty;
+  const difficulty = isPvP ? 'normal' as const : state.settings.difficulty;
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
-  const isSwipeMode = state.settings.battleView === 'swipe';
+  const isSwipeMode = !isPvP && state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
+  const gameoverRoute = isPvP ? '/gameover?mode=pvp' : '/gameover';
+
+  // PvP: track fired positions for mock opponent
+  const firedPositionsRef = useRef(new Set<string>());
 
   // Compute actual enemy grid width for alignment
   const FULL_LABEL = getLabelSize('full');
   const mainCellSize = computeCellSize(CONTENT_WIDTH, 'full', gridSize);
   const GRID_TOTAL_WIDTH = mainCellSize * gridSize + FULL_LABEL;
-
-  // Mini-map sizing
   const MINI_MAX_WIDTH = Math.floor(GRID_TOTAL_WIDTH * 0.75);
 
   // Auto-switch to the relevant board when turn changes (swipe mode)
@@ -63,6 +76,7 @@ export default function BattleScreen() {
     setTimeout(() => setShowSunkModal(false), 2000);
   }, []);
 
+  // Player attack (shared between arcade and pvp)
   const handlePlayerAttack = useCallback((position: Position) => {
     if (!state.isPlayerTurn || state.phase !== 'battle') return;
 
@@ -84,103 +98,120 @@ export default function BattleScreen() {
     }
 
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, dispatch, haptics, showSunkAnimation]);
 
-    if (checkWinCondition(newShips)) {
-      setTimeout(() => {
-        const updatedTracking = {
-          ...state.tracking,
-          turnNumber: state.tracking.turnNumber + 1,
-          playerShots: [
-            ...state.tracking.playerShots,
-            { turn: state.tracking.turnNumber + 1, position, result, shipId },
-          ],
-          currentStreak: result !== 'miss' ? state.tracking.currentStreak + 1 : 0,
-          longestStreak: result !== 'miss'
-            ? Math.max(state.tracking.longestStreak, state.tracking.currentStreak + 1)
-            : state.tracking.longestStreak,
-          shipFirstHitTurn: { ...state.tracking.shipFirstHitTurn },
-          shipSunkTurn: { ...state.tracking.shipSunkTurn },
-        };
-        if (shipId && !updatedTracking.shipFirstHitTurn[shipId]) {
-          updatedTracking.shipFirstHitTurn[shipId] = updatedTracking.turnNumber;
-        }
-        if (shipId && result === 'sunk') {
-          updatedTracking.shipSunkTurn[shipId] = updatedTracking.turnNumber;
-        }
-
-        const matchStats = computeMatchStats(updatedTracking, newShips, state.playerShips, true, gridSize, difficulty);
-        dispatch({ type: 'END_GAME', winner: 'player', matchStats });
-        updateStatsAfterGame(true, matchStats);
-        saveMatchToHistory(true, matchStats, gridSize, difficulty);
-        router.replace('/gameover');
-      }, 500);
-    }
-  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.playerShips, state.tracking, dispatch, haptics, router, gridSize, showSunkAnimation]);
-
+  // Opponent turn: AI (arcade) or mock (pvp)
   useEffect(() => {
     if (state.isPlayerTurn || state.phase !== 'battle') return;
 
-    const delay = diffConfig.delayMin + Math.random() * (diffConfig.delayMax - diffConfig.delayMin);
+    if (isPvP) {
+      // PvP mock opponent
+      const delay = OPPONENT_ATTACK_DELAY_MIN + Math.random() * (OPPONENT_ATTACK_DELAY_MAX - OPPONENT_ATTACK_DELAY_MIN);
+      opponentTimerRef.current = setTimeout(() => {
+        const position = generateMockAttack(state.playerBoard, firedPositionsRef.current, gridSize);
+        if (!position) return;
+        firedPositionsRef.current.add(posKey(position));
 
-    aiTimerRef.current = setTimeout(() => {
-      const { position, newAI } = computeAIMove(state.ai, state.playerBoard, state.playerShips, gridSize, difficulty);
-      const { newShips, result, shipId } = processAttack(
-        state.playerBoard,
-        state.playerShips,
-        position
-      );
+        const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
+        if (result === 'miss') haptics.light();
+        else if (result === 'hit') haptics.medium();
+        else if (result === 'sunk') {
+          haptics.sunk();
+          const sunk = newShips.find(s => s.id === shipId);
+          if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
+        }
+        dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: createInitialAIState() });
+      }, delay);
+    } else {
+      // Arcade AI
+      const delay = diffConfig.delayMin + Math.random() * (diffConfig.delayMax - diffConfig.delayMin);
+      opponentTimerRef.current = setTimeout(() => {
+        const { position, newAI } = computeAIMove(state.ai, state.playerBoard, state.playerShips, gridSize, difficulty);
+        const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
 
-      if (result === 'miss') haptics.light();
-      else if (result === 'hit') haptics.medium();
-      else if (result === 'sunk') {
-        haptics.sunk();
-        const sunk = newShips.find(s => s.id === shipId);
-        if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
-      }
+        if (result === 'miss') haptics.light();
+        else if (result === 'hit') haptics.medium();
+        else if (result === 'sunk') {
+          haptics.sunk();
+          const sunk = newShips.find(s => s.id === shipId);
+          if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
+        }
 
-      const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
-
-      dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: updatedAI });
-
-      if (checkWinCondition(newShips)) {
-        setTimeout(() => {
-          const matchStats = computeMatchStats(state.tracking, state.opponentShips, newShips, false, gridSize, difficulty);
-          dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
-          updateStatsAfterGame(false, matchStats);
-          saveMatchToHistory(false, matchStats, gridSize, difficulty);
-          router.replace('/gameover');
-        }, 500);
-      }
-    }, delay);
+        const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
+        dispatch({ type: 'AI_ATTACK', position, result, shipId, aiState: updatedAI });
+      }, delay);
+    }
 
     return () => {
-      if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+      if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
     };
   }, [state.isPlayerTurn, state.phase]);
+
+  // Win detection: player victory
+  useEffect(() => {
+    if (state.phase !== 'battle' || state.opponentShips.length === 0) return;
+    if (checkWinCondition(state.opponentShips)) {
+      const timer = setTimeout(() => {
+        endGame({ won: true, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [state.opponentShips]);
+
+  // Win detection: opponent victory
+  useEffect(() => {
+    if (state.phase !== 'battle' || state.playerShips.length === 0) return;
+    if (checkWinCondition(state.playerShips)) {
+      const timer = setTimeout(() => {
+        endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [state.playerShips]);
+
+  // PvP timer expiry: auto-fire random shot
+  const handleTimerExpire = useCallback(() => {
+    if (!state.isPlayerTurn || state.phase !== 'battle') return;
+    const available: Position[] = [];
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const cell = state.opponentBoard[row][col];
+        if (cell.state === 'empty' || cell.state === 'ship') {
+          available.push({ row, col });
+        }
+      }
+    }
+    if (available.length === 0) return;
+    const position = available[Math.floor(Math.random() * available.length)];
+    const { result, shipId } = processAttack(state.opponentBoard, state.opponentShips, position);
+    haptics.light();
+    dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, dispatch, haptics]);
 
   const handleSurrender = () => {
     Alert.alert(
       'Surrender',
-      'Are you sure you want to surrender this battle?',
+      isPvP ? 'Are you sure you want to surrender this PvP match?' : 'Are you sure you want to surrender this battle?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Surrender',
           style: 'destructive',
           onPress: () => {
-            if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-            const matchStats = computeMatchStats(state.tracking, state.opponentShips, state.playerShips, false, gridSize, difficulty);
-            dispatch({ type: 'END_GAME', winner: 'opponent', matchStats });
-            updateStatsAfterGame(false, matchStats);
-            saveMatchToHistory(false, matchStats, gridSize, difficulty);
-            router.replace('/gameover');
+            if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
+            endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
           },
         },
       ]
     );
   };
 
-  // --- Swipe mode ---
+  // PvP custom turn indicator text
+  const turnText = isPvP
+    ? state.isPlayerTurn ? 'YOUR TURN' : `${MOCK_OPPONENT.toUpperCase()}'S TURN`
+    : undefined;
+
+  // --- Swipe mode (arcade only) ---
   if (isSwipeMode) {
     return (
       <GradientContainer>
@@ -246,11 +277,31 @@ export default function BattleScreen() {
     );
   }
 
-  // --- Stacked mode (default) ---
+  // --- Stacked mode (default for both arcade and pvp) ---
   return (
     <GradientContainer>
       <View style={styles.container}>
-        <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
+        {/* PvP: opponent status + custom turn indicator + timer */}
+        {isPvP && <OpponentStatus name={MOCK_OPPONENT} status="online" />}
+
+        {isPvP ? (
+          <>
+            <View style={[styles.turnContainer, !state.isPlayerTurn && styles.turnContainerEnemy]}>
+              <View style={[styles.turnDot, { backgroundColor: state.isPlayerTurn ? COLORS.accent.gold : COLORS.accent.fire }]} />
+              <Text style={[styles.turnText, !state.isPlayerTurn && styles.turnTextEnemy]}>
+                {turnText}
+              </Text>
+            </View>
+            <TurnTimer
+              duration={TURN_TIMER_SECONDS}
+              isActive={state.phase === 'battle'}
+              isPlayerTurn={state.isPlayerTurn}
+              onExpire={handleTimerExpire}
+            />
+          </>
+        ) : (
+          <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
+        )}
 
         <View style={{ width: GRID_TOTAL_WIDTH }}>
           {/* Main enemy grid */}
@@ -346,6 +397,36 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  // PvP turn indicator
+  turnContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.accent.gold,
+    backgroundColor: COLORS.overlay.goldMedium,
+  },
+  turnContainerEnemy: {
+    borderColor: COLORS.accent.fire,
+    backgroundColor: COLORS.overlay.fireGlow,
+  },
+  turnDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  turnText: {
+    fontFamily: FONTS.heading,
+    fontSize: 14,
+    color: COLORS.text.accent,
+    letterSpacing: 2,
+  },
+  turnTextEnemy: {
+    color: COLORS.accent.fire,
+  },
   // Swipe mode
   swipeTabs: {
     flexDirection: 'row',
@@ -361,7 +442,7 @@ const styles = StyleSheet.create({
   },
   swipeTabActive: {
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    backgroundColor: COLORS.overlay.goldSoft,
   },
   swipeTabText: {
     fontFamily: FONTS.heading,
