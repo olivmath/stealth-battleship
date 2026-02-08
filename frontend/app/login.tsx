@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.3)',
+    backgroundColor: COLORS.surface.cardBorder,
   },
   button: {
     marginTop: SPACING.sm,

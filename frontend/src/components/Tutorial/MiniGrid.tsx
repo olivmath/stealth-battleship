@@ -5,21 +5,21 @@ import { COLORS } from '../../constants/theme';
 export type MiniCellType = 'empty' | 'ship' | 'hit' | 'miss' | 'sunk' | 'water';
 
 const CELL_BG: Record<MiniCellType, string> = {
-  empty: 'rgba(30, 58, 95, 0.3)',
+  empty: COLORS.surface.cardBorder,
   ship: COLORS.grid.ship,
   hit: COLORS.accent.fire,
   miss: COLORS.cell.miss,
   sunk: COLORS.cell.sunk,
-  water: 'rgba(30, 58, 95, 0.15)',
+  water: COLORS.surface.subtle,
 };
 
 const CELL_BORDER: Record<MiniCellType, string> = {
   empty: COLORS.grid.border,
   ship: COLORS.grid.shipLight,
   hit: COLORS.accent.fireDark,
-  miss: '#3d4758',
+  miss: COLORS.marker.sunkShip,
   sunk: COLORS.accent.fireDark,
-  water: 'rgba(30, 58, 95, 0.3)',
+  water: COLORS.surface.cardBorder,
 };
 
 export function MiniCell({ type, size = 18 }: { type: MiniCellType; size?: number }) {
@@ -69,19 +69,19 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ff6b6b',
+    backgroundColor: COLORS.marker.miniHit,
   },
   missDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#64748b',
+    backgroundColor: COLORS.marker.miniMiss,
     opacity: 0.7,
   },
   sunkX: {
     width: 10,
     height: 10,
-    backgroundColor: '#991b1b',
+    backgroundColor: COLORS.marker.miniSunk,
     transform: [{ rotate: '45deg' }],
   },
 });

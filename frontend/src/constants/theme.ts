@@ -36,6 +36,40 @@ export const COLORS = {
     disabledBg: 'rgba(30, 58, 95, 0.3)',
     disabledBorder: '#4a5568',
   },
+  surface: {
+    card: 'rgba(30, 58, 95, 0.2)',
+    cardBorder: 'rgba(30, 58, 95, 0.3)',
+    elevated: 'rgba(30, 58, 95, 0.4)',
+    subtle: 'rgba(30, 58, 95, 0.15)',
+  },
+  overlay: {
+    goldGlow: 'rgba(245, 158, 11, 0.05)',
+    goldSoft: 'rgba(245, 158, 11, 0.08)',
+    goldMedium: 'rgba(245, 158, 11, 0.1)',
+    goldStrong: 'rgba(245, 158, 11, 0.2)',
+    fireGlow: 'rgba(239, 68, 68, 0.1)',
+    fireHit: 'rgba(239, 68, 68, 0.3)',
+    victoryGlow: 'rgba(34, 197, 94, 0.3)',
+    backdrop: 'rgba(0, 0, 0, 0.7)',
+    backdropLight: 'rgba(0, 0, 0, 0.6)',
+    darkPanel: 'rgba(10, 25, 47, 0.8)',
+    secondaryFade: 'rgba(148, 163, 184, 0.3)',
+  },
+  status: {
+    online: '#22c55e',
+    pvp: '#22d3ee',
+    waiting: '#eab308',
+    offline: '#6b7280',
+  },
+  marker: {
+    miss: '#38bdf8',
+    hitDot: '#e2e8f0',
+    white: '#ffffff',
+    sunkShip: '#3d4758',
+    miniHit: '#ff6b6b',
+    miniMiss: '#64748b',
+    miniSunk: '#991b1b',
+  },
 } as const;
 
 export const FONTS = {

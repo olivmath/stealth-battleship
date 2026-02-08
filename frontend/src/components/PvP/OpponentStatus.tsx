@@ -10,10 +10,10 @@ interface Props {
 }
 
 const STATUS_COLOR: Record<Status, string> = {
-  searching: '#eab308',
-  online: '#22c55e',
-  ready: '#22c55e',
-  offline: '#6b7280',
+  searching: COLORS.status.waiting,
+  online: COLORS.status.online,
+  ready: COLORS.status.online,
+  offline: COLORS.status.offline,
 };
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   dot: {
     width: 8,

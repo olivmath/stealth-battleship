@@ -69,12 +69,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    backgroundColor: 'rgba(30, 58, 95, 0.15)',
+    backgroundColor: COLORS.surface.subtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionActive: {
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: COLORS.overlay.goldMedium,
   },
 });

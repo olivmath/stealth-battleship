@@ -20,9 +20,9 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
     : variant === 'danger'
       ? COLORS.accent.fire
       : variant === 'success'
-        ? '#22c55e'
+        ? COLORS.status.online
         : variant === 'pvp'
-          ? '#22d3ee'
+          ? COLORS.status.pvp
           : COLORS.ui.buttonBorder;
 
   const bgColor = disabled ? COLORS.ui.disabledBg : COLORS.ui.buttonBg;
@@ -86,10 +86,10 @@ const styles = StyleSheet.create({
     color: COLORS.accent.fire,
   },
   successText: {
-    color: '#22c55e',
+    color: COLORS.status.online,
   },
   pvpText: {
-    color: '#22d3ee',
+    color: COLORS.status.pvp,
   },
   subtitle: {
     fontFamily: FONTS.bodyLight,

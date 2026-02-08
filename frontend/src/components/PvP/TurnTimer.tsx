@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(30, 58, 95, 0.4)',
+    backgroundColor: COLORS.surface.elevated,
     overflow: 'hidden',
   },
   progressFill: {

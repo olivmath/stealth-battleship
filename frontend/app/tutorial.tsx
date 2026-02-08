@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent.gold,
   },
   dotInactive: {
-    backgroundColor: 'rgba(148, 163, 184, 0.3)',
+    backgroundColor: COLORS.overlay.secondaryFade,
   },
   skipText: {
     fontFamily: FONTS.body,

@@ -9,9 +9,9 @@ import { MatchRecord } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: '#22c55e',
-  normal: '#f59e0b',
-  hard: '#f87171',
+  easy: COLORS.status.online,
+  normal: COLORS.accent.gold,
+  hard: COLORS.accent.fire,
 };
 
 function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () => void }) {
@@ -59,7 +59,7 @@ const itemStyles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(30, 58, 95, 0.3)',
+    borderBottomColor: COLORS.surface.cardBorder,
   },
   left: {
     flexDirection: 'row',
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     borderRadius: 4,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   empty: {
     flex: 1,

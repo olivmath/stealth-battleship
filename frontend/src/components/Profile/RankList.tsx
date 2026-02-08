@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     borderRadius: 4,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
     padding: SPACING.md,
     gap: SPACING.xs,
   },
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   rowCurrent: {
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    backgroundColor: COLORS.overlay.goldSoft,
   },
   rowFuture: {
     opacity: 0.45,

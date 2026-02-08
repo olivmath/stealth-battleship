@@ -37,7 +37,7 @@ const levelStyles = StyleSheet.create({
     borderColor: COLORS.accent.gold,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+    backgroundColor: COLORS.overlay.goldGlow,
   },
   rankRow: {
     flexDirection: 'row',
@@ -65,7 +65,7 @@ const levelStyles = StyleSheet.create({
   progressBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(30, 58, 95, 0.4)',
+    backgroundColor: COLORS.surface.elevated,
     marginTop: SPACING.sm,
     overflow: 'hidden',
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   statsTitle: {
     fontFamily: FONTS.heading,

@@ -185,11 +185,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.15)',
+    backgroundColor: COLORS.surface.subtle,
   },
   optionSelected: {
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    backgroundColor: COLORS.overlay.goldSoft,
   },
   optionRow: {
     flexDirection: 'row',

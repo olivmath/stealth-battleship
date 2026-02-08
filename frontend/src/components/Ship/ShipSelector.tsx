@@ -81,11 +81,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   selectedItem: {
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: COLORS.overlay.goldMedium,
   },
   placedItem: {
     opacity: 0.4,

@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   ring: {
     position: 'absolute',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.2)',
+    borderColor: COLORS.overlay.goldStrong,
   },
   centerDot: {
     position: 'absolute',

@@ -106,7 +106,7 @@ export default function SunkShipModal({ visible, ship }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: COLORS.overlay.backdropLight,
     justifyContent: 'center',
     alignItems: 'center',
   },

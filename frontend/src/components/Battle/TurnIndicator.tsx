@@ -31,11 +31,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: COLORS.overlay.goldMedium,
   },
   enemyContainer: {
     borderColor: COLORS.accent.fire,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: COLORS.overlay.fireGlow,
   },
   dot: {
     width: 8,

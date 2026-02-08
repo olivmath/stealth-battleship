@@ -31,7 +31,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
       : getCellColor(state);
 
   const bgColor = isInvalid
-    ? 'rgba(239, 68, 68, 0.3)'
+    ? COLORS.overlay.fireHit
     : isPreview
       ? 'rgba(245, 158, 11, 0.3)'
       : baseBgColor;
@@ -115,13 +115,13 @@ const styles = StyleSheet.create({
     width: '30%',
     height: '30%',
     borderRadius: 100,
-    backgroundColor: '#38bdf8',
+    backgroundColor: COLORS.marker.miss,
     opacity: 0.9,
     alignItems: 'center',
     justifyContent: 'center',
   },
   missMarkerText: {
-    color: '#e2e8f0',
+    color: COLORS.marker.hitDot,
     fontSize: 8,
     fontWeight: 'bold',
   },
@@ -135,12 +135,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hitMarkerText: {
-    color: '#ffffff',
+    color: COLORS.marker.white,
     fontSize: 10,
     fontWeight: 'bold',
   },
   sunkMarkerText: {
-    color: '#ffffff',
+    color: COLORS.marker.white,
     fontSize: 10,
     fontWeight: 'bold',
     transform: [{ rotate: '-45deg' }],
