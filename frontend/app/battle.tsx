@@ -140,7 +140,7 @@ export default function BattleScreen() {
     if (state.phase !== 'battle' || state.opponentShips.length === 0) return;
     if (checkWinCondition(state.opponentShips)) {
       const timer = setTimeout(() => {
-        endGame({ won: true, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
+        endGame({ won: true, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -151,7 +151,7 @@ export default function BattleScreen() {
     if (state.phase !== 'battle' || state.playerShips.length === 0) return;
     if (checkWinCondition(state.playerShips)) {
       const timer = setTimeout(() => {
-        endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
+        endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -187,7 +187,7 @@ export default function BattleScreen() {
           style: 'destructive',
           onPress: () => {
             if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
-            endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute });
+            endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
           },
         },
       ]

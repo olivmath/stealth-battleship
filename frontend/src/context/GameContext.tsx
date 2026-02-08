@@ -81,6 +81,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         opponent: createInitialAIState(),
         tracking: createInitialTracking(),
         lastMatchStats: null,
+        commitment: action.commitment,
       };
 
     case 'PLAYER_ATTACK': {

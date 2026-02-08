@@ -104,6 +104,24 @@ export interface MatchRecord {
   gridSize: number;
   difficulty: DifficultyLevel;
   stats: MatchStats;
+  commitment?: GameCommitment;
+}
+
+// --- Cryptographic commitment (ZK-ready) ---
+
+export interface GameCommitment {
+  boardHash: string;
+  shipPositionHash: string;
+  timestamp: number;
+}
+
+export interface Move {
+  turn: number;
+  player: 'player' | 'opponent';
+  position: Position;
+  result: AttackResult;
+  shipId?: string;
+  proof?: string;
 }
 
 // --- Settings ---
@@ -145,6 +163,7 @@ export interface GameState {
   tracking: BattleTracking;
   lastMatchStats: MatchStats | null;
   settings: GameSettings;
+  commitment?: GameCommitment;
 }
 
 export type GameAction =
@@ -153,7 +172,7 @@ export type GameAction =
   | { type: 'LOAD_SETTINGS'; settings: GameSettings }
   | { type: 'PLACE_SHIP'; ship: PlacedShip }
   | { type: 'REMOVE_SHIP'; shipId: string }
-  | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board }
+  | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board; commitment?: GameCommitment }
   | { type: 'PLAYER_ATTACK'; position: Position; result: AttackResult; shipId?: string }
   | { type: 'OPPONENT_ATTACK'; position: Position; result: AttackResult; shipId?: string; opponentState: AIState }
   | { type: 'END_GAME'; winner: 'player' | 'opponent'; matchStats: MatchStats }

@@ -23,6 +23,7 @@ import { getShipDefinitions, getShipStyle, getColumnLabels, getRowLabels } from 
 import { ShipDefinition, Orientation, Position, GridSizeOption } from '../src/types/game';
 import { calculatePositions, validatePlacement, autoPlaceShips } from '../src/engine/shipPlacement';
 import { createEmptyBoard } from '../src/engine/board';
+import { computeBoardCommitment } from '../src/engine/crypto';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
 
@@ -199,15 +200,18 @@ export default function PlacementScreen() {
     setPreviewPositions([]);
   };
 
-  const handleReady = () => {
+  const handleReady = async () => {
     haptics.heavy();
     const aiResult = autoPlaceShips(createEmptyBoard(gridSize), shipDefs, gridSize);
     if (!aiResult) return;
+
+    const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
 
     dispatch({
       type: 'START_GAME',
       opponentShips: aiResult.ships,
       opponentBoard: aiResult.board,
+      commitment,
     });
 
     if (isPvP) {

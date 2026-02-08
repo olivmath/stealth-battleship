@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
-import { PlayerStats, MatchRecord, MatchStats, GameSettings, DifficultyLevel } from '../types/game';
+import { PlayerStats, MatchRecord, MatchStats, GameSettings, DifficultyLevel, GameCommitment } from '../types/game';
 
 const USER_KEY = '@battleship_user';
 const SCORES_KEY = '@battleship_scores';
@@ -88,7 +88,8 @@ export async function saveMatchToHistory(
   won: boolean,
   matchStats: MatchStats,
   gridSize: number,
-  difficulty: DifficultyLevel = 'normal'
+  difficulty: DifficultyLevel = 'normal',
+  commitment?: GameCommitment
 ): Promise<MatchRecord> {
   const history = await getMatchHistory();
   const record: MatchRecord = {
@@ -99,6 +100,7 @@ export async function saveMatchToHistory(
     gridSize,
     difficulty,
     stats: matchStats,
+    commitment,
   };
   history.unshift(record);
   // Keep last 50 matches
