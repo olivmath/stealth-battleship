@@ -380,23 +380,28 @@ E6 UX & Animations
 
 ---
 
-## Ordem de Execução Recomendada
+## Ordem de Execução (definida pelo product owner)
 
 ```
-E1 (Testes) ──────────────────────────────┐
-                                          ▼
-E2 (ZK Architecture) ────────────────────┐│
-                                         ▼▼
-E3 (Code Consolidation) ────────────────┐
-                                        ▼
-                              ┌─── E4 (Grid Progressivo)
-                              │
-                              ├─── E5 (i18n)
-                              │
-                              └─── E6 (UX & Animations)
+E1 (Testes) ─────────────────► rede de segurança
+     │
+     ▼
+E3 (Code Consolidation) ────► elimina 1.550 LOC duplicadas
+     │
+     ▼
+E2 (ZK Architecture) ───────► modelo de dados ZK-ready
+     │
+     ▼
+E4 (Grid Progressivo) ──────► progressão com propósito
+     │
+     ▼
+E5 (i18n) ──────────────────► PT-BR, EN, ES
+     │
+     ▼
+E6 (UX & Animations) ───────► polish final
 ```
 
-E1 é pré-requisito de tudo. E2 e E3 podem ser parcialmente paralelos. E4, E5, E6 podem rodar em paralelo após E3.
+Testes primeiro para dar segurança. Cleanup antes de ZK para não refatorar código duplicado. Game design e i18n antes do polish final.
 
 ---
 
