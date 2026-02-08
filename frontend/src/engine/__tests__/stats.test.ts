@@ -80,9 +80,11 @@ describe('computeMatchStats', () => {
     return {
       turnNumber: 10,
       playerShots: [],
-      aiShots: [],
+      opponentShots: [],
       currentStreak: 0,
       longestStreak: 0,
+      opponentStreak: 0,
+      opponentLongestStreak: 0,
       shipFirstHitTurn: {},
       shipSunkTurn: {},
       ...overrides,

@@ -63,9 +63,11 @@ export interface ShotRecord {
 export interface BattleTracking {
   turnNumber: number;
   playerShots: ShotRecord[];
-  aiShots: ShotRecord[];
+  opponentShots: ShotRecord[];
   currentStreak: number;
   longestStreak: number;
+  opponentStreak: number;
+  opponentLongestStreak: number;
   shipFirstHitTurn: Record<string, number>;
   shipSunkTurn: Record<string, number>;
 }

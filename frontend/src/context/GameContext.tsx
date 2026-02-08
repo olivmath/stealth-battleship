@@ -7,9 +7,11 @@ function createInitialTracking(): BattleTracking {
   return {
     turnNumber: 0,
     playerShots: [],
-    aiShots: [],
+    opponentShots: [],
     currentStreak: 0,
     longestStreak: 0,
+    opponentStreak: 0,
+    opponentLongestStreak: 0,
     shipFirstHitTurn: {},
     shipSunkTurn: {},
   };
@@ -169,6 +171,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return s;
       });
 
+      const oppStreak = action.result !== 'miss'
+        ? state.tracking.opponentStreak + 1
+        : 0;
+      const oppLongest = Math.max(state.tracking.opponentLongestStreak, oppStreak);
+
       return {
         ...state,
         playerBoard: newBoard,
@@ -178,10 +185,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         tracking: {
           ...state.tracking,
           turnNumber: newTurn,
-          aiShots: [
-            ...state.tracking.aiShots,
+          opponentShots: [
+            ...state.tracking.opponentShots,
             { turn: newTurn, position: action.position, result: action.result, shipId: action.shipId },
           ],
+          opponentStreak: oppStreak,
+          opponentLongestStreak: oppLongest,
         },
       };
     }
