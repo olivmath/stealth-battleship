@@ -12,8 +12,7 @@ import OpponentStatus from '../src/components/PvP/OpponentStatus';
 import TurnTimer from '../src/components/PvP/TurnTimer';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { processAttack, checkWinCondition, posKey } from '../src/engine/board';
-import { computeAIMove, updateAIAfterAttack, createInitialAIState } from '../src/engine/ai';
+import { processAttack, checkWinCondition } from '../src/engine/board';
 import { Position, PlacedShip } from '../src/types/game';
 import { useGameEffects } from '../src/hooks/useGameEffects';
 import { DIFFICULTY_CONFIG } from '../src/constants/game';
@@ -22,8 +21,8 @@ import {
   OPPONENT_ATTACK_DELAY_MIN,
   OPPONENT_ATTACK_DELAY_MAX,
   TURN_TIMER_SECONDS,
-  generateMockAttack,
 } from '../src/services/pvpMock';
+import { OpponentStrategy, LocalAIStrategy, MockPvPStrategy } from '../src/engine/opponentStrategy';
 import { COLORS, FONTS } from '../src/constants/theme';
 
 const SCREEN_PADDING = 16;
@@ -46,8 +45,12 @@ export default function BattleScreen() {
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
   const gameoverRoute = isPvP ? '/gameover?mode=pvp' : '/gameover';
 
-  // PvP: track fired positions for mock opponent
-  const firedPositionsRef = useRef<string[]>([]);
+  // Opponent strategy: AI or MockPvP
+  const strategyRef = useRef<OpponentStrategy>(
+    isPvP
+      ? new MockPvPStrategy()
+      : new LocalAIStrategy(state.opponent, gridSize, difficulty)
+  );
 
   // Compute actual enemy grid width for alignment
   const FULL_LABEL = getLabelSize('full');
@@ -100,47 +103,32 @@ export default function BattleScreen() {
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
   }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, dispatch, haptics, showSunkAnimation]);
 
-  // Opponent turn: AI (arcade) or mock (pvp)
+  // Opponent turn: unified via strategy pattern
   useEffect(() => {
     if (state.isPlayerTurn || state.phase !== 'battle') return;
 
-    if (isPvP) {
-      // PvP mock opponent
-      const delay = OPPONENT_ATTACK_DELAY_MIN + Math.random() * (OPPONENT_ATTACK_DELAY_MAX - OPPONENT_ATTACK_DELAY_MIN);
-      opponentTimerRef.current = setTimeout(() => {
-        const position = generateMockAttack(state.playerBoard, firedPositionsRef.current, gridSize);
-        if (!position) return;
-        firedPositionsRef.current.push(posKey(position));
+    const delayMin = isPvP ? OPPONENT_ATTACK_DELAY_MIN : diffConfig.delayMin;
+    const delayMax = isPvP ? OPPONENT_ATTACK_DELAY_MAX : diffConfig.delayMax;
+    const delay = delayMin + Math.random() * (delayMax - delayMin);
 
-        const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
-        if (result === 'miss') haptics.light();
-        else if (result === 'hit') haptics.medium();
-        else if (result === 'sunk') {
-          haptics.sunk();
-          const sunk = newShips.find(s => s.id === shipId);
-          if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
-        }
-        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: createInitialAIState() });
-      }, delay);
-    } else {
-      // Arcade AI
-      const delay = diffConfig.delayMin + Math.random() * (diffConfig.delayMax - diffConfig.delayMin);
-      opponentTimerRef.current = setTimeout(() => {
-        const { position, newAI } = computeAIMove(state.opponent, state.playerBoard, state.playerShips, gridSize, difficulty);
-        const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
+    opponentTimerRef.current = setTimeout(() => {
+      const strategy = strategyRef.current;
+      const position = strategy.computeMove(state.playerBoard, state.playerShips, gridSize);
+      if (!position) return;
 
-        if (result === 'miss') haptics.light();
-        else if (result === 'hit') haptics.medium();
-        else if (result === 'sunk') {
-          haptics.sunk();
-          const sunk = newShips.find(s => s.id === shipId);
-          if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
-        }
+      const { newShips, result, shipId } = processAttack(state.playerBoard, state.playerShips, position);
 
-        const updatedAI = updateAIAfterAttack(newAI, position, result, shipId, newShips, gridSize, difficulty);
-        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: updatedAI });
-      }, delay);
-    }
+      if (result === 'miss') haptics.light();
+      else if (result === 'hit') haptics.medium();
+      else if (result === 'sunk') {
+        haptics.sunk();
+        const sunk = newShips.find(s => s.id === shipId);
+        if (sunk) setTimeout(() => showSunkAnimation(sunk), 1000);
+      }
+
+      strategy.onMoveResult(position, result, shipId, newShips);
+      dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
+    }, delay);
 
     return () => {
       if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
