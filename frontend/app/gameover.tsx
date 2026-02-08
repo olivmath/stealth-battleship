@@ -1,117 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import GameBoard from '../src/components/Board/GameBoard';
 import { useGame } from '../src/context/GameContext';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { usePlayerStats } from '../src/hooks/useStorage';
 import { getLevelInfo } from '../src/engine/stats';
-import { ShipKillEfficiency, LevelInfo } from '../src/types/game';
 import { DIFFICULTY_CONFIG } from '../src/constants/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import KillEfficiencyBar from '../src/components/Stats/KillEfficiencyBar';
+import LevelUpModal from '../src/components/Stats/LevelUpModal';
+import { MOCK_OPPONENT } from '../src/services/pvpMock';
 
-function KillEfficiencyBar({ item }: { item: ShipKillEfficiency }) {
-  const maxShots = Math.max(item.actualShots, item.idealShots);
-  const idealWidth = maxShots > 0 ? (item.idealShots / maxShots) * 100 : 0;
-  const actualWidth = maxShots > 0 ? (item.actualShots / maxShots) * 100 : 0;
-  const isPerfect = item.actualShots === item.idealShots;
-
-  return (
-    <View style={effStyles.container}>
-      <View style={effStyles.header}>
-        <Text style={effStyles.shipName}>{item.shipName}</Text>
-        <Text style={[effStyles.ratio, isPerfect && effStyles.perfectRatio]}>
-          {item.idealShots}/{item.actualShots} {isPerfect ? 'PERFECT' : ''}
-        </Text>
-      </View>
-      <View style={effStyles.barBg}>
-        <View style={[effStyles.barActual, { width: `${actualWidth}%` }]} />
-        <View style={[effStyles.barIdeal, { width: `${idealWidth}%` }]} />
-      </View>
-      <View style={effStyles.legend}>
-        <View style={effStyles.legendItem}>
-          <View style={[effStyles.legendDot, { backgroundColor: COLORS.accent.gold }]} />
-          <Text style={effStyles.legendText}>Ideal</Text>
-        </View>
-        <View style={effStyles.legendItem}>
-          <View style={[effStyles.legendDot, { backgroundColor: COLORS.accent.fire }]} />
-          <Text style={effStyles.legendText}>Actual</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const effStyles = StyleSheet.create({
-  container: { gap: 4 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  shipName: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.primary },
-  ratio: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.text.secondary },
-  perfectRatio: { color: COLORS.accent.gold },
-  barBg: { height: 8, borderRadius: 4, backgroundColor: 'rgba(30, 58, 95, 0.3)', overflow: 'hidden' },
-  barActual: { position: 'absolute', height: '100%', borderRadius: 4, backgroundColor: COLORS.accent.fire, opacity: 0.6 },
-  barIdeal: { position: 'absolute', height: '100%', borderRadius: 4, backgroundColor: COLORS.accent.gold },
-  legend: { flexDirection: 'row', gap: 12 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 6, height: 6, borderRadius: 3 },
-  legendText: { fontFamily: FONTS.bodyLight, fontSize: 10, color: COLORS.text.secondary },
-});
-
-function LevelUpModal({ visible, levelInfo }: { visible: boolean; levelInfo: LevelInfo }) {
-  if (!visible) return null;
-  return (
-    <Modal transparent visible={visible} animationType="fade">
-      <View style={luStyles.backdrop}>
-        <View style={luStyles.container}>
-          <Text style={luStyles.label}>RANK UP!</Text>
-          <Text style={luStyles.rank}>{levelInfo.rank.toUpperCase()}</Text>
-          <Text style={luStyles.motto}>{levelInfo.motto}</Text>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-const luStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  container: {
-    alignItems: 'center',
-    gap: SPACING.sm,
-    borderWidth: 2,
-    borderColor: COLORS.accent.gold,
-    borderRadius: 8,
-    padding: SPACING.xl,
-    backgroundColor: COLORS.background.dark,
-  },
-  label: {
-    fontFamily: FONTS.heading,
-    fontSize: 12,
-    color: COLORS.accent.gold,
-    letterSpacing: 4,
-  },
-  rank: {
-    fontFamily: FONTS.heading,
-    fontSize: 32,
-    color: COLORS.accent.gold,
-    letterSpacing: 3,
-  },
-  motto: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    fontStyle: 'italic',
-  },
-});
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BOARD_MAX = Math.floor((SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm) / 2);
 
 export default function GameOverScreen() {
   const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isPvP = mode === 'pvp';
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
   const { stats, refresh } = usePlayerStats();
@@ -124,6 +34,7 @@ export default function GameOverScreen() {
   const xpEarned = ms?.score ?? 0;
   const difficulty = state.settings.difficulty;
   const multiplier = DIFFICULTY_CONFIG[difficulty].scoreMultiplier;
+  const gridSize = state.settings.gridSize;
 
   // Track level-up
   useEffect(() => {
@@ -132,7 +43,6 @@ export default function GameOverScreen() {
 
   useEffect(() => {
     if (previousXP === null && stats.totalXP > 0) {
-      // totalXP already includes this match's score (saved in battle.tsx)
       const xpBefore = stats.totalXP - xpEarned;
       setPreviousXP(xpBefore);
 
@@ -151,7 +61,7 @@ export default function GameOverScreen() {
   const handlePlayAgain = () => {
     haptics.light();
     dispatch({ type: 'RESET_GAME' });
-    router.replace('/placement');
+    router.replace(isPvP ? '/placement?mode=pvp' : '/placement');
   };
 
   const handleMenu = () => {
@@ -159,14 +69,18 @@ export default function GameOverScreen() {
     router.replace('/menu');
   };
 
+  const subtitle = isPvP
+    ? isVictory ? `You defeated ${MOCK_OPPONENT}!` : `${MOCK_OPPONENT} sank your fleet!`
+    : isVictory ? 'Enemy fleet destroyed' : 'Your fleet has been sunk';
+
   return (
     <GradientContainer>
       {isVictory && (
         <ConfettiCannon
           count={200}
           origin={{ x: -10, y: 0 }}
-          autoStart={true}
-          fadeOut={true}
+          autoStart
+          fadeOut
           fallSpeed={3000}
           explosionSpeed={350}
         />
@@ -177,9 +91,7 @@ export default function GameOverScreen() {
           <Text style={[styles.result, isVictory ? styles.victory : styles.defeat]}>
             {isVictory ? 'VICTORY' : 'DEFEAT'}
           </Text>
-          <Text style={styles.subtitle}>
-            {isVictory ? 'Enemy fleet destroyed' : 'Your fleet has been sunk'}
-          </Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
           <View style={[styles.divider, { backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }]} />
         </View>
 
@@ -198,14 +110,16 @@ export default function GameOverScreen() {
           <View style={styles.xpRow}>
             <Text style={styles.xpLabel}>XP EARNED</Text>
             <View style={styles.xpRight}>
-              {multiplier !== 1 && (
+              {!isPvP && multiplier !== 1 && (
                 <Text style={styles.multiplierBadge}>{multiplier}x</Text>
               )}
               <Text style={styles.xpValue}>+{xpEarned}</Text>
             </View>
           </View>
-          <View style={styles.difficultyRow}>
-            <Text style={styles.difficultyLabel}>{difficulty.toUpperCase()}</Text>
+          <View style={styles.modeRow}>
+            <Text style={styles.modeLabel}>
+              {isPvP ? 'PvP ONLINE' : difficulty.toUpperCase()}
+            </Text>
           </View>
           <View style={styles.levelRow}>
             <Text style={styles.levelRank}>{currentLevel.rank.toUpperCase()}</Text>
@@ -258,7 +172,7 @@ export default function GameOverScreen() {
               activeOpacity={0.7}
             >
               <Text style={styles.reportTitle}>BATTLE REPORT</Text>
-              <Text style={styles.reportArrow}>{showReport ? '▲' : '▼'}</Text>
+              <Text style={styles.reportArrow}>{showReport ? '\u25B2' : '\u25BC'}</Text>
             </TouchableOpacity>
 
             {showReport && (
@@ -279,7 +193,7 @@ export default function GameOverScreen() {
                 <View style={styles.reportRow}>
                   <Text style={styles.reportLabel}>First Blood</Text>
                   <Text style={styles.reportValue}>
-                    {ms.firstBloodTurn > 0 ? `Turn ${ms.firstBloodTurn}` : '—'}
+                    {ms.firstBloodTurn > 0 ? `Turn ${ms.firstBloodTurn}` : '\u2014'}
                   </Text>
                 </View>
                 <View style={styles.reportRow}>
@@ -293,9 +207,40 @@ export default function GameOverScreen() {
           </View>
         )}
 
+        {/* Board Reveal (PvP only) */}
+        {isPvP && (
+          <View style={styles.boardRevealSection}>
+            <Text style={styles.revealTitle}>BOARD REVEAL</Text>
+            <View style={styles.boardsRow}>
+              <View style={styles.boardColumn}>
+                <Text style={styles.boardLabel}>YOUR BOARD</Text>
+                <GameBoard
+                  board={state.playerBoard}
+                  showShips
+                  disabled
+                  gridSize={gridSize}
+                  maxWidth={BOARD_MAX}
+                  variant="mini"
+                />
+              </View>
+              <View style={styles.boardColumn}>
+                <Text style={styles.boardLabel}>OPPONENT'S BOARD</Text>
+                <GameBoard
+                  board={state.opponentBoard}
+                  showShips
+                  disabled
+                  gridSize={gridSize}
+                  maxWidth={BOARD_MAX}
+                  variant="mini"
+                />
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Actions */}
         <View style={styles.actions}>
-          <NavalButton title="PLAY AGAIN" onPress={handlePlayAgain} />
+          <NavalButton title={isPvP ? 'REMATCH' : 'PLAY AGAIN'} onPress={handlePlayAgain} />
           <NavalButton title="RETURN TO BASE" onPress={handleMenu} variant="secondary" />
         </View>
       </ScrollView>
@@ -316,13 +261,12 @@ const styles = StyleSheet.create({
   scoreContainer: { alignItems: 'center' },
   scoreLabel: { fontFamily: FONTS.heading, fontSize: 10, color: COLORS.text.secondary, letterSpacing: 3 },
   scoreValue: { fontFamily: FONTS.heading, fontSize: 48, letterSpacing: 2 },
-  // XP Section
   xpContainer: {
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+    backgroundColor: COLORS.overlay.goldGlow,
   },
   xpRow: {
     flexDirection: 'row',
@@ -356,10 +300,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: COLORS.accent.gold,
   },
-  difficultyRow: {
+  modeRow: {
     marginTop: 4,
   },
-  difficultyLabel: {
+  modeLabel: {
     fontFamily: FONTS.body,
     fontSize: 10,
     color: COLORS.text.secondary,
@@ -385,7 +329,7 @@ const styles = StyleSheet.create({
   progressBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(30, 58, 95, 0.4)',
+    backgroundColor: COLORS.surface.elevated,
     marginTop: SPACING.xs,
     overflow: 'hidden',
   },
@@ -394,13 +338,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: COLORS.accent.gold,
   },
-  // Stats
   statsContainer: {
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center', gap: SPACING.xs },
@@ -408,14 +351,13 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: FONTS.body, fontSize: 9, color: COLORS.text.secondary, letterSpacing: 1 },
   shipsRow: { flexDirection: 'row', gap: 6 },
   shipDot: { width: 18, height: 18, borderRadius: 2, borderWidth: 1 },
-  shipAlive: { backgroundColor: 'rgba(34, 197, 94, 0.3)', borderColor: '#22c55e' },
-  shipDead: { backgroundColor: 'rgba(239, 68, 68, 0.3)', borderColor: COLORS.accent.fire },
-  // Report
+  shipAlive: { backgroundColor: COLORS.overlay.victoryGlow, borderColor: COLORS.status.online },
+  shipDead: { backgroundColor: COLORS.overlay.fireHit, borderColor: COLORS.accent.fire },
   reportContainer: {
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     borderRadius: 4,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
     overflow: 'hidden',
   },
   reportToggle: {
@@ -435,10 +377,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(30, 58, 95, 0.3)',
+    borderBottomColor: COLORS.surface.cardBorder,
   },
   reportLabel: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.secondary },
   reportValue: { fontFamily: FONTS.heading, fontSize: 14, color: COLORS.text.primary },
   perfectText: { color: COLORS.accent.gold },
+  boardRevealSection: {
+    gap: SPACING.sm,
+  },
+  revealTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  boardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  boardColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  boardLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+  },
   actions: { gap: SPACING.md },
 });
