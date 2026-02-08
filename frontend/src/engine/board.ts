@@ -17,25 +17,30 @@ export function processAttack(
 ): { newBoard: Board; newShips: PlacedShip[]; result: AttackResult; shipId?: string } {
   const { row, col } = position;
   const cell = board[row][col];
-  const newBoard = board.map(r => r.map(c => ({ ...c })));
-  const newShips = ships.map(s => ({ ...s, positions: [...s.positions] }));
+  const newShips = ships.map(s => {
+    if (s.id !== cell.shipId) return { ...s, positions: [...s.positions] };
+    const newHits = s.hits + 1;
+    return { ...s, positions: [...s.positions], hits: newHits, isSunk: newHits >= s.size };
+  });
 
   if (cell.shipId) {
     const ship = newShips.find(s => s.id === cell.shipId)!;
-    ship.hits += 1;
 
-    if (ship.hits >= ship.size) {
-      ship.isSunk = true;
+    if (ship.isSunk) {
+      const affectedRows = new Set(ship.positions.map(p => p.row));
+      const newBoard = board.map((r, i) => affectedRows.has(i) ? r.map(c => ({ ...c })) : r);
       ship.positions.forEach(p => {
         newBoard[p.row][p.col] = { state: 'sunk', shipId: ship.id };
       });
       return { newBoard, newShips, result: 'sunk', shipId: ship.id };
     }
 
+    const newBoard = board.map((r, i) => i === row ? r.map(c => ({ ...c })) : r);
     newBoard[row][col] = { state: 'hit', shipId: cell.shipId };
     return { newBoard, newShips, result: 'hit', shipId: cell.shipId };
   }
 
+  const newBoard = board.map((r, i) => i === row ? r.map(c => ({ ...c })) : r);
   newBoard[row][col] = { state: 'miss', shipId: null };
   return { newBoard, newShips, result: 'miss' };
 }
