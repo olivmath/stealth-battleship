@@ -53,7 +53,7 @@ export class MockPvPStrategy implements OpponentStrategy {
     return position;
   }
 
-  onMoveResult(): void {
+  onMoveResult(_position: Position, _result: AttackResult, _shipId?: string, _ships?: PlacedShip[]): void {
     // Mock PvP doesn't need to update state based on results
   }
 
