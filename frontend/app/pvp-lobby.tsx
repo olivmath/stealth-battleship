@@ -24,7 +24,7 @@ export default function PvPLobbyScreen() {
 
       const t2 = setTimeout(() => {
         dispatch({ type: 'RESET_GAME' });
-        router.replace('/pvp-placement');
+        router.replace('/placement?mode=pvp');
       }, FOUND_DELAY);
 
       timersRef.current.push(t2);

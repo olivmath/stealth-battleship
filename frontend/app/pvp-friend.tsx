@@ -42,7 +42,7 @@ export default function PvPFriendScreen() {
     timerRef.current = setTimeout(() => {
       haptics.medium();
       dispatch({ type: 'RESET_GAME' });
-      router.replace('/pvp-placement');
+      router.replace('/placement?mode=pvp');
     }, 4000);
   };
 
@@ -53,7 +53,7 @@ export default function PvPFriendScreen() {
     timerRef.current = setTimeout(() => {
       haptics.medium();
       dispatch({ type: 'RESET_GAME' });
-      router.replace('/pvp-placement');
+      router.replace('/placement?mode=pvp');
     }, 2000);
   };
 
@@ -150,7 +150,7 @@ export default function PvPFriendScreen() {
             value={joinCode}
             onChangeText={(text) => setJoinCode(text.replace(/[^0-9]/g, '').slice(0, 6))}
             placeholder="000000"
-            placeholderTextColor="rgba(245, 158, 11, 0.2)"
+            placeholderTextColor={COLORS.overlay.goldStrong}
             maxLength={6}
             keyboardType="number-pad"
             autoCorrect={false}
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderWidth: 1.5,
     borderColor: COLORS.accent.gold,
-    backgroundColor: 'rgba(10, 25, 47, 0.8)',
+    backgroundColor: COLORS.overlay.darkPanel,
     borderRadius: 4,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
