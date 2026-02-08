@@ -5,41 +5,9 @@ import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getMatchHistory } from '../src/storage/scores';
-import { MatchRecord, ShipKillEfficiency } from '../src/types/game';
+import { MatchRecord } from '../src/types/game';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
-
-function KillEfficiencyBar({ item }: { item: ShipKillEfficiency }) {
-  const maxShots = Math.max(item.actualShots, item.idealShots);
-  const idealWidth = maxShots > 0 ? (item.idealShots / maxShots) * 100 : 0;
-  const actualWidth = maxShots > 0 ? (item.actualShots / maxShots) * 100 : 0;
-  const isPerfect = item.actualShots === item.idealShots;
-
-  return (
-    <View style={effStyles.container}>
-      <View style={effStyles.header}>
-        <Text style={effStyles.shipName}>{item.shipName}</Text>
-        <Text style={[effStyles.ratio, isPerfect && effStyles.perfectRatio]}>
-          {item.idealShots}/{item.actualShots} {isPerfect ? 'PERFECT' : ''}
-        </Text>
-      </View>
-      <View style={effStyles.barBg}>
-        <View style={[effStyles.barActual, { width: `${actualWidth}%` }]} />
-        <View style={[effStyles.barIdeal, { width: `${idealWidth}%` }]} />
-      </View>
-    </View>
-  );
-}
-
-const effStyles = StyleSheet.create({
-  container: { gap: 4 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  shipName: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.primary },
-  ratio: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.text.secondary },
-  perfectRatio: { color: COLORS.accent.gold },
-  barBg: { height: 8, borderRadius: 4, backgroundColor: 'rgba(30, 58, 95, 0.3)', overflow: 'hidden' },
-  barActual: { position: 'absolute', height: '100%', borderRadius: 4, backgroundColor: COLORS.accent.fire, opacity: 0.6 },
-  barIdeal: { position: 'absolute', height: '100%', borderRadius: 4, backgroundColor: COLORS.accent.gold },
-});
+import KillEfficiencyBar from '../src/components/Stats/KillEfficiencyBar';
 
 export default function MatchDetailScreen() {
   const router = useRouter();
@@ -121,7 +89,7 @@ export default function MatchDetailScreen() {
             <View style={styles.reportSection}>
               <Text style={styles.reportSectionTitle}>KILL EFFICIENCY</Text>
               {ms.killEfficiency.map(item => (
-                <KillEfficiencyBar key={item.shipId} item={item} />
+                <KillEfficiencyBar key={item.shipId} item={item} showLegend={false} />
               ))}
             </View>
           )}
@@ -178,7 +146,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
   },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center', gap: SPACING.xs },
@@ -189,7 +157,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.grid.border,
     borderRadius: 4,
     padding: SPACING.md,
-    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+    backgroundColor: COLORS.surface.card,
     gap: SPACING.md,
   },
   reportTitle: { fontFamily: FONTS.heading, fontSize: 10, color: COLORS.text.secondary, letterSpacing: 2, textAlign: 'center' },
@@ -201,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(30, 58, 95, 0.3)',
+    borderBottomColor: COLORS.surface.cardBorder,
   },
   reportLabel: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.secondary },
   reportValue: { fontFamily: FONTS.heading, fontSize: 14, color: COLORS.text.primary },
