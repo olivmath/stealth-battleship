@@ -6,6 +6,14 @@ const SCORES_KEY = '@battleship_scores';
 const HISTORY_KEY = '@battleship_history';
 const SETTINGS_KEY = '@battleship_settings';
 
+function safeParse<T>(data: string, fallback: T): T {
+  try {
+    return JSON.parse(data) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 const DEFAULT_SETTINGS: GameSettings = {
   gridSize: 6,
   battleView: 'stacked',
@@ -15,7 +23,7 @@ const DEFAULT_SETTINGS: GameSettings = {
 export async function getSettings(): Promise<GameSettings> {
   const data = await AsyncStorage.getItem(SETTINGS_KEY);
   if (!data) return DEFAULT_SETTINGS;
-  return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+  return { ...DEFAULT_SETTINGS, ...safeParse(data, {}) };
 }
 
 export async function saveSettings(settings: GameSettings): Promise<void> {
@@ -37,13 +45,13 @@ export async function savePlayerName(name: string): Promise<void> {
 export async function getPlayerName(): Promise<string | null> {
   const data = await AsyncStorage.getItem(USER_KEY);
   if (!data) return null;
-  return JSON.parse(data).name;
+  return safeParse<{ name: string }>(data, { name: '' }).name || null;
 }
 
 export async function getPlayerStats(): Promise<PlayerStats> {
   const data = await AsyncStorage.getItem(SCORES_KEY);
   if (!data) return DEFAULT_STATS;
-  const parsed = JSON.parse(data);
+  const parsed = safeParse(data, {});
   return { ...DEFAULT_STATS, ...parsed };
 }
 
@@ -72,7 +80,7 @@ export async function updateStatsAfterGame(
 export async function getMatchHistory(): Promise<MatchRecord[]> {
   const data = await AsyncStorage.getItem(HISTORY_KEY);
   if (!data) return [];
-  return JSON.parse(data);
+  return safeParse<MatchRecord[]>(data, []);
 }
 
 export async function saveMatchToHistory(
