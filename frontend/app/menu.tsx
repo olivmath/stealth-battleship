@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import SketchfabModel from '../src/components/UI/SketchfabModel';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
+
+const SketchfabModel = lazy(() => import('../src/components/UI/SketchfabModel'));
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
@@ -62,7 +64,9 @@ export default function MenuScreen() {
           <View style={styles.divider} />
         </View>
 
-        <SketchfabModel modelId={MENU_MODEL_ID} height={200} />
+        <Suspense fallback={<View style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}><RadarSpinner size={40} /></View>}>
+          <SketchfabModel modelId={MENU_MODEL_ID} height={200} />
+        </Suspense>
 
         {/* Actions */}
         <View style={styles.actions}>
