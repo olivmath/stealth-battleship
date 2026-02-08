@@ -114,10 +114,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newLongest = Math.max(state.tracking.longestStreak, newStreak);
 
       const newFirstHit = { ...state.tracking.shipFirstHitTurn };
-      if (action.shipId && action.result === 'hit' && !newFirstHit[action.shipId]) {
-        newFirstHit[action.shipId] = newTurn;
-      }
-      if (action.shipId && action.result === 'sunk' && !newFirstHit[action.shipId]) {
+      if (action.shipId && (action.result === 'hit' || action.result === 'sunk') && !newFirstHit[action.shipId]) {
         newFirstHit[action.shipId] = newTurn;
       }
 
