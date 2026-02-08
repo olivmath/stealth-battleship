@@ -33,7 +33,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
   const bgColor = isInvalid
     ? COLORS.overlay.fireHit
     : isPreview
-      ? 'rgba(245, 158, 11, 0.3)'
+      ? COLORS.overlay.goldPreview
       : baseBgColor;
 
   const borderColor = isInvalid

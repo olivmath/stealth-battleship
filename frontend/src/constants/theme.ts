@@ -47,6 +47,7 @@ export const COLORS = {
     goldSoft: 'rgba(245, 158, 11, 0.08)',
     goldMedium: 'rgba(245, 158, 11, 0.1)',
     goldStrong: 'rgba(245, 158, 11, 0.2)',
+    goldPreview: 'rgba(245, 158, 11, 0.3)',
     fireGlow: 'rgba(239, 68, 68, 0.1)',
     fireHit: 'rgba(239, 68, 68, 0.3)',
     victoryGlow: 'rgba(34, 197, 94, 0.3)',
