@@ -14,7 +14,8 @@
       "backgroundColor": "#0a0e1a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.battleship-zk"
     },
     "android": {
       "adaptiveIcon": {
