@@ -14,22 +14,38 @@ graph TB
         A1[NoirJS → Proof Generation]
         A2[Convex Client → matchmaking, turns]
         A3[Game Engine - board.ts, stats.ts]
+        A4[Passkey Kit → Smart Wallet]
     end
 
-    subgraph CONVEX["CONVEX BACKEND"]
+    subgraph CONVEX["CONVEX BACKEND (real-time)"]
         B1[Matchmaking + Realtime subscriptions]
-        B2[Turn coordination + validation]
-        B3[ZK Proof Verification - server-side]
+        B2[Turn coordination + shot_result verification]
+        B3[Match history + proof storage]
     end
 
-    subgraph SOROBAN["FUTURE: SOROBAN SMART CONTRACTS (Stellar)"]
-        C1[Smart Wallet - passkey auth]
-        C2[Match Contract - stakes + escrow]
-        C3[UltraHonk Verifier - on-chain ZK]
+    subgraph SOROBAN["SOROBAN SMART CONTRACTS (Stellar)"]
+        C1[Match Contract → open_match + close_match]
+        C2[UltraHonk Verifier → board_validity on-chain]
+        C3[Escrow → stake lock/release]
+        C4[Smart Wallet Contract - passkey auth]
     end
 
-    APP --> CONVEX --> SOROBAN
+    APP -- "board_proofs + stakes (TX 1: OPEN)" --> SOROBAN
+    APP -- "turns (real-time)" --> CONVEX
+    CONVEX -- "winner (TX 2: CLOSE)" --> SOROBAN
 ```
+
+### Hybrid Model
+
+```
+ON-CHAIN (Soroban):  create_match (board proofs + escrow)  →  settle_match (winner + release)
+OFF-CHAIN (Convex):  matchmaking → turns → shot proofs → game logic (real-time, ~ms latency)
+```
+
+- **Inicio:** board_validity proof verificada on-chain + stake depositado em escrow
+- **Turnos:** shot_result proofs verificadas off-chain no Convex (rapido)
+- **Fim:** Convex submete settlement tx → Soroban libera escrow pro winner
+- **Total on-chain:** 2 transacoes por jogo (open + close)
 
 ## Decisions
 
@@ -39,11 +55,12 @@ graph TB
 | Hashing | Poseidon | ZK-friendly, native on Stellar P25, replaces SHA-256 |
 | Circuits | 2: `board_validity` + `shot_result` | Minimal set for trustless battleship |
 | Proof Generation | Client-side (NoirJS) | Private inputs never leave device |
-| Proof Verification V1 | Server-side (Convex edge function) | Simpler, no blockchain needed |
-| Proof Verification V2 | On-chain (UltraHonk Soroban contract) | Future, for stakes/on-chain settlement |
+| Verification: board_validity | On-chain (Soroban UltraHonk) | Trustless, verified in TX 1 (open) |
+| Verification: shot_result | Off-chain (Convex) | Real-time latency, ~ms per turn |
+| On-chain txs | 2 per game: open + close | Minimal gas, maximal trust |
 | Backend | Convex (realtime + edge functions) | TypeScript, realtime built-in, typed schema |
 | Board Reveal | Eliminated | ZK proofs replace commit-reveal entirely |
-| Wallet/Stakes | Not in this phase | Focus on ZK correctness first |
+| Model | Hybrid (on-chain + off-chain) | open/close on-chain, turns off-chain |
 
 ## Noir Circuits
 
@@ -121,35 +138,37 @@ sequenceDiagram
     Note over A,B: match_id, opponent
 ```
 
-### Phase 2: Placement + Board Commitment (ZK)
+### Phase 2: Placement + Board Commitment + Escrow (On-Chain)
 
 ```mermaid
 sequenceDiagram
     participant A as Player A
+    participant S as Soroban
     participant C as Convex
     participant B as Player B
 
     Note over A: Places ships on grid
     Note over B: Places ships on grid
 
-    Note over A: board_a = serialize(ships)<br/>nonce_a = random(32 bytes)
-    Note over B: board_b = serialize(ships)<br/>nonce_b = random(32 bytes)
-
     rect rgb(40, 40, 80)
-        Note over A: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>Proves: in bounds, no overlaps,<br/>correct sizes, hash matches
+        Note over A: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>~2-5s "Securing your fleet..."
     end
 
     rect rgb(40, 40, 80)
-        Note over B: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>Proves: in bounds, no overlaps,<br/>correct sizes, hash matches
+        Note over B: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>~2-5s "Securing your fleet..."
     end
 
-    A->>C: submit_placement(board_hash_a, proof_a)
-    B->>C: submit_placement(board_hash_b, proof_b)
+    A->>C: find_match(grid_size)
+    B->>C: find_match(grid_size)
+    C->>A: matched(opponent: B)
+    C->>B: matched(opponent: A)
 
-    rect rgb(60, 40, 40)
-        Note over C: VERIFY both<br/>board_validity proofs
-    end
+    Note over A,B: Both players send proofs + stakes in 1 atomic tx
 
+    A->>S: open_match(board_hash_a, proof_a, board_hash_b, proof_b, stake_a, stake_b)
+    Note over S: TX 1 (OPEN):<br/>UltraHonk verify both proofs ✓<br/>Lock both stakes in escrow
+
+    S->>C: match_opened(match_id, board_hash_a, board_hash_b)
     C->>A: battle_start (first_turn: random)
     C->>B: battle_start (first_turn: random)
 ```
@@ -189,40 +208,83 @@ sequenceDiagram
 sequenceDiagram
     participant A as Player A
     participant C as Convex
+    participant S as Soroban
     participant B as Player B
 
     rect rgb(60, 40, 40)
-        Note over C: Win check: All ships of B sunk<br/>Verify: All ZK proofs OK,<br/>turn order correct,<br/>no timeout violations
+        Note over C: Win check: All ships of B sunk<br/>All shot_result proofs verified<br/>Turn order correct, no timeouts
     end
 
-    C->>A: game_over(winner: A, stats, XP earned)
-    C->>B: game_over(winner: A, stats, XP earned)
+    C->>S: close_match(match_id, winner: A, match_proof)
+    Note over S: TX 2 (CLOSE):<br/>Verify match_proof on-chain<br/>Release escrow → Player A
 
-    Note over A,B: NO BOARD REVEAL NEEDED<br/>(ZK proofs replaced it)
+    S->>C: match_closed(tx_hash)
+    C->>A: game_over(winner: A, stats, XP, tx_hash)
+    C->>B: game_over(winner: A, stats, XP, tx_hash)
+
+    Note over A,B: NO BOARD REVEAL NEEDED<br/>Stakes settled on-chain trustlessly
 ```
 
+
 ---
+
+## Soroban Contract: `battleship_match`
+
+```rust
+// 2 transactions per game: OPEN + CLOSE
+
+// TX 1: OPEN — verify both boards + lock both stakes
+fn open_match(
+    player_a: Address,
+    player_b: Address,
+    board_hash_a: Field,
+    board_hash_b: Field,
+    proof_a: Bytes,        // board_validity proof
+    proof_b: Bytes,        // board_validity proof
+    stake_a: i128,
+    stake_b: i128,
+) -> u64  // returns match_id
+
+// TX 2: CLOSE — verify result + release escrow
+fn close_match(
+    match_id: u64,
+    winner: Address,
+    match_proof: Bytes,    // aggregated or final proof
+) -> ()
+
+// Storage
+struct Match {
+    match_id: u64,
+    player_a: Address,
+    player_b: Address,
+    board_hash_a: Field,
+    board_hash_b: Field,
+    stake_total: i128,
+    status: MatchStatus,   // Open | Closed
+    winner: Option<Address>,
+    created_at: u64,
+}
+```
 
 ## Convex Schema
 
 ```typescript
-// convex/schema.ts
+// convex/schema.ts — off-chain real-time coordination
 
 matches: defineTable({
-  gridSize: v.number(),           // 6, 8, or 10
-  status: v.string(),             // "waiting" | "placing" | "battle" | "finished"
-  player1: v.string(),            // player identifier
-  player2: v.optional(v.string()),
-  player1BoardHash: v.optional(v.string()),  // Poseidon hash
+  sorobanMatchId: v.number(),       // reference to on-chain match
+  gridSize: v.number(),             // 6, 8, or 10
+  status: v.string(),               // "placing" | "battle" | "finished"
+  player1: v.string(),
+  player2: v.string(),
+  player1BoardHash: v.optional(v.string()),
   player2BoardHash: v.optional(v.string()),
-  player1BoardProof: v.optional(v.bytes()),  // board_validity proof
-  player2BoardProof: v.optional(v.bytes()),
-  player1Ready: v.boolean(),
-  player2Ready: v.boolean(),
-  currentTurn: v.optional(v.string()),       // player1 or player2
+  currentTurn: v.optional(v.string()),
   turnNumber: v.number(),
   winner: v.optional(v.string()),
-  finishReason: v.optional(v.string()),      // "victory" | "forfeit" | "cheat" | "timeout"
+  finishReason: v.optional(v.string()),  // "victory" | "forfeit" | "timeout"
+  openTx: v.optional(v.string()),        // Soroban TX 1 hash
+  closeTx: v.optional(v.string()),       // Soroban TX 2 hash
   createdAt: v.number(),
 }),
 
@@ -233,22 +295,32 @@ attacks: defineTable({
   row: v.number(),
   col: v.number(),
   result: v.string(),              // "hit" | "miss" | "sunk"
-  shipId: v.optional(v.number()),  // which ship if sunk
-  proof: v.bytes(),                // shot_result ZK proof
+  shipId: v.optional(v.number()),
+  proof: v.bytes(),                // shot_result ZK proof (stored for disputes)
   verified: v.boolean(),
   createdAt: v.number(),
 }),
 ```
 
-## Convex Edge Functions
+## Functions by Layer
+
+### Soroban (on-chain — 2 txs per game)
 
 | Function | Role |
 |----------|------|
-| `find_match(player, grid_size)` | Find or create match, subscribe to realtime |
-| `submit_placement(match_id, player, board_hash, proof)` | Verify board_validity proof, store hash |
+| `open_match(players, hashes, proofs, stakes)` | TX 1: Verify both board_validity proofs, lock both stakes in escrow |
+| `close_match(match_id, winner, match_proof)` | TX 2: Verify result, release escrow to winner |
+
+### Convex (off-chain — real-time turns)
+
+| Function | Role |
+|----------|------|
+| `find_match(player, grid_size)` | Matchmaking, pair players |
+| `submit_placement(match_id, player, board_hash, proof)` | Collect both proofs, trigger open_match on Soroban |
 | `submit_attack(match_id, player, row, col)` | Validate turn, broadcast to defender |
-| `submit_result(match_id, player, result, proof)` | Verify shot_result proof, update state, check win |
-| `forfeit(match_id, player)` | Player quits, opponent wins |
+| `submit_result(match_id, player, result, proof)` | Verify shot_result proof off-chain, update state, check win |
+| `trigger_close(match_id)` | Submit close_match tx to Soroban when game ends |
+| `forfeit(match_id, player)` | Player quits → trigger close with opponent as winner |
 | `get_match_state(match_id)` | Reconnection sync |
 
 ## UX Impact
@@ -256,9 +328,12 @@ attacks: defineTable({
 | Moment | User Sees | What Happens Behind |
 |--------|-----------|-------------------|
 | Tap "Ready" after placing ships | "Securing your fleet..." + RadarSpinner | NoirJS generates board_validity proof (~2-5s) |
+| Proof generated | "Deploying to blockchain..." | Soroban tx: verify proof + lock escrow (~5s) |
+| Both players ready | "Battle stations!" | Convex starts real-time turn coordination |
 | Opponent attacks your board | Cell flashes, hit/miss animation | NoirJS generates shot_result proof (~1-2s) |
-| Game over | Stats + XP screen | No board reveal — all proofs already verified |
-| Proof fails | "Opponent disconnected" (graceful) | Convex detects invalid proof → forfeit cheater |
+| Game over | Stats + XP + "Settling..." | Convex → Soroban settlement tx → escrow released |
+| Victory settled | "You won X XLM!" + tx link | On-chain settlement confirmed |
+| Proof fails | "Opponent disconnected" (graceful) | Convex detects invalid proof → auto-settlement |
 
 ## Proof Generation Performance
 
@@ -276,26 +351,35 @@ attacks: defineTable({
 4. Write circuit tests with Nargo test
 5. Compile to ACIR, generate TypeScript artifacts
 
-### Phase 2: NoirJS Integration
-1. PoC: NoirJS proof generation in React Native
-2. If WASM fails: WebView fallback approach
+### Phase 2: NoirJS Integration (Mobile PoC)
+1. PoC: NoirJS proof generation in React Native (native bindings)
+2. If native fails: WebView fallback approach
 3. Migrate hashing from SHA-256 to Poseidon
 4. Integrate proof generation into placement flow
 5. Integrate proof generation into battle flow
 
-### Phase 3: Convex Backend
-1. Set up Convex project + schema
-2. Implement matchmaking (find_match)
-3. Implement placement with proof verification
-4. Implement battle loop with proof verification
-5. Implement game over + disconnection handling
+### Phase 3: Soroban Contracts
+1. Implement `battleship_match` contract (open_match + close_match)
+2. Integrate UltraHonk Verifier for board_validity verification
+3. Implement escrow logic (lock on open, release on close)
+4. Deploy to Stellar testnet
 
-### Phase 4: Frontend PvP
+### Phase 4: Convex Backend (Real-Time)
+1. Set up Convex project + schema
+2. Implement matchmaking + placement collection
+3. Trigger open_match tx on Soroban when both players ready
+4. Implement battle loop with off-chain shot_result verification
+5. Trigger close_match tx on Soroban when game ends
+6. Implement disconnection/timeout handling + auto-forfeit
+
+### Phase 5: Frontend PvP
 1. Unify battle screens (arcade + pvp mode flag)
-2. Connect to Convex realtime subscriptions
-3. Add "Securing fleet" loading state
-4. Add opponent status + turn timer
-5. Handle reconnection + timeouts
+2. Smart wallet integration (passkey-kit)
+3. Connect to Convex realtime subscriptions
+4. Add "Securing fleet" + "Deploying to blockchain" loading states
+5. Add opponent status + turn timer
+6. Settlement confirmation + tx link on game over
+7. Handle reconnection + timeouts
 
 ## References
 
