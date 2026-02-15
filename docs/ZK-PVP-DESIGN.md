@@ -8,23 +8,27 @@ PvP mode with zero-knowledge proofs for trustless gameplay. No board reveal need
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│  MOBILE APP (React Native / Expo)               │
-│  ├── NoirJS → Proof Generation (client-side)    │
-│  ├── Convex Client → matchmaking, turns         │
-│  └── Game Engine (board.ts, stats.ts)           │
-├─────────────────────────────────────────────────┤
-│  CONVEX BACKEND                                 │
-│  ├── Matchmaking + Realtime subscriptions       │
-│  ├── Turn coordination + validation             │
-│  └── ZK Proof Verification (server-side)        │
-├─────────────────────────────────────────────────┤
-│  FUTURE: SOROBAN SMART CONTRACTS (Stellar)      │
-│  ├── Smart Wallet (passkey auth)                │
-│  ├── Match Contract (stakes + escrow)           │
-│  └── UltraHonk Verifier (on-chain ZK)          │
-└─────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph APP["MOBILE APP (React Native / Expo)"]
+        A1[NoirJS → Proof Generation]
+        A2[Convex Client → matchmaking, turns]
+        A3[Game Engine - board.ts, stats.ts]
+    end
+
+    subgraph CONVEX["CONVEX BACKEND"]
+        B1[Matchmaking + Realtime subscriptions]
+        B2[Turn coordination + validation]
+        B3[ZK Proof Verification - server-side]
+    end
+
+    subgraph SOROBAN["FUTURE: SOROBAN SMART CONTRACTS (Stellar)"]
+        C1[Smart Wallet - passkey auth]
+        C2[Match Contract - stakes + escrow]
+        C3[UltraHonk Verifier - on-chain ZK]
+    end
+
+    APP --> CONVEX --> SOROBAN
 ```
 
 ## Decisions
@@ -104,137 +108,97 @@ shot_result {
 
 ### Phase 1: Matchmaking
 
-```
-Player A                    Convex                     Player B
-   │                          │                           │
-   ├── find_match(grid) ─────►│                           │
-   │                          │◄──── find_match(grid) ────┤
-   │                          │                           │
-   │                          │── match_found ──────────► │
-   │◄──── match_found ────────│                           │
-   │                          │                           │
-   │   match_id, opponent     │    match_id, opponent     │
+```mermaid
+sequenceDiagram
+    participant A as Player A
+    participant C as Convex
+    participant B as Player B
+
+    A->>C: find_match(grid)
+    B->>C: find_match(grid)
+    C->>B: match_found
+    C->>A: match_found
+    Note over A,B: match_id, opponent
 ```
 
 ### Phase 2: Placement + Board Commitment (ZK)
 
-```
-Player A                           Convex                          Player B
-   │                                 │                                │
-   │  [Places ships on grid]         │         [Places ships on grid] │
-   │                                 │                                │
-   │  board_a = serialize(ships)     │     board_b = serialize(ships) │
-   │  nonce_a = random(32 bytes)     │     nonce_b = random(32 bytes) │
-   │                                 │                                │
-   │  ┌──────────────────────┐       │     ┌──────────────────────┐   │
-   │  │ NOIR: board_validity │       │     │ NOIR: board_validity │   │
-   │  │ Private inputs:      │       │     │ Private inputs:      │   │
-   │  │   - ship_positions   │       │     │   - ship_positions   │   │
-   │  │   - nonce            │       │     │   - nonce            │   │
-   │  │ Public inputs:       │       │     │ Public inputs:       │   │
-   │  │   - board_hash       │       │     │   - board_hash       │   │
-   │  │   - grid_size        │       │     │   - grid_size        │   │
-   │  │ Proves:              │       │     │ Proves:              │   │
-   │  │   - ships in bounds  │       │     │   - ships in bounds  │   │
-   │  │   - no overlaps      │       │     │   - no overlaps      │   │
-   │  │   - correct sizes    │       │     │   - correct sizes    │   │
-   │  │   - hash matches     │       │     │   - hash matches     │   │
-   │  └──────┬───────────────┘       │     └──────┬───────────────┘   │
-   │         │                       │            │                   │
-   │  proof_a + board_hash_a         │     proof_b + board_hash_b    │
-   │         │                       │            │                   │
-   ├── submit_placement ────────────►│◄── submit_placement ──────────┤
-   │   (board_hash_a, proof_a)       │   (board_hash_b, proof_b)     │
-   │                                 │                                │
-   │                          ┌──────┴──────┐                        │
-   │                          │ VERIFY both │                        │
-   │                          │ board_valid │                        │
-   │                          │ proofs      │                        │
-   │                          └──────┬──────┘                        │
-   │                                 │                                │
-   │◄──── battle_start ─────────────│──────── battle_start ─────────►│
-   │      (first_turn: random)       │      (first_turn: random)     │
+```mermaid
+sequenceDiagram
+    participant A as Player A
+    participant C as Convex
+    participant B as Player B
+
+    Note over A: Places ships on grid
+    Note over B: Places ships on grid
+
+    Note over A: board_a = serialize(ships)<br/>nonce_a = random(32 bytes)
+    Note over B: board_b = serialize(ships)<br/>nonce_b = random(32 bytes)
+
+    rect rgb(40, 40, 80)
+        Note over A: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>Proves: in bounds, no overlaps,<br/>correct sizes, hash matches
+    end
+
+    rect rgb(40, 40, 80)
+        Note over B: NOIR: board_validity<br/>Private: ship_positions, nonce<br/>Public: board_hash, grid_size<br/>Proves: in bounds, no overlaps,<br/>correct sizes, hash matches
+    end
+
+    A->>C: submit_placement(board_hash_a, proof_a)
+    B->>C: submit_placement(board_hash_b, proof_b)
+
+    rect rgb(60, 40, 40)
+        Note over C: VERIFY both<br/>board_validity proofs
+    end
+
+    C->>A: battle_start (first_turn: random)
+    C->>B: battle_start (first_turn: random)
 ```
 
 ### Phase 3: Battle (Turn Loop)
 
-```
-Attacker (A)                    Convex                     Defender (B)
-   │                              │                            │
-   │── submit_attack ────────────►│                            │
-   │   (match_id, row, col)       │                            │
-   │                              │── attack_incoming ────────►│
-   │                              │   (row, col)               │
-   │                              │                            │
-   │                              │   [B checks locally:      │
-   │                              │    hit or miss?]           │
-   │                              │                            │
-   │                              │   ┌──────────────────────┐ │
-   │                              │   │ NOIR: shot_result    │ │
-   │                              │   │ Private inputs:      │ │
-   │                              │   │   - ship_positions   │ │
-   │                              │   │   - nonce            │ │
-   │                              │   │ Public inputs:       │ │
-   │                              │   │   - board_hash       │ │
-   │                              │   │   - shot_row         │ │
-   │                              │   │   - shot_col         │ │
-   │                              │   │   - result (hit/miss)│ │
-   │                              │   │   - ship_id (if sunk)│ │
-   │                              │   │ Proves:              │ │
-   │                              │   │   - board matches    │ │
-   │                              │   │     committed hash   │ │
-   │                              │   │   - result matches   │ │
-   │                              │   │     actual cell      │ │
-   │                              │   │   - if sunk: all     │ │
-   │                              │   │     cells were hit   │ │
-   │                              │   └──────┬───────────────┘ │
-   │                              │          │                 │
-   │                              │◄── submit_result ──────────┤
-   │                              │   (result, proof)          │
-   │                              │                            │
-   │                       ┌──────┴──────┐                     │
-   │                       │ VERIFY      │                     │
-   │                       │ shot_result │                     │
-   │                       │ proof       │                     │
-   │                       │             │                     │
-   │                       │ If invalid: │                     │
-   │                       │  → cheater! │                     │
-   │                       │  → forfeit  │                     │
-   │                       └──────┬──────┘                     │
-   │                              │                            │
-   │◄──── attack_result ─────────│──── attack_result ─────────►│
-   │      (row, col, hit/miss,   │    (row, col, hit/miss,    │
-   │       sunk?, next_turn)     │     sunk?, next_turn)      │
-   │                              │                            │
-   │     [REPEAT until all ships  │                            │
-   │      of one player sunk]     │                            │
+```mermaid
+sequenceDiagram
+    participant A as Attacker (A)
+    participant C as Convex
+    participant B as Defender (B)
+
+    A->>C: submit_attack(match_id, row, col)
+    C->>B: attack_incoming(row, col)
+
+    Note over B: Checks locally: hit or miss?
+
+    rect rgb(40, 40, 80)
+        Note over B: NOIR: shot_result<br/>Private: ship_positions, nonce<br/>Public: board_hash, shot_row,<br/>shot_col, result, ship_id<br/>Proves: board matches hash,<br/>result matches cell,<br/>if sunk: all cells hit
+    end
+
+    B->>C: submit_result(result, proof)
+
+    rect rgb(60, 40, 40)
+        Note over C: VERIFY shot_result proof<br/>If invalid → cheater → forfeit
+    end
+
+    C->>A: attack_result(row, col, hit/miss, sunk?, next_turn)
+    C->>B: attack_result(row, col, hit/miss, sunk?, next_turn)
+
+    Note over A,B: REPEAT until all ships of one player sunk
 ```
 
 ### Phase 4: Game Over
 
-```
-Player A                       Convex                      Player B
-   │                              │                            │
-   │                       ┌──────┴──────┐                     │
-   │                       │ Win check:  │                     │
-   │                       │ All ships   │                     │
-   │                       │ of B sunk   │                     │
-   │                       │             │                     │
-   │                       │ Verify:     │                     │
-   │                       │ - All ZK    │                     │
-   │                       │   proofs OK │                     │
-   │                       │ - Turn order│                     │
-   │                       │   correct   │                     │
-   │                       │ - No timeout│                     │
-   │                       │   violations│                     │
-   │                       └──────┬──────┘                     │
-   │                              │                            │
-   │◄──── game_over ──────────────│───── game_over ───────────►│
-   │      (winner: A,             │     (winner: A,            │
-   │       stats, XP earned)      │      stats, XP earned)     │
-   │                              │                            │
-   │  NO BOARD REVEAL NEEDED      │  NO BOARD REVEAL NEEDED    │
-   │  (ZK proofs replaced it)     │  (ZK proofs replaced it)   │
+```mermaid
+sequenceDiagram
+    participant A as Player A
+    participant C as Convex
+    participant B as Player B
+
+    rect rgb(60, 40, 40)
+        Note over C: Win check: All ships of B sunk<br/>Verify: All ZK proofs OK,<br/>turn order correct,<br/>no timeout violations
+    end
+
+    C->>A: game_over(winner: A, stats, XP earned)
+    C->>B: game_over(winner: A, stats, XP earned)
+
+    Note over A,B: NO BOARD REVEAL NEEDED<br/>(ZK proofs replaced it)
 ```
 
 ---

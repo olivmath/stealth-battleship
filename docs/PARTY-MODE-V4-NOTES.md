@@ -54,22 +54,26 @@
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────┐
-│  MOBILE APP (React Native / Expo)               │
-│  ├── NoirJS → Proof Generation (client-side)    │
-│  ├── Convex Client → matchmaking, turns         │
-│  └── (Future) Passkey Kit → Smart Wallet        │
-├─────────────────────────────────────────────────┤
-│  CONVEX BACKEND                                 │
-│  ├── Matchmaking + Realtime                     │
-│  ├── Turn coordination                          │
-│  └── ZK Proof Validation (server-side)          │
-├─────────────────────────────────────────────────┤
-│  SOROBAN SMART CONTRACTS (Future)               │
-│  ├── Smart Wallet Contract (passkey auth)       │
-│  ├── Match Contract (stakes + escrow)           │
-│  ├── UltraHonk Verifier (on-chain ZK)          │
-│  └── AI Agent Wallet                            │
-└─────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph APP["MOBILE APP (React Native / Expo)"]
+        A1[NoirJS → Proof Generation]
+        A2[Convex Client → matchmaking, turns]
+        A3["(Future) Passkey Kit → Smart Wallet"]
+    end
+
+    subgraph CONVEX["CONVEX BACKEND"]
+        B1[Matchmaking + Realtime]
+        B2[Turn coordination]
+        B3[ZK Proof Validation - server-side]
+    end
+
+    subgraph SOROBAN["SOROBAN SMART CONTRACTS (Future)"]
+        C1[Smart Wallet Contract - passkey auth]
+        C2[Match Contract - stakes + escrow]
+        C3[UltraHonk Verifier - on-chain ZK]
+        C4[AI Agent Wallet]
+    end
+
+    APP --> CONVEX --> SOROBAN
 ```
