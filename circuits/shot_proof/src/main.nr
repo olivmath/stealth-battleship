@@ -1,4 +1,4 @@
-use std::hash::poseidon2::Poseidon2;
+use poseidon::poseidon2::Poseidon2;
 
 fn compute_board_hash(
     ships: [(u8, u8, u8, bool); 3],

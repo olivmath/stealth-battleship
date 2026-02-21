@@ -1,4 +1,4 @@
-use std::hash::poseidon2::Poseidon2;
+use poseidon::poseidon2::Poseidon2;
 
 fn ship_in_bounds(row: u8, col: u8, size: u8, horizontal: bool) -> bool {
     if horizontal {
