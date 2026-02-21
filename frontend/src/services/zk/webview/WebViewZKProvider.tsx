@@ -13,6 +13,7 @@ import type {
 import { ZK_WORKER_HTML } from './zkWorkerHtml';
 
 import boardValidityCircuit from '../circuits/board_validity.json';
+import hashHelperCircuit from '../circuits/hash_helper.json';
 
 const TAG = '[ZK]';
 
@@ -59,7 +60,6 @@ function handleMessage(event: WebViewMessageEvent) {
     return;
   }
 
-  // Forward WebView logs to RN console
   if (data.id === 'log') {
     console.log(`${TAG} [WebView]`, data.message);
     return;
@@ -110,7 +110,7 @@ export function ZKWebView() {
   );
 }
 
-/** Convert ShipTuples to NoirJS input format: tuple = JS array [val, val, ...] */
+/** Convert ShipTuples to NoirJS input format: tuple = JS array */
 function toNoirShips(
   ships: [
     [number, number, number, boolean],
@@ -121,81 +121,89 @@ function toNoirShips(
   return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
 
+/** Print a 6x6 board matrix from ship tuples */
+function logBoardMatrix(
+  ships: [
+    [number, number, number, boolean],
+    [number, number, number, boolean],
+    [number, number, number, boolean],
+  ],
+) {
+  const grid: number[][] = Array.from({ length: 6 }, () => Array(6).fill(0));
+  for (const [row, col, size, horizontal] of ships) {
+    for (let i = 0; i < size; i++) {
+      const r = horizontal ? row : row + i;
+      const c = horizontal ? col + i : col;
+      if (r < 6 && c < 6) grid[r][c] = 1;
+    }
+  }
+  console.log(`${TAG}   Board matrix (1=ship, 0=water):`);
+  console.log(`${TAG}     A B C D E F`);
+  grid.forEach((row, i) => {
+    console.log(`${TAG}   ${i + 1} ${row.join(' ')}`);
+  });
+}
+
 /** WebView-based ZK provider */
 export const webViewZKProvider: ZKProvider = {
   async init() {
     console.log(`${TAG} Waiting for WebView to initialize...`);
     await readyPromise;
-    console.log(`${TAG} Loading board_validity circuit...`);
+
     const t0 = Date.now();
-    await sendToWebView('loadCircuit', {
-      name: 'board_validity',
-      circuit: boardValidityCircuit,
-    });
-    console.log(`${TAG} board_validity loaded (${Date.now() - t0}ms)`);
+    console.log(`${TAG} Loading circuits...`);
+    await Promise.all([
+      sendToWebView('loadCircuit', { name: 'hash_helper', circuit: hashHelperCircuit }),
+      sendToWebView('loadCircuit', { name: 'board_validity', circuit: boardValidityCircuit }),
+    ]);
+    console.log(`${TAG} Circuits loaded (${Date.now() - t0}ms)`);
   },
 
   async boardValidity(input: BoardValidityInput): Promise<BoardValidityResult> {
     console.log(`${TAG} boardValidity() called`);
     console.log(`${TAG}   ships:`, JSON.stringify(input.ships));
     console.log(`${TAG}   nonce:`, input.nonce);
+    logBoardMatrix(input.ships);
 
     const ships = toNoirShips(input.ships);
     const shipSizes = input.ships.map(([, , s]) => String(s));
 
-    // Step 1: Execute circuit to compute board_hash via Poseidon2
-    // We pass a dummy board_hash — the circuit will compute the real one
-    // but fail the assertion. We use 'execute' which doesn't need assertion to pass
-    // to extract the computed hash from the witness.
-    //
-    // Actually, noir.execute() DOES enforce assertions. So we need to compute
-    // the hash correctly. The approach: we add a computeHash helper in the worker,
-    // OR we use a separate tiny circuit. For now, let's try passing the inputs
-    // and see if the circuit can execute.
-    //
-    // Alternative: compute Poseidon2 hash in JS matching the circuit's encoding.
-    // The circuit encodes: [r0,c0,s0,h0, r1,c1,s1,h1, r2,c2,s2,h2, nonce] = 13 Fields
-    // then Poseidon2::hash(inputs, 13)
-    //
-    // For the WebView approach, we'll add a 'computeHash' action that runs
-    // the Poseidon2 computation via a helper circuit or direct noir execution.
-    //
-    // PRAGMATIC APPROACH for testing:
-    // Pass all inputs including a placeholder hash.
-    // If execute fails with hash mismatch, we know the plumbing works.
-    // Then we'll fix the hash computation.
+    // Step 1: Compute board hash using hash_helper circuit
+    console.log(`${TAG}   Computing board hash (Poseidon2)...`);
+    const t0 = Date.now();
+
+    const hashResult = await sendToWebView('execute', {
+      name: 'hash_helper',
+      inputs: { ships, nonce: input.nonce },
+    });
+    const boardHash = hashResult.returnValue;
+    console.log(`${TAG}   Board hash computed (${Date.now() - t0}ms): ${boardHash}`);
+
+    // Step 2: Generate proof with the correct hash
+    console.log(`${TAG}   Generating board_validity proof...`);
+    const t1 = Date.now();
 
     const circuitInput = {
       ships,
       nonce: input.nonce,
-      board_hash: '0', // Will fail assertion — this is expected for first test
+      board_hash: boardHash,
       ship_sizes: shipSizes,
     };
 
-    const t0 = Date.now();
-    console.log(`${TAG}   Generating proof...`);
+    const result = await sendToWebView('executeAndProve', {
+      name: 'board_validity',
+      inputs: circuitInput,
+    });
 
-    try {
-      const result = await sendToWebView('generateProof', {
-        name: 'board_validity',
-        inputs: circuitInput,
-      });
+    const elapsed = Date.now() - t1;
+    const proofBytes = new Uint8Array(result.proof);
+    console.log(`${TAG}   Proof generated! (${elapsed}ms)`);
+    console.log(`${TAG}   Proof size: ${proofBytes.length} bytes`);
 
-      const elapsed = Date.now() - t0;
-      const proofBytes = new Uint8Array(result.proof);
-      console.log(`${TAG}   Proof generated! (${elapsed}ms)`);
-      console.log(`${TAG}   Proof size: ${proofBytes.length} bytes`);
-      console.log(`${TAG}   Public inputs:`, result.publicInputs);
-
-      return {
-        proof: proofBytes,
-        boardHash: result.publicInputs?.[0] ?? '',
-      };
-    } catch (err: any) {
-      const elapsed = Date.now() - t0;
-      console.error(`${TAG}   Proof generation FAILED (${elapsed}ms):`, err.message);
-      throw err;
-    }
+    return {
+      proof: proofBytes,
+      boardHash,
+    };
   },
 
   async shotProof(_input: ShotProofInput): Promise<ShotProofResult> {

@@ -105,6 +105,12 @@ export const ZK_WORKER_HTML = `
     return { witness, returnValue };
   }
 
+  async function generateProofFromWitness(name, witness) {
+    const { backend } = circuits[name];
+    const proof = await backend.generateProof(witness);
+    return proof;
+  }
+
   async function generateProof(name, inputs) {
     const { noir, backend } = circuits[name];
     const { witness } = await noir.execute(inputs);
@@ -131,6 +137,15 @@ export const ZK_WORKER_HTML = `
       } else if (action === 'execute') {
         const { witness, returnValue } = await executeOnly(payload.name, payload.inputs);
         result = { ok: true, returnValue };
+      } else if (action === 'executeAndProve') {
+        // 2-pass: execute to get witness, then generate proof from witness
+        const { witness } = await executeOnly(payload.name, payload.inputs);
+        const proof = await generateProofFromWitness(payload.name, witness);
+        result = {
+          ok: true,
+          proof: Array.from(proof.proof),
+          publicInputs: proof.publicInputs,
+        };
       } else if (action === 'generateProof') {
         const proof = await generateProof(payload.name, payload.inputs);
         result = {
