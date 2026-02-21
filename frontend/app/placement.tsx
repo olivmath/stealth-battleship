@@ -213,35 +213,39 @@ export default function PlacementScreen() {
 
     const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
 
-    // --- ZK: Generate board_validity proof ---
-    console.log('[ZK] === BOARD VALIDITY PROOF START ===');
-    console.log('[ZK] Player ships:', state.playerShips.map(s => ({
-      id: s.id, size: s.size, orientation: s.orientation,
-      positions: s.positions,
-    })));
+    // --- ZK: Generate board_validity proof (6x6 only, 3 ships) ---
+    if (gridSize === 6 && state.playerShips.length === 3) {
+      console.log('[ZK] === BOARD VALIDITY PROOF START ===');
+      console.log('[ZK] Player ships:', state.playerShips.map(s => ({
+        id: s.id, size: s.size, orientation: s.orientation,
+        pos0: s.positions[0],
+      })));
 
-    // Convert PlacedShip[] to ShipTuple[] for circuit
-    const shipTuples = state.playerShips.map((s): ShipTuple => {
-      const row = s.positions[0].row;
-      const col = s.positions[0].col;
-      const horizontal = s.orientation === 'horizontal';
-      return [row, col, s.size, horizontal];
-    }) as [ShipTuple, ShipTuple, ShipTuple];
+      // Convert PlacedShip[] to ShipTuple[] for circuit
+      const shipTuples = state.playerShips.map((s): ShipTuple => {
+        const row = s.positions[0].row;
+        const col = s.positions[0].col;
+        const horizontal = s.orientation === 'horizontal';
+        return [row, col, s.size, horizontal];
+      }) as [ShipTuple, ShipTuple, ShipTuple];
 
-    const nonce = String(Math.floor(Math.random() * 1000000));
-    console.log('[ZK] Ship tuples:', shipTuples);
-    console.log('[ZK] Nonce:', nonce);
+      const nonce = String(Math.floor(Math.random() * 1000000));
+      console.log('[ZK] Ship tuples:', shipTuples);
+      console.log('[ZK] Nonce:', nonce);
 
-    try {
-      const zkResult = await boardValidity({ ships: shipTuples, nonce });
-      console.log('[ZK] === PROOF GENERATED ===');
-      console.log('[ZK] Proof size:', zkResult.proof.length, 'bytes');
-      console.log('[ZK] Board hash:', zkResult.boardHash);
-    } catch (err: any) {
-      console.error('[ZK] === PROOF FAILED ===');
-      console.error('[ZK] Error:', err.message);
+      try {
+        const zkResult = await boardValidity({ ships: shipTuples, nonce });
+        console.log('[ZK] === PROOF GENERATED ===');
+        console.log('[ZK] Proof size:', zkResult.proof.length, 'bytes');
+        console.log('[ZK] Board hash:', zkResult.boardHash);
+      } catch (err: any) {
+        console.error('[ZK] === PROOF FAILED ===');
+        console.error('[ZK] Error:', err.message);
+      }
+      console.log('[ZK] === BOARD VALIDITY PROOF END ===');
+    } else {
+      console.log('[ZK] Skipping proof (grid:', gridSize, 'ships:', state.playerShips.length, '— circuit supports 6x6 with 3 ships)');
     }
-    console.log('[ZK] === BOARD VALIDITY PROOF END ===');
     // --- End ZK ---
 
     dispatch({

@@ -110,6 +110,7 @@ export function ZKWebView() {
   );
 }
 
+/** Convert ShipTuples to NoirJS input format: tuple = JS array [val, val, ...] */
 function toNoirShips(
   ships: [
     [number, number, number, boolean],
@@ -117,12 +118,7 @@ function toNoirShips(
     [number, number, number, boolean],
   ],
 ) {
-  return ships.map(([r, c, s, h]) => ({
-    '0': String(r),
-    '1': String(c),
-    '2': String(s),
-    '3': h ? '1' : '0',
-  }));
+  return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
 
 /** WebView-based ZK provider */
