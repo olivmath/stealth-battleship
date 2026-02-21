@@ -18,14 +18,6 @@ export default function RootLayout() {
     Rajdhani_600SemiBold,
   });
 
-  if (!fontsLoaded) {
-    return (
-      <View style={styles.loading}>
-        <RadarSpinner size={60} />
-      </View>
-    );
-  }
-
   useEffect(() => {
     console.log('[ZK] Initializing ZK provider...');
     initZK(webViewZKProvider).then(() => {
@@ -34,6 +26,14 @@ export default function RootLayout() {
       console.error('[ZK] Provider init failed:', err);
     });
   }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loading}>
+        <RadarSpinner size={60} />
+      </View>
+    );
+  }
 
   return (
     <GameProvider>
