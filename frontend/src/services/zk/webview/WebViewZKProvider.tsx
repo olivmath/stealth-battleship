@@ -59,6 +59,12 @@ function handleMessage(event: WebViewMessageEvent) {
     return;
   }
 
+  // Forward WebView logs to RN console
+  if (data.id === 'log') {
+    console.log(`${TAG} [WebView]`, data.message);
+    return;
+  }
+
   if (data.id === 'init') {
     if (data.ok) {
       console.log(`${TAG} WebView initialized ✓`);

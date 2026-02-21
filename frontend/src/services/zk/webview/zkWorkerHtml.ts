@@ -3,8 +3,13 @@
  * Loads NoirJS + bb.js via CDN, generates proofs via postMessage protocol.
  *
  * Protocol:
- *   RN → WebView: { id, action: 'loadCircuit'|'generateProof', payload }
+ *   RN → WebView: { id, action: 'loadCircuit'|'generateProof'|'execute', payload }
  *   WebView → RN: { id, ok: true, ...result } | { id, ok: false, error }
+ *
+ * WASM Init Sequence:
+ *   1. Import acvm_js, noirc_abi, noir_js, bb.js modules
+ *   2. Call initACVM() and initNoirC() with WASM binaries (wasm-bindgen requirement)
+ *   3. Only then create Noir/UltraHonkBackend instances
  */
 export const ZK_WORKER_HTML = `
 <!DOCTYPE html>
@@ -15,8 +20,16 @@ export const ZK_WORKER_HTML = `
 </head>
 <body>
 <script type="module">
-  const NOIR_JS_URL = 'https://esm.sh/@noir-lang/noir_js@1.0.0-beta.18';
-  const BB_JS_URL = 'https://esm.sh/@aztec/bb.js@3.0.0-nightly.20251104';
+  const VERSION = '1.0.0-beta.18';
+  const BB_VERSION = '3.0.0-nightly.20251104';
+
+  const ACVM_JS_URL = 'https://esm.sh/@noir-lang/acvm_js@' + VERSION;
+  const NOIRC_ABI_URL = 'https://esm.sh/@noir-lang/noirc_abi@' + VERSION;
+  const NOIR_JS_URL = 'https://esm.sh/@noir-lang/noir_js@' + VERSION;
+  const BB_JS_URL = 'https://esm.sh/@aztec/bb.js@' + BB_VERSION;
+
+  const ACVM_WASM_URL = 'https://esm.sh/@noir-lang/acvm_js@' + VERSION + '/web/acvm_js_bg.wasm';
+  const NOIRC_WASM_URL = 'https://esm.sh/@noir-lang/noirc_abi@' + VERSION + '/web/noirc_abi_wasm_bg.wasm';
 
   let Noir, UltraHonkBackend;
   const circuits = {};
@@ -25,14 +38,55 @@ export const ZK_WORKER_HTML = `
     window.ReactNativeWebView.postMessage(JSON.stringify(msg));
   }
 
+  function log(msg) {
+    send({ id: 'log', ok: true, message: msg });
+  }
+
+  // iOS WKWebView fetch polyfill for .wasm files (MIME type workaround)
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, opts) {
+    if (typeof url === 'string' && url.endsWith('.wasm')) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = () => resolve(new Response(
+          xhr.response,
+          { headers: { 'Content-Type': 'application/wasm' } }
+        ));
+        xhr.onerror = () => reject(new Error('WASM fetch failed: ' + url));
+        xhr.send();
+      });
+    }
+    return originalFetch(url, opts);
+  };
+
   async function initialize() {
     try {
-      const [noirModule, bbModule] = await Promise.all([
+      log('Loading JS modules...');
+
+      // Step 1: Load all JS modules in parallel
+      const [acvmModule, noircModule, noirModule, bbModule] = await Promise.all([
+        import(ACVM_JS_URL),
+        import(NOIRC_ABI_URL),
         import(NOIR_JS_URL),
         import(BB_JS_URL),
       ]);
+
+      log('JS modules loaded. Initializing WASM...');
+
+      // Step 2: Initialize wasm-bindgen modules (MUST happen before using Noir)
+      await Promise.all([
+        acvmModule.default(fetch(ACVM_WASM_URL)),
+        noircModule.default(fetch(NOIRC_WASM_URL)),
+      ]);
+
+      log('WASM initialized.');
+
+      // Step 3: Assign classes — now safe to use
       Noir = noirModule.Noir;
       UltraHonkBackend = bbModule.UltraHonkBackend;
+
       send({ id: 'init', ok: true });
     } catch (err) {
       send({ id: 'init', ok: false, error: 'Init failed: ' + (err.message || err) });
@@ -63,7 +117,7 @@ export const ZK_WORKER_HTML = `
     try {
       parsed = JSON.parse(event.data);
     } catch {
-      return; // ignore non-JSON messages
+      return;
     }
 
     const { id, action, payload } = parsed;
