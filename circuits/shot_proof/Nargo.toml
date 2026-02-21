@@ -1,0 +1,6 @@
+[package]
+name = "shot_proof"
+type = "bin"
+authors = [""]
+
+[dependencies]
