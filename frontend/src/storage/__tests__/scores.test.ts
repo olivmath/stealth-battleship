@@ -193,7 +193,7 @@ describe('Settings', () => {
   });
 
   it('saves and retrieves settings', async () => {
-    const settings = { gridSize: 10 as const, battleView: 'swipe' as const, difficulty: 'hard' as const };
+    const settings = { gridSize: 6 as const, battleView: 'swipe' as const, difficulty: 'hard' as const };
     await saveSettings(settings);
     const result = await getSettings();
     expect(result).toEqual(settings);

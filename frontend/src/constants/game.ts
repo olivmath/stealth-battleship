@@ -8,14 +8,15 @@ export interface RankConfig {
   ships: ShipDefinition[];
 }
 
+// All ranks use 6x6 grid with 3 ships (ZK circuit constraint)
 export const RANK_PROGRESSION: RankConfig[] = [
   {
     rank: 'Recruit',
     gridSize: 6,
     ships: [
-      { id: 'scout-1', name: 'Scout', size: 1 },
-      { id: 'scout-2', name: 'Scout', size: 1 },
       { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
   {
@@ -29,44 +30,38 @@ export const RANK_PROGRESSION: RankConfig[] = [
   },
   {
     rank: 'Lieutenant',
-    gridSize: 8,
+    gridSize: 6,
     ships: [
       { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
       { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
-      { id: 'cruiser', name: 'Cruiser', size: 4 },
     ],
   },
   {
     rank: 'Commander',
-    gridSize: 8,
+    gridSize: 6,
     ships: [
       { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'destroyer-1', name: 'Destroyer', size: 3 },
-      { id: 'destroyer-2', name: 'Destroyer', size: 3 },
-      { id: 'cruiser', name: 'Cruiser', size: 4 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
   {
     rank: 'Captain',
-    gridSize: 10,
+    gridSize: 6,
     ships: [
       { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
-      { id: 'cruiser-1', name: 'Cruiser', size: 4 },
-      { id: 'cruiser-2', name: 'Cruiser', size: 4 },
-      { id: 'carrier', name: 'Carrier', size: 5 },
     ],
   },
   {
     rank: 'Admiral',
-    gridSize: 10,
+    gridSize: 6,
     ships: [
-      { id: 'destroyer', name: 'Destroyer', size: 2 },
-      { id: 'submarine', name: 'Submarine', size: 3 },
-      { id: 'cruiser', name: 'Cruiser', size: 3 },
-      { id: 'battleship', name: 'Battleship', size: 4 },
-      { id: 'carrier', name: 'Carrier', size: 5 },
+      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
 ];
@@ -102,8 +97,8 @@ export const CLASSIC_SHIPS: ShipDefinition[] = [
   { id: 'destroyer', name: 'Destroyer', size: 2 },
 ];
 
-export function getShipDefinitions(gridSize: GridSizeOption): ShipDefinition[] {
-  return gridSize === 10 ? CLASSIC_SHIPS : COMPACT_SHIPS;
+export function getShipDefinitions(_gridSize: GridSizeOption): ShipDefinition[] {
+  return COMPACT_SHIPS;
 }
 
 export function getColumnLabels(gridSize: GridSizeOption): string[] {

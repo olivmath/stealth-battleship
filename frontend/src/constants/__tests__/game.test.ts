@@ -36,13 +36,12 @@ describe('getShipDefinitionsForRank', () => {
   it('returns ships for Recruit', () => {
     const ships = getShipDefinitionsForRank('Recruit');
     expect(ships).toHaveLength(3);
-    expect(ships[0].name).toBe('Scout');
+    expect(ships[0].name).toBe('Patrol Boat');
   });
 
-  it('returns ships for Admiral', () => {
+  it('returns 3 ships for Admiral', () => {
     const ships = getShipDefinitionsForRank('Admiral');
-    expect(ships).toHaveLength(5);
-    expect(ships.some(s => s.name === 'Carrier')).toBe(true);
+    expect(ships).toHaveLength(3);
   });
 
   it('returns Recruit ships for unknown rank', () => {
@@ -54,24 +53,13 @@ describe('getShipDefinitionsForRank', () => {
 // --- getGridSizeForRank ---
 
 describe('getGridSizeForRank', () => {
-  it('returns 6 for Recruit', () => {
+  it('returns 6 for all ranks', () => {
     expect(getGridSizeForRank('Recruit')).toBe(6);
-  });
-
-  it('returns 6 for Ensign', () => {
     expect(getGridSizeForRank('Ensign')).toBe(6);
-  });
-
-  it('returns 8 for Lieutenant', () => {
-    expect(getGridSizeForRank('Lieutenant')).toBe(8);
-  });
-
-  it('returns 10 for Captain', () => {
-    expect(getGridSizeForRank('Captain')).toBe(10);
-  });
-
-  it('returns 10 for Admiral', () => {
-    expect(getGridSizeForRank('Admiral')).toBe(10);
+    expect(getGridSizeForRank('Lieutenant')).toBe(6);
+    expect(getGridSizeForRank('Commander')).toBe(6);
+    expect(getGridSizeForRank('Captain')).toBe(6);
+    expect(getGridSizeForRank('Admiral')).toBe(6);
   });
 });
 
@@ -80,14 +68,6 @@ describe('getGridSizeForRank', () => {
 describe('getShipDefinitions', () => {
   it('returns compact ships for gridSize 6', () => {
     expect(getShipDefinitions(6)).toBe(COMPACT_SHIPS);
-  });
-
-  it('returns classic ships for gridSize 10', () => {
-    expect(getShipDefinitions(10)).toBe(CLASSIC_SHIPS);
-  });
-
-  it('returns compact ships for gridSize 8', () => {
-    expect(getShipDefinitions(8)).toBe(COMPACT_SHIPS);
   });
 });
 
@@ -98,19 +78,6 @@ describe('getColumnLabels', () => {
     const labels = getColumnLabels(6);
     expect(labels).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
   });
-
-  it('returns 10 labels for gridSize 10', () => {
-    const labels = getColumnLabels(10);
-    expect(labels).toHaveLength(10);
-    expect(labels[0]).toBe('A');
-    expect(labels[9]).toBe('J');
-  });
-
-  it('returns 8 labels for gridSize 8', () => {
-    const labels = getColumnLabels(8);
-    expect(labels).toHaveLength(8);
-    expect(labels[7]).toBe('H');
-  });
 });
 
 // --- getRowLabels ---
@@ -119,13 +86,6 @@ describe('getRowLabels', () => {
   it('returns 6 numeric labels for gridSize 6', () => {
     const labels = getRowLabels(6);
     expect(labels).toEqual(['1', '2', '3', '4', '5', '6']);
-  });
-
-  it('returns 10 labels for gridSize 10', () => {
-    const labels = getRowLabels(10);
-    expect(labels).toHaveLength(10);
-    expect(labels[0]).toBe('1');
-    expect(labels[9]).toBe('10');
   });
 });
 
