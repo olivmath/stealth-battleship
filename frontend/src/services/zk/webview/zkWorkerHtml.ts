@@ -45,6 +45,12 @@ export const ZK_WORKER_HTML = `
     circuits[name] = { noir, backend };
   }
 
+  async function executeOnly(name, inputs) {
+    const { noir } = circuits[name];
+    const { witness, returnValue } = await noir.execute(inputs);
+    return { witness, returnValue };
+  }
+
   async function generateProof(name, inputs) {
     const { noir, backend } = circuits[name];
     const { witness } = await noir.execute(inputs);
@@ -68,6 +74,9 @@ export const ZK_WORKER_HTML = `
       if (action === 'loadCircuit') {
         await loadCircuit(payload.name, payload.circuit);
         result = { ok: true };
+      } else if (action === 'execute') {
+        const { witness, returnValue } = await executeOnly(payload.name, payload.inputs);
+        result = { ok: true, returnValue };
       } else if (action === 'generateProof') {
         const proof = await generateProof(payload.name, payload.inputs);
         result = {

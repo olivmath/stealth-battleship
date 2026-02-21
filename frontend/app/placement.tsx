@@ -25,6 +25,8 @@ import { ShipDefinition, Orientation, Position, GridSizeOption } from '../src/ty
 import { calculatePositions, validatePlacement, autoPlaceShips } from '../src/engine/shipPlacement';
 import { createEmptyBoard } from '../src/engine/board';
 import { computeBoardCommitment } from '../src/engine/crypto';
+import { boardValidity } from '../src/services/zk';
+import type { ShipTuple } from '../src/services/zk';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
@@ -210,6 +212,37 @@ export default function PlacementScreen() {
     if (!aiResult) return;
 
     const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
+
+    // --- ZK: Generate board_validity proof ---
+    console.log('[ZK] === BOARD VALIDITY PROOF START ===');
+    console.log('[ZK] Player ships:', state.playerShips.map(s => ({
+      id: s.id, size: s.size, orientation: s.orientation,
+      positions: s.positions,
+    })));
+
+    // Convert PlacedShip[] to ShipTuple[] for circuit
+    const shipTuples = state.playerShips.map((s): ShipTuple => {
+      const row = s.positions[0].row;
+      const col = s.positions[0].col;
+      const horizontal = s.orientation === 'horizontal';
+      return [row, col, s.size, horizontal];
+    }) as [ShipTuple, ShipTuple, ShipTuple];
+
+    const nonce = String(Math.floor(Math.random() * 1000000));
+    console.log('[ZK] Ship tuples:', shipTuples);
+    console.log('[ZK] Nonce:', nonce);
+
+    try {
+      const zkResult = await boardValidity({ ships: shipTuples, nonce });
+      console.log('[ZK] === PROOF GENERATED ===');
+      console.log('[ZK] Proof size:', zkResult.proof.length, 'bytes');
+      console.log('[ZK] Board hash:', zkResult.boardHash);
+    } catch (err: any) {
+      console.error('[ZK] === PROOF FAILED ===');
+      console.error('[ZK] Error:', err.message);
+    }
+    console.log('[ZK] === BOARD VALIDITY PROOF END ===');
+    // --- End ZK ---
 
     dispatch({
       type: 'START_GAME',

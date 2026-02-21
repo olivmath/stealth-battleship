@@ -1,5 +1,5 @@
 import '../src/i18n';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Orbitron_400Regular, Orbitron_700Bold } from '@expo-google-fonts/orbitron';
@@ -8,6 +8,7 @@ import { View, StyleSheet } from 'react-native';
 import { GameProvider } from '../src/context/GameContext';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { COLORS } from '../src/constants/theme';
+import { ZKWebView, initZK, webViewZKProvider } from '../src/services/zk';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -25,8 +26,18 @@ export default function RootLayout() {
     );
   }
 
+  useEffect(() => {
+    console.log('[ZK] Initializing ZK provider...');
+    initZK(webViewZKProvider).then(() => {
+      console.log('[ZK] Provider ready ✓');
+    }).catch((err) => {
+      console.error('[ZK] Provider init failed:', err);
+    });
+  }, []);
+
   return (
     <GameProvider>
+      <ZKWebView />
       <StatusBar style="light" />
       <Stack
         screenOptions={{
