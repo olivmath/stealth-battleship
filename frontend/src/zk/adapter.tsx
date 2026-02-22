@@ -9,12 +9,30 @@ import type {
   ShotProofResult,
   TurnsProofInput,
   TurnsProofResult,
+  ShipTuples,
   OnProgressCallback,
 } from './entities';
+import { MAX_ATTACKS } from './entities';
 import { ZK_WORKER_HTML } from './zkWorkerHtml';
 
 import boardValidityCircuit from './circuits/board_validity.json';
 import hashHelperCircuit from './circuits/hash_helper.json';
+import shotProofCircuit from './circuits/shot_proof.json';
+import turnsProofCircuit from './circuits/turns_proof.json';
+
+// ─── Shared helpers ─────────────────────────────────────────────────
+
+function toNoirShips(ships: ShipTuples) {
+  return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
+}
+
+function padAttacks(attacks: [number, number][]): [string, string][] {
+  const padded: [string, string][] = attacks.map(([r, c]) => [String(r), String(c)]);
+  while (padded.length < MAX_ATTACKS) {
+    padded.push(['0', '0']);
+  }
+  return padded;
+}
 
 // ─── Server ZK Provider ──────────────────────────────────────────────
 
@@ -52,27 +70,16 @@ export class ServerZKProvider implements ZKProvider {
     }
   }
 
-  async boardValidity(
-    input: BoardValidityInput,
-    onProgress?: OnProgressCallback,
-  ): Promise<BoardValidityResult> {
-    console.log(`${SERVER_TAG} ${info('━━━ boardValidity() ━━━')}`);
-    console.log(`${SERVER_TAG} ${label('Ships')}: ${JSON.stringify(input.ships)}`);
-    console.log(`${SERVER_TAG} ${label('Nonce')}: ${input.nonce}`);
-
+  private async postProof<T>(endpoint: string, body: object, onProgress?: OnProgressCallback): Promise<T> {
     onProgress?.('Sending to proof server...');
     const t0 = Date.now();
-
-    const url = `${this.baseUrl}/api/prove/board-validity`;
+    const url = `${this.baseUrl}${endpoint}`;
     console.log(`${SERVER_TAG} ${info('POST')} ${dim(url)}`);
 
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ships: input.ships,
-        nonce: input.nonce,
-      }),
+      body: JSON.stringify(body),
     });
 
     const elapsed = Date.now() - t0;
@@ -85,29 +92,84 @@ export class ServerZKProvider implements ZKProvider {
       throw new Error(`Server proof failed: ${errData.error || errData.details || res.statusText}`);
     }
 
-    const data = await res.json();
-    const proofBytes = new Uint8Array(data.proof);
-
-    console.log(`${SERVER_TAG} ${ok('✓ Proof received')}`);
-    console.log(`${SERVER_TAG} ${label('Proof size')}: ${proofBytes.length} bytes`);
-    console.log(`${SERVER_TAG} ${label('Board hash')}: ${info(data.boardHash)}`);
-    console.log(`${SERVER_TAG} ${label('Total time')}: ${time(`${elapsed}ms`)}`);
-    console.log(`${SERVER_TAG} ${info('━━━━━━━━━━━━━━━━━━━━━━━')}`);
-
     onProgress?.('Proof generated!');
-
-    return {
-      proof: proofBytes,
-      boardHash: data.boardHash,
-    };
+    return res.json();
   }
 
-  async shotProof(_input: ShotProofInput): Promise<ShotProofResult> {
-    throw new Error('shotProof not implemented on server yet');
+  async boardValidity(
+    input: BoardValidityInput,
+    onProgress?: OnProgressCallback,
+  ): Promise<BoardValidityResult> {
+    console.log(`${SERVER_TAG} ${info('━━━ boardValidity() ━━━')}`);
+    console.log(`${SERVER_TAG} ${label('Ships')}: ${JSON.stringify(input.ships)}`);
+    console.log(`${SERVER_TAG} ${label('Nonce')}: ${input.nonce}`);
+
+    const data = await this.postProof<{ proof: number[]; boardHash: string }>(
+      '/api/prove/board-validity',
+      { ships: input.ships, nonce: input.nonce },
+      onProgress,
+    );
+
+    const proofBytes = new Uint8Array(data.proof);
+    console.log(`${SERVER_TAG} ${ok('✓ Proof received')} — ${label('size')}: ${proofBytes.length} bytes, ${label('hash')}: ${info(data.boardHash)}`);
+    return { proof: proofBytes, boardHash: data.boardHash };
   }
 
-  async turnsProof(_input: TurnsProofInput): Promise<TurnsProofResult> {
-    throw new Error('turnsProof not implemented on server yet');
+  async shotProof(
+    input: ShotProofInput,
+    onProgress?: OnProgressCallback,
+  ): Promise<ShotProofResult> {
+    console.log(`${SERVER_TAG} ${info('━━━ shotProof() ━━━')}`);
+    console.log(`${SERVER_TAG} ${label('Shot')}: (${input.row}, ${input.col}) isHit=${input.isHit}`);
+
+    const data = await this.postProof<{ proof: number[] }>(
+      '/api/prove/shot-proof',
+      {
+        ships: input.ships,
+        nonce: input.nonce,
+        boardHash: input.boardHash,
+        row: input.row,
+        col: input.col,
+        isHit: input.isHit,
+      },
+      onProgress,
+    );
+
+    const proofBytes = new Uint8Array(data.proof);
+    console.log(`${SERVER_TAG} ${ok('✓ Proof received')} — ${label('size')}: ${proofBytes.length} bytes`);
+    return { proof: proofBytes, isHit: input.isHit };
+  }
+
+  async turnsProof(
+    input: TurnsProofInput,
+    onProgress?: OnProgressCallback,
+  ): Promise<TurnsProofResult> {
+    console.log(`${SERVER_TAG} ${info('━━━ turnsProof() ━━━')}`);
+    console.log(`${SERVER_TAG} ${label('Winner')}: ${input.winner === 0 ? 'player' : 'AI'}`);
+    console.log(`${SERVER_TAG} ${label('Attacks')}: player=${input.attacksPlayer.length}, AI=${input.attacksAI.length}`);
+
+    const data = await this.postProof<{ proof: number[] }>(
+      '/api/prove/turns-proof',
+      {
+        shipsPlayer: input.shipsPlayer,
+        shipsAi: input.shipsAI,
+        noncePlayer: input.noncePlayer,
+        nonceAi: input.nonceAI,
+        boardHashPlayer: input.boardHashPlayer,
+        boardHashAi: input.boardHashAI,
+        attacksPlayer: input.attacksPlayer,
+        attacksAi: input.attacksAI,
+        nAttacksPlayer: input.attacksPlayer.length,
+        nAttacksAi: input.attacksAI.length,
+        shipSizes: input.shipSizes,
+        winner: input.winner,
+      },
+      onProgress,
+    );
+
+    const proofBytes = new Uint8Array(data.proof);
+    console.log(`${SERVER_TAG} ${ok('✓ Proof received')} — ${label('size')}: ${proofBytes.length} bytes`);
+    return { proof: proofBytes, winner: input.winner };
   }
 
   destroy(): void {
@@ -212,37 +274,20 @@ export function ZKWebView() {
   );
 }
 
-/** Convert ShipTuples to NoirJS input format */
-function toNoirShips(
-  ships: [
-    [number, number, number, boolean],
-    [number, number, number, boolean],
-    [number, number, number, boolean],
-  ],
-) {
-  return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
-}
-
-/** Print a 6x6 board matrix from ship tuples */
-function logBoardMatrix(
-  ships: [
-    [number, number, number, boolean],
-    [number, number, number, boolean],
-    [number, number, number, boolean],
-  ],
-) {
-  const grid: number[][] = Array.from({ length: 6 }, () => Array(6).fill(0));
+/** Print a 10x10 board matrix from ship tuples */
+function logBoardMatrix(ships: ShipTuples) {
+  const grid: number[][] = Array.from({ length: 10 }, () => Array(10).fill(0));
   for (const [row, col, size, horizontal] of ships) {
     for (let i = 0; i < size; i++) {
       const r = horizontal ? row : row + i;
       const c = horizontal ? col + i : col;
-      if (r < 6 && c < 6) grid[r][c] = 1;
+      if (r < 10 && c < 10) grid[r][c] = 1;
     }
   }
   console.log(`${WV_TAG}   Board matrix (1=ship, 0=water):`);
-  console.log(`${WV_TAG}     A B C D E F`);
+  console.log(`${WV_TAG}     A B C D E F G H I J`);
   grid.forEach((row, i) => {
-    console.log(`${WV_TAG}   ${i + 1} ${row.join(' ')}`);
+    console.log(`${WV_TAG}   ${String(i + 1).padStart(2)} ${row.join(' ')}`);
   });
 }
 
@@ -257,6 +302,8 @@ export const webViewZKProvider: ZKProvider = {
     await Promise.all([
       sendToWebView('loadCircuit', { name: 'hash_helper', circuit: hashHelperCircuit }),
       sendToWebView('loadCircuit', { name: 'board_validity', circuit: boardValidityCircuit }),
+      sendToWebView('loadCircuit', { name: 'shot_proof', circuit: shotProofCircuit }),
+      sendToWebView('loadCircuit', { name: 'turns_proof', circuit: turnsProofCircuit }),
     ]);
     console.log(`${WV_TAG} Circuits loaded (${Date.now() - t0}ms)`);
   },
@@ -285,35 +332,84 @@ export const webViewZKProvider: ZKProvider = {
     console.log(`${WV_TAG}   [2/2] Generating board_validity proof...`);
     const t1 = Date.now();
 
-    const circuitInput = {
-      ships,
-      nonce: input.nonce,
-      board_hash: boardHash,
-      ship_sizes: shipSizes,
-    };
-
     const result = await sendToWebView('executeAndProve', {
       name: 'board_validity',
-      inputs: circuitInput,
+      inputs: {
+        ships,
+        nonce: input.nonce,
+        board_hash: boardHash,
+        ship_sizes: shipSizes,
+      },
     });
 
-    const elapsed = Date.now() - t1;
     const proofBytes = new Uint8Array(result.proof);
-    console.log(`${WV_TAG}   [2/2] Proof generated! (${elapsed}ms)`);
-    console.log(`${WV_TAG}   Proof size: ${proofBytes.length} bytes`);
+    console.log(`${WV_TAG}   [2/2] Proof generated! (${Date.now() - t1}ms) — ${proofBytes.length} bytes`);
 
-    return {
-      proof: proofBytes,
-      boardHash,
-    };
+    return { proof: proofBytes, boardHash };
   },
 
-  async shotProof(_input: ShotProofInput): Promise<ShotProofResult> {
-    throw new Error('shotProof not implemented yet');
+  async shotProof(input: ShotProofInput, onProgress?: OnProgressCallback): Promise<ShotProofResult> {
+    console.log(`${WV_TAG} shotProof() called`);
+    console.log(`${WV_TAG}   shot: (${input.row}, ${input.col}) isHit=${input.isHit}`);
+    logBoardMatrix(input.ships);
+
+    const ships = toNoirShips(input.ships);
+
+    onProgress?.('Generating shot proof...');
+    console.log(`${WV_TAG}   Generating shot_proof...`);
+    const t0 = Date.now();
+
+    const result = await sendToWebView('executeAndProve', {
+      name: 'shot_proof',
+      inputs: {
+        ships,
+        nonce: input.nonce,
+        board_hash: input.boardHash,
+        row: String(input.row),
+        col: String(input.col),
+        is_hit: input.isHit,
+      },
+    });
+
+    const proofBytes = new Uint8Array(result.proof);
+    console.log(`${WV_TAG}   Proof generated! (${Date.now() - t0}ms) — ${proofBytes.length} bytes`);
+
+    onProgress?.('Proof generated!');
+    return { proof: proofBytes, isHit: input.isHit };
   },
 
-  async turnsProof(_input: TurnsProofInput): Promise<TurnsProofResult> {
-    throw new Error('turnsProof not implemented yet');
+  async turnsProof(input: TurnsProofInput, onProgress?: OnProgressCallback): Promise<TurnsProofResult> {
+    console.log(`${WV_TAG} turnsProof() called`);
+    console.log(`${WV_TAG}   winner: ${input.winner === 0 ? 'player' : 'AI'}`);
+    console.log(`${WV_TAG}   attacks: player=${input.attacksPlayer.length}, AI=${input.attacksAI.length}`);
+
+    onProgress?.('Generating game result proof...');
+    console.log(`${WV_TAG}   Generating turns_proof...`);
+    const t0 = Date.now();
+
+    const result = await sendToWebView('executeAndProve', {
+      name: 'turns_proof',
+      inputs: {
+        ships_player: toNoirShips(input.shipsPlayer),
+        ships_ai: toNoirShips(input.shipsAI),
+        nonce_player: input.noncePlayer,
+        nonce_ai: input.nonceAI,
+        board_hash_player: input.boardHashPlayer,
+        board_hash_ai: input.boardHashAI,
+        attacks_player: padAttacks(input.attacksPlayer),
+        attacks_ai: padAttacks(input.attacksAI),
+        n_attacks_player: String(input.attacksPlayer.length),
+        n_attacks_ai: String(input.attacksAI.length),
+        ship_sizes: input.shipSizes.map(String),
+        winner: String(input.winner),
+      },
+    });
+
+    const proofBytes = new Uint8Array(result.proof);
+    console.log(`${WV_TAG}   Proof generated! (${Date.now() - t0}ms) — ${proofBytes.length} bytes`);
+
+    onProgress?.('Proof generated!');
+    return { proof: proofBytes, winner: input.winner };
   },
 
   destroy() {

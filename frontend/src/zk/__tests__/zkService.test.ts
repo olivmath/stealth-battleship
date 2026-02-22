@@ -1,5 +1,13 @@
-import { ZKProvider, BoardValidityInput, BoardValidityResult, ShotProofInput, ShotProofResult, TurnsProofInput, TurnsProofResult } from '../entities';
+import { ZKProvider, BoardValidityInput, BoardValidityResult, ShotProofInput, ShotProofResult, TurnsProofInput, TurnsProofResult, ShipTuples } from '../entities';
 import { initZK, boardValidity, shotProof, turnsProof } from '../interactor';
+
+const fiveShips: ShipTuples = [
+  [0, 0, 5, true],
+  [2, 0, 4, true],
+  [4, 0, 3, true],
+  [6, 0, 3, true],
+  [8, 0, 2, true],
+];
 
 describe('ZKService', () => {
   let mockProvider: jest.Mocked<ZKProvider>;
@@ -12,7 +20,6 @@ describe('ZKService', () => {
       turnsProof: jest.fn(),
       destroy: jest.fn(),
     };
-    // Initialize ZKService with our mock provider
     initZK(mockProvider);
   });
 
@@ -26,7 +33,7 @@ describe('ZKService', () => {
 
   describe('boardValidity', () => {
     const mockInput: BoardValidityInput = {
-      ships: [[1, 1, 2, true], [3, 3, 3, false], [5, 5, 4, true]],
+      ships: fiveShips,
       nonce: '123',
     };
     const mockResult: BoardValidityResult = {
@@ -54,7 +61,7 @@ describe('ZKService', () => {
 
   describe('shotProof', () => {
     const mockInput: ShotProofInput = {
-      ships: [[1, 1, 2, true], [3, 3, 3, false], [5, 5, 4, true]],
+      ships: fiveShips,
       nonce: '123',
       boardHash: '0xabc',
       row: 0,
@@ -86,15 +93,15 @@ describe('ZKService', () => {
 
   describe('turnsProof', () => {
     const mockInput: TurnsProofInput = {
-      shipsPlayer: [[1, 1, 2, true], [3, 3, 3, false], [5, 5, 4, true]],
-      shipsAI: [[0, 0, 2, true], [2, 2, 3, false], [4, 4, 4, true]],
+      shipsPlayer: fiveShips,
+      shipsAI: [[0, 5, 5, true], [2, 5, 4, true], [4, 5, 3, true], [6, 5, 3, true], [8, 5, 2, true]],
       noncePlayer: '123',
       nonceAI: '456',
       boardHashPlayer: '0xabc',
       boardHashAI: '0xdef',
-      attacksPlayer: [[0,0]],
-      attacksAI: [[1,1]],
-      shipSizes: [2, 3, 4],
+      attacksPlayer: [[0, 0]],
+      attacksAI: [[1, 1]],
+      shipSizes: [5, 4, 3, 3, 2],
       winner: 0,
     };
     const mockResult: TurnsProofResult = {

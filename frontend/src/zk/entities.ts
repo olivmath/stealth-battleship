@@ -1,9 +1,15 @@
 /** Ship tuple matching Noir circuit format: (row, col, size, horizontal) */
 export type ShipTuple = [number, number, number, boolean];
 
+/** 5 classic ships for 10x10 grid */
+export type ShipTuples = [ShipTuple, ShipTuple, ShipTuple, ShipTuple, ShipTuple];
+
+/** Max attacks = 10x10 grid */
+export const MAX_ATTACKS = 100;
+
 /** Input for board_validity circuit */
 export interface BoardValidityInput {
-  ships: [ShipTuple, ShipTuple, ShipTuple];
+  ships: ShipTuples;
   nonce: string; // Field as decimal string
 }
 
@@ -15,7 +21,7 @@ export interface BoardValidityResult {
 
 /** Input for shot_proof circuit */
 export interface ShotProofInput {
-  ships: [ShipTuple, ShipTuple, ShipTuple];
+  ships: ShipTuples;
   nonce: string;
   boardHash: string;
   row: number;
@@ -31,15 +37,15 @@ export interface ShotProofResult {
 
 /** Input for turns_proof circuit */
 export interface TurnsProofInput {
-  shipsPlayer: [ShipTuple, ShipTuple, ShipTuple];
-  shipsAI: [ShipTuple, ShipTuple, ShipTuple];
+  shipsPlayer: ShipTuples;
+  shipsAI: ShipTuples;
   noncePlayer: string;
   nonceAI: string;
   boardHashPlayer: string;
   boardHashAI: string;
   attacksPlayer: [number, number][];
   attacksAI: [number, number][];
-  shipSizes: [number, number, number];
+  shipSizes: [number, number, number, number, number];
   winner: 0 | 1;
 }
 
