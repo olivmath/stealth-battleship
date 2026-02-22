@@ -1,0 +1,229 @@
+# Guia de Cenas — Battleship ZK Trailer
+
+Leia como uma historia. Cada cena descreve o que voce ve, ouve e sente.
+Os tempos entre colchetes sao o relogio global do video.
+
+---
+
+## CENA 1 — Hook Cinematico [0:00 — 0:20]
+
+Tela preta. Silencio total. Voce so ouve uma onda distante e um unico ping de sonar.
+
+Depois de 3 segundos, imagens de oceano escuro e nublado aparecem em camera lenta. Um navio de guerra emerge da neblina visto de cima. Particulas verdes de sonar pulsam sobre a agua como um radar vivo. Uma musica grave e tensa comeca, estilo Dunkirk.
+
+Aos 8 segundos, sobre a imagem do casco do navio cortando ondas, aparece a frase:
+
+    "In war, information is power."
+
+O texto treme como um sinal de radar instavel — efeito glitch.
+
+Aos 13 segundos a frase some e uma nova entra com o mesmo efeito:
+
+    "But what if you could prove...
+     without revealing?"
+
+Aos 17 segundos a imagem escurece e o logo BATTLESHIP ZK emerge do centro com um brilho dourado. Abaixo: "Trustless Naval Warfare on Stellar". Dois pings de sonar marcam o momento.
+
+Narracao (voiceover, sem rosto):
+"In war... information is power. But what if you could prove your strategy... without revealing it?"
+
+---
+
+## CENA 2 — O Problema [0:20 — 0:35]
+
+A tela se divide em dois lados com um slide horizontal.
+
+Lado esquerdo — borda vermelha pulsando — mostra "TRADITIONAL BATTLESHIP" com um icone de olho e dois boards visiveis. Texto: "Server sees everything".
+
+Lado direito — borda verde solida — mostra "BATTLESHIP ZK" com um cadeado e dois boards com "???". Texto: "No one sees your board".
+
+Neste momento o rosto do apresentador aparece num quadradinho no canto inferior direito (PiP).
+
+Aos 28 segundos o lado esquerdo explode — fragmentos se desintegram como um navio atingido. O lado direito fica intacto e brilha mais verde.
+
+Aos 30 segundos o lado direito se expande para tela inteira com a frase centralizada:
+
+    "Zero Knowledge. Full Privacy."
+
+Narracao (PiP):
+"In regular digital Battleship, someone always sees both boards — a server, a smart contract, or an end-game reveal. With ZK proofs — no one ever sees your board."
+
+---
+
+## CENA 3A — Proof 1: Board Validity [0:35 — 0:50]
+
+Texto "PROOF 1 — Board Validity" aparece com efeito de escala. Subtitulo: "Prove your board is legal".
+
+No fundo, imagens suaves de tripulacao preparando equipamentos num navio (40% de opacidade).
+
+No centro aparece um grid 6x6. Os navios surgem um a um com animacao de snap:
+- Patrol Boat (2 celulas) — snap
+- Patrol Boat (2 celulas) — snap
+- Destroyer (3 celulas) — snap
+
+Depois numeros hexadecimais fluem dos navios como particulas, convergem para o centro e formam um hash Poseidon: "0x7a3f...b2c1".
+
+Ao lado aparecem dois badges:
+- Cadeado: "Private: ship positions"
+- Globo: "Public: board_hash only"
+
+O grid se miniaturiza e um badge desliza de baixo: "Verified on-chain via Soroban UltraHonk". Som de tranca.
+
+Narracao (PiP):
+"When you place your ships, a ZK proof guarantees your board is valid — correct sizes, no overlaps, within bounds — without revealing where anything is. The board is Poseidon-hashed and committed on-chain."
+
+---
+
+## CENA 3B — Proof 2: Shot Proof [0:50 — 1:05]
+
+Texto "PROOF 2 — Shot Proof" aparece. Subtitulo: "Prove every hit/miss is honest".
+
+Um grid 6x6 aparece no centro. Uma mira animada (crosshair) se move ate a celula [3,4]. Som de targeting. A mira trava e brilha.
+
+Corte rapido: 2 segundos de explosao naval — torpedo atinge casco, agua explode, camera chacoalha.
+
+Volta pro grid. A celula [3,4] acende laranja. Texto grande: "HIT!" com brilho de fogo.
+
+Abaixo, formula aparece como typewriter:
+
+    is_hit == (board[3][4] == 1) ✓
+
+Badge: "board_hash matches committed hash ✓"
+
+Frase final em destaque:
+
+    "Lying is mathematically impossible."
+
+Badge: "Generated every turn | ~1-2s"
+
+Narracao (PiP):
+"Every time you receive a shot, a proof confirms whether it's a hit or miss — verified against your committed board hash. Lying is mathematically impossible."
+
+---
+
+## CENA 3C — Proof 3: Turns Proof [1:05 — 1:20]
+
+Texto "PROOF 3 — Turns Proof" aparece. Subtitulo: "Prove the entire game was fair".
+
+No fundo, imagem de navio afundando em camera lenta (50% opacidade). Dramatico.
+
+Sobre a imagem, dois grids lado a lado (Player A e Player B). Um replay animado mostra os tiros aparecendo em sequencia rapida nos dois grids — vermelho = hit, azul = miss. Como um fast-forward de uma partida inteira em 3 segundos.
+
+O replay congela. Um trofeu dourado emerge no centro entre os grids com brilho e som de conquista.
+
+Texto: "Winner computed IN the proof"
+
+Badge grande no final:
+
+    "The circuit IS the referee."
+    "Settles on-chain → escrow released"
+
+Narracao (PiP):
+"At game end, the entire sequence is replayed inside a circuit. The winner is computed in the proof itself. The circuit is the referee."
+
+---
+
+## CENA 4 — Demo do Jogo [1:20 — 1:50]
+
+Tela preta. Texto aparece como typewriter dourado:
+
+    "Let me show you."
+
+Um ping de sonar marca o inicio da demo.
+
+A partir daqui, uma gravacao de tela do app ocupa o centro da tela dentro de um frame de celular. Em cada fase da demo, um overlay label aparece no canto superior direito explicando o que esta acontecendo:
+
+[1:22 — 1:27] Placement — jogador arrasta navios.
+Label: "Ship Placement — drag & drop"
+
+[1:27 — 1:31] Tap no botao Ready. Loading com RadarSpinner.
+Label: "board_validity proof generating — NoirJS + bb.js (client-side WASM)"
+
+[1:31 — 1:34] Deploying to blockchain.
+Label: "Soroban TX 1: open_match() — Board hash committed on Stellar"
+
+[1:34 — 1:39] Tela de batalha. Jogador toca celula pra atacar.
+Label: "Player attacks — opponent proves response"
+
+[1:39 — 1:43] Resultado HIT com animacao de fogo.
+Label: "shot_proof verified — result honest"
+
+[1:43 — 1:48] Game over — "Victory!" com XP e rank.
+Label: "turns_proof → Soroban TX 2: close() — Winner settled. Escrow released."
+
+[1:48 — 1:50] Zoom-out do celular. App se miniaturiza, fundo navy retorna.
+
+Narracao (PiP):
+"Let me show you. Here I'm placing ships... tap Ready... the board validity proof generates client-side... Board hash committed on Stellar... Battle begins — I tap to attack, the opponent's proof confirms the result... Hit! And when the game ends — turns proof settles everything on-chain. Two transactions total."
+
+---
+
+## CENA 5 — Arquitetura + Stellar [1:50 — 2:10]
+
+Um diagrama aparece camada por camada com animacao de slide.
+
+Primeiro o topo — PLAYER DEVICE: "Noir Circuits (WASM) + Game Engine + React Native / Expo". Caixa com borda branca e glow.
+
+Depois duas setas: "proofs ↓" (teal) e "↓ real-time turns" (laranja).
+
+Dois blocos na base aparecem simultaneamente:
+
+STELLAR (Soroban) — caixa azul:
+- TX 1: open_match
+- TX 2: close_match
+- Escrow lock/release
+
+CONVEX (off-chain) — caixa roxa:
+- Matchmaking
+- Turn coordination
+- shot_proof verification
+- ~ms latency
+
+As linhas conectoras pulsam como pontilhado animado.
+
+Aos 1:58 o bloco Stellar ganha destaque com borda dourada pulsando:
+
+    PROTOCOL 25 (X-RAY)
+    → Native BN254 curve operations
+    → Native Poseidon2 hash function
+    = The EXACT primitives our circuits use
+
+Badge central desliza:
+
+    "Only 2 on-chain transactions per game"
+    open_match() ———— gameplay ———— close()
+
+O diagrama todo faz fade suave.
+
+Narracao (PiP):
+"The architecture is hybrid. On-chain: just two Soroban transactions per game — open and close. Off-chain: Convex handles real-time turns with millisecond latency. We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use."
+
+---
+
+## CENA 6 — Encerramento [2:10 — 2:30]
+
+Imagens de frota naval ao por-do-sol. Wide shot epico. Luz dourada. Silhuetas de navios. A musica resolve — sai da tensao, acorde maior. Ondas suaves.
+
+A imagem faz fade para fundo navy escuro. O logo BATTLESHIP ZK aparece grande no centro com escala e brilho dourado. Ping de sonar.
+
+Abaixo do logo, o tagline aparece letra por letra:
+
+    "Fair by math. Fun by design."
+
+O cursor pisca duas vezes e para.
+
+Links aparecem em fade:
+
+    github.com/olivmath/battleship-zk
+    Stellar Testnet | Noir + UltraHonk
+
+Logos dos parceiros se alinham na base: Stellar, Noir, Convex.
+
+Texto final pequeno: "Built for Stellar Hacks 2026"
+
+A musica sustenta o ultimo acorde e faz fade. Um ping de sonar final. Silencio. Tela preta.
+
+Narracao (voiceover, sem rosto):
+"Battleship ZK. Fair by math. Fun by design."
+
+Os ultimos 5 segundos sao so musica e logo.
