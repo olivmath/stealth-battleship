@@ -5,8 +5,8 @@ import { c } from '../log.js';
 
 export interface TurnsProofPort {
   generateProof(
-    shipsPlayer: [ShipTuple, ShipTuple, ShipTuple],
-    shipsAi: [ShipTuple, ShipTuple, ShipTuple],
+    shipsPlayer: ShipTuple[],
+    shipsAi: ShipTuple[],
     noncePlayer: string,
     nonceAi: string,
     boardHashPlayer: string,
@@ -15,7 +15,7 @@ export interface TurnsProofPort {
     attacksAi: AttackTuple[],
     nAttacksPlayer: number,
     nAttacksAi: number,
-    shipSizes: [number, number, number],
+    shipSizes: number[],
     winner: number,
   ): Promise<{ proof: Uint8Array; publicInputs: string[] }>;
 }

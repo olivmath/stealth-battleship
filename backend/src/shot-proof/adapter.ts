@@ -5,7 +5,7 @@ import { getCircuit } from '../shared/circuits.js';
 import { c } from '../log.js';
 import type { ShotProofPort } from './interactor.js';
 
-function toNoirShips(ships: [ShipTuple, ShipTuple, ShipTuple]) {
+function toNoirShips(ships: ShipTuple[]) {
   return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
 

@@ -1,12 +1,16 @@
 // Entity layer — pure types + validation (zero external deps)
 
+export const GRID_SIZE = 10;
+export const NUM_SHIPS = 5;
+export const MAX_ATTACKS = GRID_SIZE * GRID_SIZE; // 100
+
 export type ShipTuple = [number, number, number, boolean];
 export type AttackTuple = [number, number];
 
 // ─── Board Validity ───
 
 export interface BoardValidityInput {
-  ships: [ShipTuple, ShipTuple, ShipTuple];
+  ships: ShipTuple[];
   nonce: string;
 }
 
@@ -18,7 +22,7 @@ export interface BoardValidityResult {
 // ─── Shot Proof ───
 
 export interface ShotProofInput {
-  ships: [ShipTuple, ShipTuple, ShipTuple];
+  ships: ShipTuple[];
   nonce: string;
   boardHash: string;
   row: number;
@@ -33,8 +37,8 @@ export interface ShotProofResult {
 // ─── Turns Proof ───
 
 export interface TurnsProofInput {
-  shipsPlayer: [ShipTuple, ShipTuple, ShipTuple];
-  shipsAi: [ShipTuple, ShipTuple, ShipTuple];
+  shipsPlayer: ShipTuple[];
+  shipsAi: ShipTuple[];
   noncePlayer: string;
   nonceAi: string;
   boardHashPlayer: string;
@@ -43,7 +47,7 @@ export interface TurnsProofInput {
   attacksAi: AttackTuple[];
   nAttacksPlayer: number;
   nAttacksAi: number;
-  shipSizes: [number, number, number];
+  shipSizes: number[];
   winner: number;
 }
 
@@ -57,9 +61,9 @@ type ValidationOk<T> = { ok: true; data: T };
 type ValidationErr = { ok: false; error: string };
 type ValidationResult<T> = ValidationOk<T> | ValidationErr;
 
-function validateShipsArray(ships: unknown): ships is [ShipTuple, ShipTuple, ShipTuple] {
-  if (!ships || !Array.isArray(ships) || ships.length !== 3) return false;
-  for (let i = 0; i < 3; i++) {
+function validateShipsArray(ships: unknown): ships is ShipTuple[] {
+  if (!ships || !Array.isArray(ships) || ships.length !== NUM_SHIPS) return false;
+  for (let i = 0; i < NUM_SHIPS; i++) {
     const s = ships[i];
     if (!Array.isArray(s) || s.length !== 4) return false;
   }
@@ -74,7 +78,7 @@ export function validateBoardValidityInput(body: unknown): ValidationResult<Boar
   const { ships, nonce } = body as Record<string, unknown>;
 
   if (!validateShipsArray(ships)) {
-    return { ok: false, error: 'Invalid input: ships must be array of 3 tuples [row, col, size, horizontal]' };
+    return { ok: false, error: `Invalid input: ships must be array of ${NUM_SHIPS} tuples [row, col, size, horizontal]` };
   }
 
   if (!nonce || typeof nonce !== 'string') {
@@ -92,7 +96,7 @@ export function validateShotProofInput(body: unknown): ValidationResult<ShotProo
   const { ships, nonce, boardHash, row, col, isHit } = body as Record<string, unknown>;
 
   if (!validateShipsArray(ships)) {
-    return { ok: false, error: 'Invalid input: ships must be array of 3 tuples' };
+    return { ok: false, error: `Invalid input: ships must be array of ${NUM_SHIPS} tuples` };
   }
   if (!nonce || typeof nonce !== 'string') {
     return { ok: false, error: 'Invalid input: nonce must be a non-empty string' };
@@ -100,11 +104,11 @@ export function validateShotProofInput(body: unknown): ValidationResult<ShotProo
   if (!boardHash || typeof boardHash !== 'string') {
     return { ok: false, error: 'Invalid input: boardHash must be a non-empty string' };
   }
-  if (typeof row !== 'number' || row < 0 || row > 5) {
-    return { ok: false, error: 'Invalid input: row must be 0-5' };
+  if (typeof row !== 'number' || row < 0 || row > GRID_SIZE - 1) {
+    return { ok: false, error: `Invalid input: row must be 0-${GRID_SIZE - 1}` };
   }
-  if (typeof col !== 'number' || col < 0 || col > 5) {
-    return { ok: false, error: 'Invalid input: col must be 0-5' };
+  if (typeof col !== 'number' || col < 0 || col > GRID_SIZE - 1) {
+    return { ok: false, error: `Invalid input: col must be 0-${GRID_SIZE - 1}` };
   }
   if (typeof isHit !== 'boolean') {
     return { ok: false, error: 'Invalid input: isHit must be a boolean' };
@@ -121,10 +125,10 @@ export function validateTurnsProofInput(body: unknown): ValidationResult<TurnsPr
   const b = body as Record<string, unknown>;
 
   if (!validateShipsArray(b.shipsPlayer)) {
-    return { ok: false, error: 'Invalid input: shipsPlayer must be array of 3 tuples' };
+    return { ok: false, error: `Invalid input: shipsPlayer must be array of ${NUM_SHIPS} tuples` };
   }
   if (!validateShipsArray(b.shipsAi)) {
-    return { ok: false, error: 'Invalid input: shipsAi must be array of 3 tuples' };
+    return { ok: false, error: `Invalid input: shipsAi must be array of ${NUM_SHIPS} tuples` };
   }
   if (!b.noncePlayer || typeof b.noncePlayer !== 'string') {
     return { ok: false, error: 'Invalid input: noncePlayer must be a non-empty string' };
@@ -150,8 +154,8 @@ export function validateTurnsProofInput(body: unknown): ValidationResult<TurnsPr
   if (typeof b.nAttacksAi !== 'number') {
     return { ok: false, error: 'Invalid input: nAttacksAi must be a number' };
   }
-  if (!Array.isArray(b.shipSizes) || b.shipSizes.length !== 3) {
-    return { ok: false, error: 'Invalid input: shipSizes must be array of 3 numbers' };
+  if (!Array.isArray(b.shipSizes) || b.shipSizes.length !== NUM_SHIPS) {
+    return { ok: false, error: `Invalid input: shipSizes must be array of ${NUM_SHIPS} numbers` };
   }
   if (typeof b.winner !== 'number' || (b.winner !== 0 && b.winner !== 1)) {
     return { ok: false, error: 'Invalid input: winner must be 0 or 1' };
@@ -160,8 +164,8 @@ export function validateTurnsProofInput(body: unknown): ValidationResult<TurnsPr
   return {
     ok: true,
     data: {
-      shipsPlayer: b.shipsPlayer as [ShipTuple, ShipTuple, ShipTuple],
-      shipsAi: b.shipsAi as [ShipTuple, ShipTuple, ShipTuple],
+      shipsPlayer: b.shipsPlayer as ShipTuple[],
+      shipsAi: b.shipsAi as ShipTuple[],
       noncePlayer: b.noncePlayer as string,
       nonceAi: b.nonceAi as string,
       boardHashPlayer: b.boardHashPlayer as string,
@@ -170,7 +174,7 @@ export function validateTurnsProofInput(body: unknown): ValidationResult<TurnsPr
       attacksAi: b.attacksAi as AttackTuple[],
       nAttacksPlayer: b.nAttacksPlayer as number,
       nAttacksAi: b.nAttacksAi as number,
-      shipSizes: b.shipSizes as [number, number, number],
+      shipSizes: b.shipSizes as number[],
       winner: b.winner as number,
     },
   };

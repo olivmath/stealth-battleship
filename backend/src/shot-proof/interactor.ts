@@ -5,7 +5,7 @@ import { c } from '../log.js';
 
 export interface ShotProofPort {
   generateProof(
-    ships: [ShipTuple, ShipTuple, ShipTuple],
+    ships: ShipTuple[],
     nonce: string,
     boardHash: string,
     row: number,

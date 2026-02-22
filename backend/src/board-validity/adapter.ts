@@ -6,7 +6,7 @@ import { c } from '../log.js';
 import type { BoardValidityPort } from './interactor.js';
 
 /** Convert ShipTuples to NoirJS format (strings + bool) */
-function toNoirShips(ships: [ShipTuple, ShipTuple, ShipTuple]) {
+function toNoirShips(ships: ShipTuple[]) {
   return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
 

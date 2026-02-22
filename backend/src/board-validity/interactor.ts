@@ -1,32 +1,35 @@
 // Interactor — use case orchestration (no Express, no Noir imports)
 
 import type { BoardValidityInput, BoardValidityResult, ShipTuple } from '../shared/entities.js';
+import { GRID_SIZE } from '../shared/entities.js';
 import { c } from '../log.js';
 
 /** Port interface — adapter must implement this */
 export interface BoardValidityPort {
-  computeBoardHash(ships: [ShipTuple, ShipTuple, ShipTuple], nonce: string): Promise<string>;
+  computeBoardHash(ships: ShipTuple[], nonce: string): Promise<string>;
   generateProof(
-    ships: [ShipTuple, ShipTuple, ShipTuple],
+    ships: ShipTuple[],
     nonce: string,
     boardHash: string,
   ): Promise<{ proof: Uint8Array; publicInputs: string[] }>;
 }
 
-function logBoardMatrix(tag: string, ships: [ShipTuple, ShipTuple, ShipTuple]) {
-  const grid: number[][] = Array.from({ length: 6 }, () => Array(6).fill(0));
+function logBoardMatrix(tag: string, ships: ShipTuple[]) {
+  const grid: number[][] = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
   for (const [row, col, size, horizontal] of ships) {
     for (let i = 0; i < size; i++) {
       const r = horizontal ? row : row + i;
       const col2 = horizontal ? col + i : col;
-      if (r < 6 && col2 < 6) grid[r][col2] = 1;
+      if (r < GRID_SIZE && col2 < GRID_SIZE) grid[r][col2] = 1;
     }
   }
+  const colLabels = 'ABCDEFGHIJ'.slice(0, GRID_SIZE);
   console.log(`${tag} ${c.label('Board')} (${c.cyan('■')}=ship, ${c.gray('·')}=water):`);
-  console.log(`${tag}     ${c.dim('A B C D E F')}`);
+  console.log(`${tag}     ${c.dim(colLabels.split('').join(' '))}`);
   grid.forEach((row, i) => {
     const cells = row.map(v => v ? c.cyan('■') : c.gray('·')).join(' ');
-    console.log(`${tag}   ${c.dim(String(i + 1))} ${cells}`);
+    const rowNum = String(i + 1).padStart(2);
+    console.log(`${tag}  ${c.dim(rowNum)} ${cells}`);
   });
 }
 

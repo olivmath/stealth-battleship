@@ -1,13 +1,12 @@
 // Adapter — implements TurnsProofPort using Noir/bb.js
 
 import type { ShipTuple, AttackTuple } from '../shared/entities.js';
+import { MAX_ATTACKS } from '../shared/entities.js';
 import { getCircuit } from '../shared/circuits.js';
 import { c } from '../log.js';
 import type { TurnsProofPort } from './interactor.js';
 
-const MAX_ATTACKS = 36;
-
-function toNoirShips(ships: [ShipTuple, ShipTuple, ShipTuple]) {
+function toNoirShips(ships: ShipTuple[]) {
   return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
 
