@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LevelInfo } from '../../shared/entities';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../shared/theme';
@@ -8,9 +8,10 @@ interface Props {
   visible: boolean;
   levelInfo: LevelInfo;
   previousLevelInfo?: LevelInfo;
+  onDismiss?: () => void;
 }
 
-export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: Props) {
+export default function LevelUpModal({ visible, levelInfo, previousLevelInfo, onDismiss }: Props) {
   const { t } = useTranslation();
 
   if (!visible) return null;
@@ -19,7 +20,7 @@ export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: 
 
   return (
     <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.backdrop}>
+      <Pressable style={styles.backdrop} onPress={onDismiss}>
         <View style={styles.container}>
           <Text style={styles.label}>{t('levelUp.title')}</Text>
           <Text style={styles.rank}>{t('ranks.' + levelInfo.rank).toUpperCase()}</Text>
@@ -36,7 +37,7 @@ export default function LevelUpModal({ visible, levelInfo, previousLevelInfo }: 
             ))}
           </View>
         </View>
-      </View>
+      </Pressable>
     </Modal>
   );
 }

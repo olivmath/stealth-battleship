@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ShipKillEfficiency } from '../../shared/entities';
 import { COLORS, FONTS } from '../../shared/theme';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function KillEfficiencyBar({ item, showLegend = true }: Props) {
+  const { t } = useTranslation();
   const maxShots = Math.max(item.actualShots, item.idealShots);
   const idealWidth = maxShots > 0 ? (item.idealShots / maxShots) * 100 : 0;
   const actualWidth = maxShots > 0 ? (item.actualShots / maxShots) * 100 : 0;
@@ -30,11 +32,11 @@ export default function KillEfficiencyBar({ item, showLegend = true }: Props) {
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: COLORS.accent.gold }]} />
-            <Text style={styles.legendText}>Ideal</Text>
+            <Text style={styles.legendText}>{t('stats.ideal', 'Ideal')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: COLORS.accent.fire }]} />
-            <Text style={styles.legendText}>Actual</Text>
+            <Text style={styles.legendText}>{t('stats.actual', 'Actual')}</Text>
           </View>
         </View>
       )}

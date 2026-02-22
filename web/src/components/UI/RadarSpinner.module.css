@@ -17,10 +17,8 @@
   animation: blink 2s ease-in-out 0.7s infinite;
 }
 
-.label {
-  font-size: 11px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+.blip3 {
+  animation: blink 2s ease-in-out 1.3s infinite;
 }
 
 @keyframes spin {

@@ -1,36 +1,121 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NavalText } from '../UI/NavalText';
-import { NavalButton } from '../UI/NavalButton';
-import { COLORS, FONTS, FONT_SIZES } from '../../shared/theme';
-import styles from './LevelUpModal.module.css';
+import { useTranslation } from 'react-i18next';
+import { LevelInfo } from '../../shared/entities';
+import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../shared/theme';
 
-interface LevelUpModalProps {
+interface Props {
   visible: boolean;
-  rankName?: string;
-  motto?: string;
-  levelInfo?: any;
-  previousLevelInfo?: any;
-  onDismiss: () => void;
+  levelInfo: LevelInfo;
+  previousLevelInfo?: LevelInfo;
+  onDismiss?: () => void;
 }
 
-export function LevelUpModal({ visible, rankName: rankNameProp, motto: mottoProp, levelInfo, previousLevelInfo, onDismiss }: LevelUpModalProps) {
-  const rankName = rankNameProp ?? levelInfo?.rank ?? '';
-  const motto = mottoProp ?? levelInfo?.motto ?? '';
+export function LevelUpModal({ visible, levelInfo, previousLevelInfo, onDismiss }: Props) {
+  const { t } = useTranslation();
+
+  if (!visible) return null;
+
+  const gridChanged = previousLevelInfo && previousLevelInfo.gridSize !== levelInfo.gridSize;
+
   return createPortal(
     <AnimatePresence>
       {visible && (
-        <motion.div className={styles.overlay}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <motion.div className={styles.content}
-            initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }} transition={{ type: 'spring', damping: 15 }}
-            style={{ borderColor: COLORS.accent.gold }}>
-            <NavalText variant="label" color={COLORS.accent.gold}>RANK UP!</NavalText>
-            <NavalText variant="h2" color={COLORS.text.primary}>{rankName}</NavalText>
-            <NavalText variant="caption" color={COLORS.text.secondary} align="center">{motto}</NavalText>
-            <NavalButton title="Dismiss" onPress={onDismiss} variant="ghost" size="sm" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onDismiss}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: COLORS.overlay.backdrop,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: 'spring', damping: 15 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: SPACING.sm,
+              border: `2px solid ${COLORS.accent.gold}`,
+              borderRadius: RADIUS.md,
+              padding: SPACING.xl,
+              backgroundColor: COLORS.background.dark,
+              ...SHADOWS.lg,
+            }}
+          >
+            <span style={{
+              fontFamily: FONTS.heading,
+              fontSize: 12,
+              color: COLORS.accent.gold,
+              letterSpacing: 4,
+            }}>
+              {t('levelUp.title')}
+            </span>
+            <span style={{
+              fontFamily: FONTS.heading,
+              fontSize: FONT_SIZES.h1,
+              color: COLORS.accent.gold,
+              letterSpacing: 3,
+            }}>
+              {t('ranks.' + levelInfo.rank).toUpperCase()}
+            </span>
+            <span style={{
+              fontFamily: FONTS.bodyLight,
+              fontSize: FONT_SIZES.md,
+              color: COLORS.text.secondary,
+              fontStyle: 'italic',
+            }}>
+              {t('mottos.' + levelInfo.rank)}
+            </span>
+            {gridChanged && (
+              <span style={{
+                fontFamily: FONTS.heading,
+                fontSize: FONT_SIZES.md,
+                color: COLORS.accent.victory,
+                letterSpacing: 2,
+                marginTop: SPACING.xs,
+              }}>
+                {t('levelUp.newGrid', { gridSize: levelInfo.gridSize })}
+              </span>
+            )}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+              marginTop: SPACING.sm,
+            }}>
+              <span style={{
+                fontFamily: FONTS.heading,
+                fontSize: FONT_SIZES.caption,
+                color: COLORS.text.secondary,
+                letterSpacing: 2,
+                marginBottom: 4,
+              }}>
+                {t('levelUp.yourFleet')}
+              </span>
+              {levelInfo.ships.map((s, i) => (
+                <span key={`${s.id}-${i}`} style={{
+                  fontFamily: FONTS.body,
+                  fontSize: 12,
+                  color: COLORS.text.primary,
+                }}>
+                  {t('ships.' + s.name)} ({s.size})
+                </span>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       )}

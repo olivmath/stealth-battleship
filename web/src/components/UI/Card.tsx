@@ -1,26 +1,40 @@
 import React from 'react';
 import { COLORS, RADIUS, SPACING, SHADOWS } from '../../shared/theme';
-import styles from './Card.module.css';
 
-type CardVariant = 'default' | 'elevated' | 'accent' | 'danger';
+type Variant = 'default' | 'elevated' | 'accent' | 'danger';
 
-interface CardProps {
+interface Props {
+  variant?: Variant;
+  style?: React.CSSProperties | React.CSSProperties[];
   children: React.ReactNode;
-  variant?: CardVariant;
-  style?: React.CSSProperties;
 }
 
-const variantStyles: Record<CardVariant, React.CSSProperties> = {
-  default: { backgroundColor: COLORS.surface.card, borderColor: COLORS.surface.cardBorder },
-  elevated: { backgroundColor: COLORS.surface.elevated, borderColor: COLORS.surface.cardBorder, ...SHADOWS.md },
-  accent: { backgroundColor: COLORS.overlay.goldGlow, borderColor: COLORS.accent.gold },
-  danger: { backgroundColor: COLORS.overlay.fireGlow, borderColor: COLORS.accent.fire },
+const variantStyles: Record<Variant, React.CSSProperties> = {
+  default: {},
+  elevated: {
+    backgroundColor: COLORS.surface.elevated,
+    ...SHADOWS.md,
+  },
+  accent: {
+    borderColor: COLORS.accent.gold,
+    backgroundColor: COLORS.overlay.goldGlow,
+  },
+  danger: {
+    borderColor: COLORS.accent.fire,
+    backgroundColor: COLORS.overlay.fireGlow,
+  },
 };
 
-export function Card({ children, variant = 'default', style }: CardProps) {
-  return (
-    <div className={styles.card} style={{ ...variantStyles[variant], ...style }}>
-      {children}
-    </div>
-  );
+export function Card({ variant = 'default', style, children }: Props) {
+  const merged: React.CSSProperties = {
+    padding: SPACING.md,
+    borderRadius: RADIUS.default,
+    border: `1px solid ${COLORS.grid.border}`,
+    backgroundColor: COLORS.surface.card,
+    ...SHADOWS.sm,
+    ...variantStyles[variant],
+    ...(Array.isArray(style) ? Object.assign({}, ...style) : style),
+  };
+
+  return <div style={merged}>{children}</div>;
 }

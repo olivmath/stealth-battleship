@@ -1,14 +1,12 @@
 import React from 'react';
 import { SPACING } from '../../shared/theme';
 
-type SpacingKey = keyof typeof SPACING;
-
-interface SpacerProps {
-  size?: number | SpacingKey;
+interface Props {
+  size: keyof typeof SPACING;
   horizontal?: boolean;
 }
 
-export function Spacer({ size = 16, horizontal }: SpacerProps) {
-  const px = typeof size === 'string' ? SPACING[size] : size;
-  return <div style={horizontal ? { width: px } : { height: px }} />;
+export function Spacer({ size, horizontal = false }: Props) {
+  const value = SPACING[size];
+  return <div style={horizontal ? { width: value } : { height: value }} />;
 }

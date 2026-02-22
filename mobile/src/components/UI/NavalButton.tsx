@@ -10,8 +10,8 @@ interface Props {
   subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'pvp';
-  size?: 'default' | 'small';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'pvp' | 'ghost';
+  size?: 'default' | 'small' | 'sm';
   style?: ViewStyle;
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -24,21 +24,25 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
     transform: [{ scale: scale.value }],
   }));
 
-  const borderColor = disabled
-    ? COLORS.ui.disabledBorder
-    : variant === 'danger'
-      ? COLORS.accent.fire
-      : variant === 'success'
-        ? COLORS.status.online
-        : variant === 'pvp'
-          ? COLORS.status.pvp
-          : COLORS.ui.buttonBorder;
+  const variantMap: Record<string, { border: string; bg: string; text: string }> = {
+    primary: { border: COLORS.ui.buttonBorder, bg: COLORS.ui.buttonBg, text: COLORS.text.accent },
+    secondary: { border: COLORS.surface.cardBorder, bg: 'transparent', text: COLORS.text.primary },
+    danger: { border: COLORS.accent.fire, bg: COLORS.ui.buttonBg, text: COLORS.accent.fire },
+    success: { border: COLORS.status.online, bg: COLORS.ui.buttonBg, text: COLORS.status.online },
+    pvp: { border: COLORS.status.pvp, bg: COLORS.ui.buttonBg, text: COLORS.status.pvp },
+    ghost: { border: 'transparent', bg: 'transparent', text: COLORS.text.primary },
+  };
 
-  const bgColor = disabled ? COLORS.ui.disabledBg : COLORS.ui.buttonBg;
+  const v = variantMap[variant] ?? variantMap.primary;
+  const borderColor = disabled ? COLORS.ui.disabledBorder : v.border;
+  const bgColor = disabled ? COLORS.ui.disabledBg : v.bg;
+  const textColor = disabled ? COLORS.text.secondary : v.text;
+
+  const isSmall = size === 'small' || size === 'sm';
 
   return (
     <AnimatedPressable
-      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, Platform.OS === 'web' && !disabled ? { cursor: 'pointer' } as any : undefined, animatedStyle, style]}
+      style={[styles.button, isSmall && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, Platform.OS === 'web' && !disabled ? { cursor: 'pointer' } as any : undefined, animatedStyle, style]}
       onPress={onPress}
       onPressIn={() => { scale.value = withSpring(0.97, { damping: 15, stiffness: 300 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
@@ -50,11 +54,8 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
     >
       <Text style={[
         styles.text,
-        size === 'small' && styles.textSmall,
-        disabled && styles.disabledText,
-        variant === 'danger' && styles.dangerText,
-        variant === 'success' && styles.successText,
-        variant === 'pvp' && styles.pvpText,
+        isSmall && styles.textSmall,
+        { color: textColor },
       ]}>
         {title}
       </Text>
@@ -88,18 +89,6 @@ const styles = StyleSheet.create({
   textSmall: {
     fontSize: 11,
     letterSpacing: 1,
-  },
-  disabledText: {
-    color: COLORS.text.secondary,
-  },
-  dangerText: {
-    color: COLORS.accent.fire,
-  },
-  successText: {
-    color: COLORS.status.online,
-  },
-  pvpText: {
-    color: COLORS.status.pvp,
   },
   subtitle: {
     fontFamily: FONTS.bodyLight,

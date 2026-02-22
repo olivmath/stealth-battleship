@@ -1,13 +1,12 @@
-import React from 'react';
-import { GRADIENT } from '../../shared/theme';
+import React, { ReactNode } from 'react';
 import styles from './GradientContainer.module.css';
 
-interface GradientContainerProps {
-  children: React.ReactNode;
+interface Props {
+  children: ReactNode;
   style?: React.CSSProperties;
 }
 
-export function GradientContainer({ children, style }: GradientContainerProps) {
+export function GradientContainer({ children, style }: Props) {
   return (
     <div className={styles.container} style={style}>
       {children}

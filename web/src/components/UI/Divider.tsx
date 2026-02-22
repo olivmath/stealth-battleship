@@ -1,13 +1,22 @@
 import React from 'react';
-import { COLORS, SPACING } from '../../shared/theme';
+import { COLORS } from '../../shared/theme';
 
-interface DividerProps {
-  color?: string;
-  spacing?: number;
+interface Props {
   width?: number;
+  color?: string;
   style?: React.CSSProperties;
 }
 
-export function Divider({ color = COLORS.surface.cardBorder, spacing = SPACING.md, width, style }: DividerProps) {
-  return <div style={{ height: 1, backgroundColor: color, marginTop: spacing, marginBottom: spacing, width: width != null ? width : undefined, ...style }} />;
+export function Divider({ width = 40, color = COLORS.accent.gold, style }: Props) {
+  return (
+    <div
+      style={{
+        width,
+        height: 2,
+        backgroundColor: color,
+        opacity: 0.6,
+        ...style,
+      }}
+    />
+  );
 }
