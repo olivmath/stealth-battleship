@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'rea
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
 import GameBoard, { getLabelSize, computeCellSize } from '../src/components/Board/GameBoard';
 import TurnIndicator from '../src/components/Battle/TurnIndicator';
 import FleetStatus from '../src/components/Battle/FleetStatus';
@@ -25,12 +26,13 @@ import {
   TURN_TIMER_SECONDS,
 } from '../src/services/pvpMock';
 import { OpponentStrategy, LocalAIStrategy, MockPvPStrategy } from '../src/game/engine';
-import { COLORS, FONTS } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../src/shared/theme';
+import Spacer from '../src/components/UI/Spacer';
 import { useTranslation } from 'react-i18next';
 
-const SCREEN_PADDING = 16;
+const SCREEN_PADDING = LAYOUT.screenPadding;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CONTENT_WIDTH = Math.min(SCREEN_WIDTH - SCREEN_PADDING * 2, 400);
+const CONTENT_WIDTH = Math.min(SCREEN_WIDTH - SCREEN_PADDING * 2, LAYOUT.maxContentWidth);
 
 export default function BattleScreen() {
   const router = useRouter();
@@ -40,10 +42,8 @@ export default function BattleScreen() {
   const haptics = useHaptics();
   const { t } = useTranslation();
   const { endGame } = useGameEffects();
-  const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const gridSize = state.settings.gridSize;
-  const difficulty = isPvP ? 'normal' as const : state.settings.difficulty;
+  const difficulty = 'hard' as const;
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
   const isSwipeMode = !isPvP && state.settings.battleView === 'swipe';
   const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
@@ -86,8 +86,10 @@ export default function BattleScreen() {
     setTimeout(() => setShowSunkModal(false), 2000);
   }, []);
 
-  // ZK: fire-and-forget shotProof in background
-  const generateShotProof = useCallback((
+  // ZK: blocking shotProof — game waits for proof before advancing
+  const [provingShot, setProvingShot] = useState(false);
+
+  const generateShotProof = useCallback(async (
     ships: ShipTuples,
     nonce: string,
     boardHash: string,
@@ -96,18 +98,20 @@ export default function BattleScreen() {
     isHit: boolean,
     label: string,
   ) => {
-    shotProof({ ships, nonce, boardHash, row, col, isHit })
-      .then((result) => {
-        console.log(`[ZK] shotProof ${label} OK — ${result.proof.length} bytes`);
-      })
-      .catch((err) => {
-        console.warn(`[ZK] shotProof ${label} FAILED:`, err.message);
-      });
+    setProvingShot(true);
+    try {
+      const result = await shotProof({ ships, nonce, boardHash, row, col, isHit });
+      console.log(`[ZK] shotProof ${label} OK — ${result.proof.length} bytes`);
+    } catch (err: any) {
+      console.warn(`[ZK] shotProof ${label} FAILED:`, err.message);
+    } finally {
+      setProvingShot(false);
+    }
   }, []);
 
   // Player attack (shared between arcade and pvp)
-  const handlePlayerAttack = useCallback((position: Position) => {
-    if (!state.isPlayerTurn || state.phase !== 'battle') return;
+  const handlePlayerAttack = useCallback(async (position: Position) => {
+    if (!state.isPlayerTurn || state.phase !== 'battle' || provingShot) return;
 
     const cell = state.opponentBoard[position.row][position.col];
     if (cell.state !== 'empty' && cell.state !== 'ship') return;
@@ -128,27 +132,25 @@ export default function BattleScreen() {
 
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
 
-    // ZK: prove attack result against opponent's board (background)
+    // ZK: prove attack result — blocks turn until proof returns
     if (state.commitment?.opponentZk) {
       const { nonce, boardHash } = state.commitment.opponentZk;
       try {
         const opponentTuples = toShipTuples(state.opponentShips);
-        generateShotProof(opponentTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'player→opponent');
+        await generateShotProof(opponentTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'player→opponent');
       } catch (e) {
         // toShipTuples may fail if ships count doesn't match during game end
       }
     }
-  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.commitment, dispatch, haptics, showSunkAnimation, generateShotProof]);
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.commitment, dispatch, haptics, showSunkAnimation, generateShotProof, provingShot]);
 
   // Opponent turn: unified via strategy pattern
   useEffect(() => {
-    if (state.isPlayerTurn || state.phase !== 'battle') return;
+    if (state.isPlayerTurn || state.phase !== 'battle' || provingShot) return;
 
-    const delayMin = isPvP ? OPPONENT_ATTACK_DELAY_MIN : diffConfig.delayMin;
-    const delayMax = isPvP ? OPPONENT_ATTACK_DELAY_MAX : diffConfig.delayMax;
-    const delay = delayMin + Math.random() * (delayMax - delayMin);
+    let cancelled = false;
 
-    opponentTimerRef.current = setTimeout(() => {
+    const runOpponentTurn = async () => {
       const strategy = strategyRef.current;
       const position = strategy.computeMove(state.playerBoard, state.playerShips, gridSize);
       if (!position) return;
@@ -165,24 +167,26 @@ export default function BattleScreen() {
       }
 
       strategy.onMoveResult(position, result, shipId, newShips);
-      dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
 
-      // ZK: prove attack result against player's board (background)
+      // ZK: prove attack result — blocks turn until proof returns
       if (state.commitment?.playerZk) {
         const { nonce, boardHash } = state.commitment.playerZk;
         try {
           const playerTuples = toShipTuples(state.playerShips);
-          generateShotProof(playerTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'opponent→player');
+          await generateShotProof(playerTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'opponent→player');
         } catch (e) {
           // toShipTuples may fail if ships count doesn't match during game end
         }
       }
-    }, delay);
 
-    return () => {
-      if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
+      if (!cancelled) {
+        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
+      }
     };
-  }, [state.isPlayerTurn, state.phase]);
+
+    runOpponentTurn();
+    return () => { cancelled = true; };
+  }, [state.isPlayerTurn, state.phase, provingShot]);
 
   // Win detection: player victory
   useEffect(() => {
@@ -235,7 +239,6 @@ export default function BattleScreen() {
           text: t('battle.surrenderTitle'),
           style: 'destructive',
           onPress: () => {
-            if (opponentTimerRef.current) clearTimeout(opponentTimerRef.current);
             endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
           },
         },
@@ -254,6 +257,12 @@ export default function BattleScreen() {
       <GradientContainer>
         <View style={styles.container}>
           <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
+          {provingShot && (
+            <View style={styles.provingIndicator}>
+              <RadarSpinner size={16} />
+              <Text style={styles.provingText}>{t('battle.proving')}</Text>
+            </View>
+          )}
 
           <View style={styles.swipeTabs}>
             <TouchableOpacity
@@ -341,14 +350,21 @@ export default function BattleScreen() {
           <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
         )}
 
+        {provingShot && (
+          <View style={styles.provingIndicator}>
+            <RadarSpinner size={16} />
+            <Text style={styles.provingText}>{t('battle.proving')}</Text>
+          </View>
+        )}
+
         <View style={{ width: GRID_TOTAL_WIDTH }}>
           {/* Main enemy grid */}
           <View style={styles.mainGridSection}>
             <Text style={styles.sectionLabel}>{t('battle.enemyWaters')}</Text>
             <GameBoard
               board={state.opponentBoard}
-              onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
-              disabled={!state.isPlayerTurn}
+              onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
+              disabled={!state.isPlayerTurn || provingShot}
               showShips={false}
               gridSize={gridSize}
               isOpponent
@@ -357,7 +373,7 @@ export default function BattleScreen() {
             />
           </View>
 
-          <View style={{ height: 16 }} />
+          <Spacer size="md" />
 
           {/* Bottom panel: mini-map + fleet status */}
           <View style={styles.bottomPanel}>
@@ -442,7 +458,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
     backgroundColor: COLORS.overlay.goldMedium,
@@ -454,7 +470,7 @@ const styles = StyleSheet.create({
   turnDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     marginRight: 8,
   },
   turnText: {
@@ -476,7 +492,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     alignItems: 'center',
   },
   swipeTabActive: {
@@ -496,5 +512,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: 16,
+  },
+  provingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  provingText: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.accent.gold,
+    letterSpacing: 2,
   },
 });
