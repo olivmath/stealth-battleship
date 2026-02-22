@@ -25,9 +25,12 @@ const TIMELINE = {
   problemSplit: {
     at: [20, 35],
     blocks: {
-      splitAppear: [20, 28],
-      explosion: [28, 30],
-      zkExpand: [30, 35],
+      appear: [20, 23],          // Alice, Server, Bob aparecem
+      aliceToServer: [23, 25],   // Alice envia pacote → Server
+      serverToBob: [25, 27],     // Server repassa → Bob (lupa aparece)
+      bobToServer: [27, 29],     // Bob envia pacote → Server
+      serverToAlice: [29, 31],   // Server repassa → Alice (lupa aparece)
+      zkExpand: [31, 35],        // Tudo some, texto ZK aparece
     },
   },
 
@@ -40,9 +43,11 @@ const TIMELINE = {
         at: [35, 50],
         anims: {
           title: [35, 37],
-          gridShips: [37, 40],
-          hashFlow: [40, 45],
-          badge: [45, 50],
+          grid: [37, 39],
+          matrix: [39, 41],
+          equation: [41, 43],
+          hash: [43, 46],
+          badge: [46, 50],
         },
       },
       // ▸ 3B — Shot Proof
@@ -50,10 +55,11 @@ const TIMELINE = {
         at: [50, 65],
         anims: {
           title: [50, 52],
-          crosshair: [52, 56],
-          explosion: [56, 58],
-          hitResult: [58, 62],
-          closingText: [62, 65],
+          alice: [52, 54],
+          coord: [54, 56],
+          matrix: [56, 58],
+          outputs: [58, 62],
+          badge: [62, 65],
         },
       },
       // ▸ 3C — Turns Proof
@@ -61,9 +67,12 @@ const TIMELINE = {
         at: [65, 80],
         anims: {
           title: [65, 67],
-          replay: [67, 71],
-          trophy: [71, 75],
-          refereeBadge: [75, 80],
+          turn1: [67, 69],
+          turn2: [69, 71],
+          turn3: [71, 73],
+          equation: [73, 76],
+          hash: [76, 78],
+          badge: [78, 80],
         },
       },
     },
