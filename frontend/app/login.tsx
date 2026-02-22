@@ -1,29 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
+import PinModal from '../src/components/UI/PinModal';
 import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../src/game/adapter';
+import { hasWallet, getSecretKey } from '../src/wallet/interactor';
 import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showPin, setShowPin] = useState(false);
   const router = useRouter();
   const { dispatch } = useGame();
   const haptics = useHaptics();
 
   useEffect(() => {
-    getPlayerName().then(saved => {
+    getPlayerName().then(async (saved) => {
       if (saved) {
-        // Auto-login for returning users
         dispatch({ type: 'SET_PLAYER', name: saved });
-        router.replace('/menu');
+        const walletExists = await hasWallet();
+        if (walletExists) {
+          // Returning user with wallet — ask for PIN
+          setShowPin(true);
+          setLoading(false);
+        } else {
+          // Returning user without wallet — send to wallet setup
+          router.replace('/wallet-setup');
+        }
         return;
       }
       setLoading(false);
@@ -35,13 +45,41 @@ export default function LoginScreen() {
     haptics.light();
     await savePlayerName(name.trim());
     dispatch({ type: 'SET_PLAYER', name: name.trim() });
-    router.replace('/menu');
+    // New user — always go to wallet setup
+    router.replace('/wallet-setup');
   };
 
-  if (loading) return (
+  const handlePinSuccess = async (pin: string) => {
+    try {
+      await getSecretKey(pin); // validates PIN
+      setShowPin(false);
+      haptics.success();
+      router.replace('/menu');
+    } catch {
+      Alert.alert(t('wallet.view.errorTitle'), t('wallet.view.errorInvalidPin'));
+    }
+  };
+
+  if (loading && !showPin) return (
     <GradientContainer>
       <View style={styles.loadingContainer}>
         <RadarSpinner size={50} />
+      </View>
+    </GradientContainer>
+  );
+
+  if (showPin) return (
+    <GradientContainer>
+      <View style={styles.loadingContainer}>
+        <PinModal
+          visible={true}
+          onSubmit={handlePinSuccess}
+          onCancel={() => {
+            // Cannot cancel PIN on login — just dismiss and stay
+            setShowPin(false);
+            setLoading(false);
+          }}
+        />
       </View>
     </GradientContainer>
   );

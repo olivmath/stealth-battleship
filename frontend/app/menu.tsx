@@ -113,6 +113,15 @@ export default function MenuScreen() {
             variant="secondary"
           />
           <NavalButton
+            title={t('menu.wallet')}
+            subtitle={t('menu.walletSub')}
+            onPress={() => {
+              haptics.light();
+              router.push('/wallet');
+            }}
+            variant="pvp"
+          />
+          <NavalButton
             title={t('menu.settings')}
             onPress={() => {
               haptics.light();
@@ -133,7 +142,9 @@ export default function MenuScreen() {
                     style: 'destructive',
                     onPress: async () => {
                       const { clearPlayerData } = await import('../src/game/adapter');
+                      const { clearWallet } = await import('../src/wallet/interactor');
                       await clearPlayerData();
+                      await clearWallet();
                       router.replace('/login');
                     },
                   },
