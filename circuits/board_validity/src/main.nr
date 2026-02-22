@@ -13,10 +13,10 @@ fn ships_overlap(
     r2: u8, c2: u8, s2: u8, h2: bool,
 ) -> bool {
     let mut overlap = false;
-    for i in 0..5_u8 {
+    for i in 0..5 {
         if i < s1 {
             let (ship1_r, ship1_c) = if h1 { (r1, c1 + i) } else { (r1 + i, c1) };
-            for j in 0..5_u8 {
+            for j in 0..5 {
                 if j < s2 {
                     let (ship2_r, ship2_c) = if h2 { (r2, c2 + j) } else { (r2 + j, c2) };
                     if (ship1_r == ship2_r) & (ship1_c == ship2_c) {

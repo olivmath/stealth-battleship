@@ -20,7 +20,7 @@ fn cell_is_hit(ships: [(u8, u8, u8, bool); 5], row: u8, col: u8) -> bool {
     let mut hit = false;
     for i in 0..5 {
         let (r, c, s, h) = ships[i];
-        for j in 0..5_u8 {
+        for j in 0..5 {
             if j < s {
                 let (ship_r, ship_c) = if h { (r, c + j) } else { (r + j, c) };
                 if (ship_r == row) & (ship_c == col) {
