@@ -85,6 +85,7 @@ export default function MenuScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
+          {/* Tier 1 — Play Modes */}
           <Animated.View entering={FadeInDown.delay(0).duration(400)}>
             <NavalButton
               title={t('menu.arcade')}
@@ -103,17 +104,9 @@ export default function MenuScreen() {
               }}
             />
           </Animated.View>
-          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
-            <NavalButton
-              title={t('menu.history')}
-              onPress={() => {
-                haptics.light();
-                router.push('/match-history');
-              }}
-              variant="secondary"
-            />
-          </Animated.View>
-          <Animated.View entering={FadeInDown.delay(240).duration(400)}>
+
+          {/* Tier 2 — Player Info */}
+          <Animated.View entering={FadeInDown.delay(160).duration(400)} style={styles.rowGroup}>
             <NavalButton
               title={t('menu.profile')}
               onPress={() => {
@@ -121,20 +114,33 @@ export default function MenuScreen() {
                 router.push('/profile');
               }}
               variant="secondary"
+              size="small"
+              style={styles.rowButton}
+            />
+            <NavalButton
+              title={t('menu.history')}
+              onPress={() => {
+                haptics.light();
+                router.push('/match-history');
+              }}
+              variant="secondary"
+              size="small"
+              style={styles.rowButton}
             />
           </Animated.View>
-          <Animated.View entering={FadeInDown.delay(320).duration(400)}>
+
+          {/* Tier 3 — Utility */}
+          <Animated.View entering={FadeInDown.delay(240).duration(400)} style={styles.rowGroup}>
             <NavalButton
               title={t('menu.wallet')}
-              subtitle={t('menu.walletSub')}
               onPress={() => {
                 haptics.light();
                 router.push('/wallet');
               }}
-              variant="pvp"
+              variant="secondary"
+              size="small"
+              style={styles.rowButton}
             />
-          </Animated.View>
-          <Animated.View entering={FadeInDown.delay(400).duration(400)}>
             <NavalButton
               title={t('menu.settings')}
               onPress={() => {
@@ -142,9 +148,13 @@ export default function MenuScreen() {
                 router.push('/settings');
               }}
               variant="secondary"
+              size="small"
+              style={styles.rowButton}
             />
           </Animated.View>
-          <Animated.View entering={FadeInDown.delay(480).duration(400)}>
+
+          {/* Tier 4 — Logout */}
+          <Animated.View entering={FadeInDown.delay(320).duration(400)}>
             <TouchableOpacity
               onPress={() => {
                 haptics.light();
@@ -214,8 +224,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   actions: {
-    gap: SPACING.md,
+    gap: SPACING.sm,
     marginTop: 'auto',
+  },
+  rowGroup: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  rowButton: {
+    flex: 1,
   },
   logoutButton: {
     alignItems: 'center',
