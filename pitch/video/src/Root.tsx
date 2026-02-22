@@ -1,18 +1,19 @@
 import React from "react";
-import { Composition } from "remotion";
+import { Composition, registerRoot } from "remotion";
 import { BattleshipZKVideo } from "./Video";
+import { CONFIG, TOTAL_FRAMES } from "./config";
 
-export const RemotionRoot: React.FC = () => {
+const RemotionRoot: React.FC = () => {
   return (
-    <>
-      <Composition
-        id="BattleshipZKDemo"
-        component={BattleshipZKVideo}
-        durationInFrames={30 * 160} // ~2:40 at 30fps
-        fps={30}
-        width={1920}
-        height={1080}
-      />
-    </>
+    <Composition
+      id="BattleshipZKTrailer"
+      component={BattleshipZKVideo}
+      durationInFrames={TOTAL_FRAMES}
+      fps={CONFIG.fps}
+      width={CONFIG.width}
+      height={CONFIG.height}
+    />
   );
 };
+
+registerRoot(RemotionRoot);

@@ -1,97 +1,155 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
-import { colors, fullScreen, titleStyle, bodyStyle, codeStyle } from "../styles";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
+import { CONFIG } from "../config";
+import { colors, fullScreen, fonts, cardStyle, codeStyle, textGlow } from "../styles";
+import { SlideIn } from "../components/primitives/SlideIn";
+import { FadeIn } from "../components/primitives/FadeIn";
+import { Badge } from "../components/ui/Badge";
+import { PiPFrame } from "../components/ui/PiPFrame";
+
+const B = CONFIG.scenes.architecture.blocks;
 
 export const Architecture: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleOpacity = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: "clamp" });
-  const deviceY = spring({ frame: Math.max(0, frame - 10), fps, config: { damping: 15 } });
-  const stellarY = spring({ frame: Math.max(0, frame - 30), fps, config: { damping: 15 } });
-  const convexY = spring({ frame: Math.max(0, frame - 30), fps, config: { damping: 15 } });
-  const arrowOpacity = interpolate(frame, [45, 60], [0, 1], { extrapolateRight: "clamp" });
-  const p25Opacity = interpolate(frame, [70, 90], [0, 1], { extrapolateRight: "clamp" });
-  const badgeOpacity = interpolate(frame, [90, 110], [0, 1], { extrapolateRight: "clamp" });
+  // Protocol 25 highlight pulse
+  const p25BorderOpacity = 0.6 + Math.sin(frame * 0.15) * 0.4;
 
-  const boxStyle = (color: string, scale: number) => ({
-    backgroundColor: colors.navyMid,
-    borderRadius: 12,
-    padding: 30,
-    border: `2px solid ${color}`,
-    transform: `scale(${scale})`,
-    minWidth: 300,
-  });
+  // Fade out
+  const fadeOut = interpolate(
+    frame,
+    [B.fadeOut.start, B.fadeOut.start + B.fadeOut.duration],
+    [1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
 
   return (
-    <AbsoluteFill style={{ ...fullScreen, padding: 60 }}>
-      <h2 style={{ ...titleStyle, fontSize: 42, opacity: titleOpacity }}>Architecture</h2>
-
+    <AbsoluteFill style={{ ...fullScreen, padding: 60, opacity: fadeOut }}>
       {/* Device layer */}
-      <div style={{ ...boxStyle(colors.white, deviceY), marginTop: 30 }}>
-        <p style={{ ...titleStyle, fontSize: 20 }}>PLAYER DEVICE</p>
-        <p style={{ ...bodyStyle, fontSize: 16 }}>Noir Circuits (WASM) + Game Engine (TS)</p>
-      </div>
-
-      {/* Arrows */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 200,
-          marginTop: 10,
-          opacity: arrowOpacity,
-        }}
-      >
-        <p style={{ ...codeStyle, fontSize: 16, color: colors.teal }}>proofs ↓</p>
-        <p style={{ ...codeStyle, fontSize: 16, color: colors.fireOrange }}>↓ real-time turns</p>
-      </div>
-
-      {/* Bottom layer */}
-      <div style={{ display: "flex", gap: 40, marginTop: 10 }}>
-        <div style={boxStyle("#2845a0", stellarY)}>
-          <p style={{ ...titleStyle, fontSize: 20, color: "#5b8def" }}>STELLAR (Soroban)</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>TX 1: open_match</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>TX 2: close_match</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>Escrow lock/release</p>
-          <div
-            style={{
-              opacity: p25Opacity,
-              marginTop: 12,
-              padding: "6px 12px",
-              backgroundColor: "#2845a0",
-              borderRadius: 6,
-            }}
-          >
-            <p style={{ ...codeStyle, fontSize: 14, color: colors.gold }}>
-              Protocol 25: BN254 + Poseidon2
-            </p>
-          </div>
-        </div>
-
-        <div style={boxStyle("#7c3aed", convexY)}>
-          <p style={{ ...titleStyle, fontSize: 20, color: "#a78bfa" }}>CONVEX (off-chain)</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>Matchmaking</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>Turn coordination</p>
-          <p style={{ ...bodyStyle, fontSize: 16 }}>shot_proof verification</p>
-          <p style={{ ...bodyStyle, fontSize: 14, color: colors.muted, marginTop: 12 }}>
-            ~ms latency
+      <SlideIn startFrame={B.deviceLayer.start} direction="down" distance={80}>
+        <div
+          style={{
+            ...cardStyle(colors.white),
+            textAlign: "center",
+            padding: "24px 60px",
+          }}
+        >
+          <p style={{ fontFamily: fonts.orbitron, fontSize: 22, fontWeight: 700, color: colors.gold, margin: 0 }}>
+            PLAYER DEVICE
+          </p>
+          <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "6px 0 0" }}>
+            Noir Circuits (WASM) + Game Engine + React Native / Expo
           </p>
         </div>
+      </SlideIn>
+
+      {/* Arrow labels */}
+      <FadeIn startFrame={B.baseLayer.start} duration={15}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 200, marginTop: 16 }}>
+          <p style={{ ...codeStyle, fontSize: 18, color: colors.teal }}>proofs ↓</p>
+          <p style={{ ...codeStyle, fontSize: 18, color: colors.fireOrange }}>↓ real-time turns</p>
+        </div>
+      </FadeIn>
+
+      {/* Base layer — Stellar + Convex */}
+      <div style={{ display: "flex", gap: 40, marginTop: 16 }}>
+        <SlideIn startFrame={B.baseLayer.start + 10} direction="up" distance={60}>
+          <div style={{ ...cardStyle(colors.stellarBlue), minWidth: 320, position: "relative" }}>
+            <p style={{ fontFamily: fonts.orbitron, fontSize: 22, fontWeight: 700, color: "#5b8def", margin: 0 }}>
+              STELLAR (Soroban)
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "8px 0 2px" }}>
+              TX 1: open_match
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "2px 0" }}>
+              TX 2: close_match
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "2px 0" }}>
+              Escrow lock/release
+            </p>
+
+            {/* Protocol 25 highlight */}
+            {frame >= B.protocol25.start && (
+              <FadeIn startFrame={B.protocol25.start} duration={15}>
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "12px 16px",
+                    backgroundColor: `${colors.stellarBlue}40`,
+                    border: `2px solid ${colors.gold}`,
+                    borderRadius: 8,
+                    borderColor: `rgba(201, 166, 52, ${p25BorderOpacity})`,
+                  }}
+                >
+                  <p style={{ fontFamily: fonts.orbitron, fontSize: 16, color: colors.gold, margin: 0 }}>
+                    PROTOCOL 25 (X-RAY)
+                  </p>
+                  <p style={{ fontFamily: fonts.rajdhani, fontSize: 15, color: colors.teal, margin: "6px 0 0" }}>
+                    → Native BN254 curve operations
+                  </p>
+                  <p style={{ fontFamily: fonts.rajdhani, fontSize: 15, color: colors.teal, margin: "2px 0" }}>
+                    → Native Poseidon2 hash function
+                  </p>
+                  <p style={{ fontFamily: fonts.rajdhani, fontSize: 14, color: colors.white, margin: "4px 0 0" }}>
+                    = The EXACT primitives our circuits use
+                  </p>
+                </div>
+              </FadeIn>
+            )}
+          </div>
+        </SlideIn>
+
+        <SlideIn startFrame={B.baseLayer.start + 10} direction="up" distance={60}>
+          <div style={{ ...cardStyle(colors.convexPurple), minWidth: 320 }}>
+            <p style={{ fontFamily: fonts.orbitron, fontSize: 22, fontWeight: 700, color: "#a78bfa", margin: 0 }}>
+              CONVEX (off-chain)
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "8px 0 2px" }}>
+              Matchmaking
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "2px 0" }}>
+              Turn coordination
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.white, margin: "2px 0" }}>
+              shot_proof verification
+            </p>
+            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, marginTop: 12 }}>
+              ~ms latency
+            </p>
+          </div>
+        </SlideIn>
       </div>
 
-      <p
-        style={{
-          ...titleStyle,
-          fontSize: 24,
-          color: colors.teal,
-          opacity: badgeOpacity,
-          marginTop: 20,
-          textAlign: "center",
-        }}
-      >
-        Only 2 on-chain transactions per game
-      </p>
+      {/* TX Badge */}
+      <FadeIn startFrame={B.txBadge.start} duration={20} style={{ marginTop: 24 }}>
+        <div
+          style={{
+            padding: "16px 40px",
+            backgroundColor: colors.navyMid,
+            border: `2px solid ${colors.teal}`,
+            borderRadius: 12,
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: fonts.orbitron,
+              fontSize: 24,
+              color: colors.teal,
+              margin: 0,
+              ...textGlow(colors.teal, 10),
+            }}
+          >
+            Only 2 on-chain transactions per game
+          </p>
+          <p style={{ fontFamily: fonts.rajdhani, fontSize: 18, color: colors.muted, margin: "8px 0 0" }}>
+            open_match() ———— gameplay ———— close()
+          </p>
+        </div>
+      </FadeIn>
+
+      <PiPFrame startFrame={B.deviceLayer.start + 20} />
     </AbsoluteFill>
   );
 };
