@@ -7,8 +7,8 @@ import { encryptSecret, decryptSecret, saveWallet, getWallet } from './adapter';
 export async function createWallet(pin: string): Promise<WalletData> {
   const { publicKey, secretKey } = generateKeypair();
 
-  const { encrypted, salt } = await encryptSecret(secretKey, pin);
-  const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt };
+  const { encrypted, salt, iv } = await encryptSecret(secretKey, pin);
+  const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt, iv };
   await saveWallet(wallet);
   // Fund on testnet (fire-and-forget)
   fundWithFriendbot(publicKey).catch(() => {});
@@ -18,8 +18,8 @@ export async function createWallet(pin: string): Promise<WalletData> {
 export async function importWallet(secretKeyInput: string, pin: string): Promise<WalletData> {
   const { publicKey } = keypairFromSecret(secretKeyInput.trim());
 
-  const { encrypted, salt } = await encryptSecret(secretKeyInput.trim(), pin);
-  const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt };
+  const { encrypted, salt, iv } = await encryptSecret(secretKeyInput.trim(), pin);
+  const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt, iv };
   await saveWallet(wallet);
   return wallet;
 }
@@ -27,11 +27,15 @@ export async function importWallet(secretKeyInput: string, pin: string): Promise
 export async function getSecretKey(pin: string): Promise<string> {
   const wallet = await getWallet();
   if (!wallet) throw new Error('No wallet found');
-  const secret = await decryptSecret(wallet.encryptedSecret, wallet.salt, pin);
-  if (!isValidSecretKey(secret)) {
+  try {
+    const secret = await decryptSecret(wallet.encryptedSecret, wallet.salt, pin, wallet.iv);
+    if (!isValidSecretKey(secret)) {
+      throw new Error('Invalid PIN');
+    }
+    return secret;
+  } catch {
     throw new Error('Invalid PIN');
   }
-  return secret;
 }
 
 export async function hasWallet(): Promise<boolean> {
@@ -53,7 +57,6 @@ export async function fundWithFriendbot(publicKey: string): Promise<void> {
   const res = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
   if (!res.ok) {
     const body = await res.text();
-    // Already funded is fine
     if (!body.includes('createAccountAlreadyExist')) {
       throw new Error('Friendbot failed');
     }
