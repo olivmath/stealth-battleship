@@ -1,6 +1,6 @@
 .cell {
-  border: 1px solid rgba(30, 58, 95, 0.4);
-  border-radius: 2px;
+  border-width: 1px;
+  border-style: solid;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,21 +14,53 @@
 }
 
 .hitMarker {
-  width: 40%;
-  height: 40%;
+  width: 50%;
+  height: 50%;
   border-radius: 50%;
+  background-color: #f87171;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hitMarkerText {
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 .missMarker {
   width: 30%;
   height: 30%;
   border-radius: 50%;
-  opacity: 0.6;
+  background-color: #38bdf8;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.missMarkerText {
+  color: #e2e8f0;
+  font-size: 8px;
+  font-weight: bold;
 }
 
 .sunkMarker {
   width: 60%;
   height: 60%;
-  border-radius: 2px;
-  opacity: 0.7;
+  background-color: #b91c1c;
+  opacity: 0.8;
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sunkMarkerText {
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: bold;
+  transform: rotate(-45deg);
 }

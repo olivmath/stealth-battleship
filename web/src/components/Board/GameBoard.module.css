@@ -1,8 +1,6 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
 }
 
 .label {
@@ -11,16 +9,18 @@
   margin-bottom: 4px;
 }
 
-.board {
+.colLabels {
+  display: flex;
+  flex-direction: row;
+}
+
+.gridBody {
   display: flex;
   flex-direction: column;
 }
 
-.colLabels {
-  display: flex;
-}
-
 .row {
   display: flex;
+  flex-direction: row;
   align-items: center;
 }

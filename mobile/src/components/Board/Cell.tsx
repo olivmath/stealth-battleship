@@ -90,7 +90,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
             backgroundColor: bgColor,
             borderColor,
           },
-          Platform.OS === 'web' && onPress && !disabled ? { cursor: 'pointer' } as any : undefined,
+          Platform.OS === 'web' && onPress && !disabled ? { cursor: 'crosshair' } as any : undefined,
         ]}
         onPress={onPress}
         disabled={disabled || !onPress}
