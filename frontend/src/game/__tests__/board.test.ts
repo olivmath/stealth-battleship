@@ -6,7 +6,7 @@ import { Board, PlacedShip } from '../../shared/entities';
 function makeBoardWithShip(gridSize: number = 6): { board: Board; ships: PlacedShip[] } {
   const board = createEmptyBoard(gridSize);
   const ship: PlacedShip = {
-    id: 'patrol-1',
+    id: 'patrol',
     name: 'Patrol Boat',
     size: 2,
     positions: [{ row: 0, col: 0 }, { row: 0, col: 1 }],
@@ -14,8 +14,8 @@ function makeBoardWithShip(gridSize: number = 6): { board: Board; ships: PlacedS
     hits: 0,
     isSunk: false,
   };
-  board[0][0] = { state: 'ship', shipId: 'patrol-1' };
-  board[0][1] = { state: 'ship', shipId: 'patrol-1' };
+  board[0][0] = { state: 'ship', shipId: 'patrol' };
+  board[0][1] = { state: 'ship', shipId: 'patrol' };
   return { board, ships: [ship] };
 }
 
@@ -88,7 +88,7 @@ describe('processAttack', () => {
     const { newBoard, newShips, result, shipId } = processAttack(board, ships, { row: 0, col: 0 });
 
     expect(result).toBe('hit');
-    expect(shipId).toBe('patrol-1');
+    expect(shipId).toBe('patrol');
     expect(newBoard[0][0].state).toBe('hit');
     expect(newShips[0].hits).toBe(1);
     expect(newShips[0].isSunk).toBe(false);
@@ -102,7 +102,7 @@ describe('processAttack', () => {
     const { newBoard, newShips, result, shipId } = processAttack(first.newBoard, first.newShips, { row: 0, col: 1 });
 
     expect(result).toBe('sunk');
-    expect(shipId).toBe('patrol-1');
+    expect(shipId).toBe('patrol');
     expect(newShips[0].hits).toBe(2);
     expect(newShips[0].isSunk).toBe(true);
     expect(newBoard[0][0].state).toBe('sunk');

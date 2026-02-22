@@ -14,8 +14,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Recruit',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -23,8 +23,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Ensign',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -32,8 +32,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Lieutenant',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -41,8 +41,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Commander',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -50,8 +50,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Captain',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -59,8 +59,8 @@ export const RANK_PROGRESSION: RankConfig[] = [
     rank: 'Admiral',
     gridSize: 6,
     ships: [
-      { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-      { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+      { id: 'patrol', name: 'Patrol Boat', size: 2 },
+      { id: 'cruiser', name: 'Cruiser', size: 2 },
       { id: 'destroyer', name: 'Destroyer', size: 3 },
     ],
   },
@@ -84,8 +84,8 @@ export const GRID_SIZE = 6;
 // --- Fleet definitions per grid size ---
 
 export const COMPACT_SHIPS: ShipDefinition[] = [
-  { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-  { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+  { id: 'patrol', name: 'Patrol Boat', size: 2 },
+  { id: 'cruiser', name: 'Cruiser', size: 2 },
   { id: 'destroyer', name: 'Destroyer', size: 3 },
 ];
 
@@ -132,6 +132,18 @@ export const SHIP_STYLES: Record<string, { color: string; label: string }> = {
 export function getShipStyle(shipId: string): { color: string; label: string } {
   const prefix = shipId.replace(/-\d+$/, '');
   return SHIP_STYLES[prefix] ?? { color: '#4a5568', label: 'Unknown' };
+}
+
+// --- Ship sinking GIFs ---
+export const SHIP_SINKING_GIFS: Record<string, any> = {
+  patrol: require('../../assets/ships/patrol-boat-fall.gif'),
+  cruiser: require('../../assets/ships/cruiser.gif'),
+  destroyer: require('../../assets/ships/destroyer-fall.gif'),
+};
+
+export function getShipSinkingGif(shipId: string) {
+  const prefix = shipId.replace(/-\d+$/, '');
+  return SHIP_SINKING_GIFS[prefix] ?? null;
 }
 
 // --- Difficulty configuration ---

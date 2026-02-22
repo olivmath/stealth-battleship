@@ -79,18 +79,18 @@ describe('validatePlacement', () => {
 // --- placeShip ---
 
 describe('placeShip', () => {
-  const patrol: ShipDefinition = { id: 'patrol-1', name: 'Patrol Boat', size: 2 };
+  const patrol: ShipDefinition = { id: 'patrol', name: 'Patrol Boat', size: 2 };
 
   it('places ship and returns new board + placedShip', () => {
     const board = createEmptyBoard(6);
     const result = placeShip(board, patrol, { row: 0, col: 0 }, 'horizontal', 6);
 
     expect(result).not.toBeNull();
-    expect(result!.newBoard[0][0]).toEqual({ state: 'ship', shipId: 'patrol-1' });
-    expect(result!.newBoard[0][1]).toEqual({ state: 'ship', shipId: 'patrol-1' });
+    expect(result!.newBoard[0][0]).toEqual({ state: 'ship', shipId: 'patrol' });
+    expect(result!.newBoard[0][1]).toEqual({ state: 'ship', shipId: 'patrol' });
     expect(result!.newBoard[0][2].state).toBe('empty');
 
-    expect(result!.placedShip.id).toBe('patrol-1');
+    expect(result!.placedShip.id).toBe('patrol');
     expect(result!.placedShip.size).toBe(2);
     expect(result!.placedShip.hits).toBe(0);
     expect(result!.placedShip.isSunk).toBe(false);
@@ -126,8 +126,8 @@ describe('placeShip', () => {
 
 describe('autoPlaceShips', () => {
   const compactShips: ShipDefinition[] = [
-    { id: 'patrol-1', name: 'Patrol Boat', size: 2 },
-    { id: 'patrol-2', name: 'Patrol Boat', size: 2 },
+    { id: 'patrol', name: 'Patrol Boat', size: 2 },
+    { id: 'cruiser', name: 'Cruiser', size: 2 },
     { id: 'destroyer', name: 'Destroyer', size: 3 },
   ];
 

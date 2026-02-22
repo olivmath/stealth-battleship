@@ -1,7 +1,9 @@
 jest.mock('expo-crypto', () => ({
   digestStringAsync: jest.fn(async (_algo: string, data: string) => {
-    // Simple deterministic mock: return hex-encoded length + first chars
-    const hex = Buffer.from(data.slice(0, 32)).toString('hex');
+    // Simple deterministic mock: return hex string from char codes
+    const hex = Array.from(data.slice(0, 32))
+      .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join('');
     return hex.padEnd(64, '0');
   }),
   CryptoDigestAlgorithm: { SHA256: 'SHA-256' },

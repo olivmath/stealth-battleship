@@ -1,5 +1,5 @@
-import React, { useEffect, lazy, Suspense } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, InteractionManager } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
@@ -21,6 +21,14 @@ export default function MenuScreen() {
   const { stats, refresh } = usePlayerStats();
   const { settings, refresh: refreshSettings } = useSettings();
   const haptics = useHaptics();
+  const [modelReady, setModelReady] = useState(false);
+
+  useEffect(() => {
+    const handle = InteractionManager.runAfterInteractions(() => {
+      setModelReady(true);
+    });
+    return () => handle.cancel();
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -83,9 +91,15 @@ export default function MenuScreen() {
           </View>
         )}
 
-        <Suspense fallback={<View style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}><RadarSpinner size={40} /></View>}>
-          <ShipModel height={200} />
-        </Suspense>
+        <View pointerEvents="box-none" style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}>
+          {modelReady ? (
+            <Suspense fallback={<RadarSpinner size={40} />}>
+              <ShipModel height={200} />
+            </Suspense>
+          ) : (
+            <RadarSpinner size={40} />
+          )}
+        </View>
 
         {/* Actions */}
         <View style={styles.actions}>

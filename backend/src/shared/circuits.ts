@@ -18,7 +18,7 @@ const circuits = new Map<string, CircuitBundle>();
 
 const CIRCUIT_DIR = path.resolve(
   __dirname,
-  '../../../frontend/src/services/zk/circuits',
+  '../../../frontend/src/zk/circuits',
 );
 
 export async function loadCircuits(): Promise<void> {

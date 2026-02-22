@@ -7,7 +7,7 @@ import { AIState, PlacedShip, ShipDefinition } from '../../shared/entities';
 
 function setupBoardWithShip(gridSize: number = 6) {
   const board = createEmptyBoard(gridSize);
-  const ship: ShipDefinition = { id: 'patrol-1', name: 'Patrol Boat', size: 2 };
+  const ship: ShipDefinition = { id: 'patrol', name: 'Patrol Boat', size: 2 };
   const result = placeShip(board, ship, { row: 2, col: 2 }, 'horizontal', gridSize)!;
   return { board: result.newBoard, ships: [result.placedShip] };
 }
@@ -178,7 +178,7 @@ describe('updateAIAfterAttack', () => {
 
   it('clears sunk ship from hitStack on sunk', () => {
     const sunkShip: PlacedShip = {
-      id: 'patrol-1',
+      id: 'patrol',
       name: 'Patrol Boat',
       size: 2,
       positions: [{ row: 2, col: 2 }, { row: 2, col: 3 }],
@@ -195,7 +195,7 @@ describe('updateAIAfterAttack', () => {
     };
 
     const result = updateAIAfterAttack(
-      ai, { row: 2, col: 3 }, 'sunk', 'patrol-1', [sunkShip], 6, 'normal'
+      ai, { row: 2, col: 3 }, 'sunk', 'patrol', [sunkShip], 6, 'normal'
     );
 
     // Sunk ship positions removed from hitStack
@@ -206,7 +206,7 @@ describe('updateAIAfterAttack', () => {
 
   it('stays in target mode after sunk if other hits remain', () => {
     const sunkShip: PlacedShip = {
-      id: 'patrol-1',
+      id: 'patrol',
       name: 'Patrol Boat',
       size: 2,
       positions: [{ row: 2, col: 2 }, { row: 2, col: 3 }],
@@ -226,7 +226,7 @@ describe('updateAIAfterAttack', () => {
     };
 
     const result = updateAIAfterAttack(
-      ai, { row: 2, col: 3 }, 'sunk', 'patrol-1', [sunkShip], 6, 'normal'
+      ai, { row: 2, col: 3 }, 'sunk', 'patrol', [sunkShip], 6, 'normal'
     );
 
     expect(result.hitStack).toHaveLength(1);

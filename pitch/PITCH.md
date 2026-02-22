@@ -218,3 +218,6 @@ Most ZK game submissions use 1 circuit. We have 3 specialized circuits that cove
 Battleship ZK proves that zero-knowledge isn't just for DeFi or identity — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have the cryptographic primitives to make this real. Every ship placement is committed, every shot is proven, every outcome is verifiable. No trust required.
 
 **Fair by math. Fun by design.**
+
+
+https://www.youtube.com/watch?v=1n8LKx59p6E

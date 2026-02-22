@@ -12,4 +12,7 @@ module.exports = {
       },
     }],
   },
+  moduleNameMapper: {
+    '\\.(gif|png|jpg|jpeg|svg)$': '<rootDir>/src/__mocks__/fileMock.js',
+  },
 };
