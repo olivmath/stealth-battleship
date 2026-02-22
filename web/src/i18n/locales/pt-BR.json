@@ -2,14 +2,12 @@
   "splash.title": "BATALHA NAVAL",
   "splash.subtitle": "ZERO KNOWLEDGE",
   "splash.loading": "INICIALIZANDO SISTEMAS...",
-
   "login.title": "BATALHA NAVAL",
   "login.subtitle": "ZERO KNOWLEDGE",
   "login.label": "NOME DO COMANDANTE",
   "login.placeholder": "Digite seu codinome...",
   "login.button": "ENTRAR NA BATALHA",
   "login.version": "v0.4.1 • MVP VISUAL",
-
   "menu.welcome": "BEM-VINDO DE VOLTA",
   "menu.pvp": "PvP ONLINE",
   "menu.pvpSub": "desafie jogadores",
@@ -25,7 +23,6 @@
   "menu.logoutConfirm": "Sair",
   "menu.rank": "PATENTE",
   "menu.winRate": "TAXA DE VITORIA",
-
   "tutorial.title": "Como Jogar\nBatalha Naval",
   "tutorial.intro": "Afunde todos os navios inimigos antes que afundem os seus. Cada jogador tem uma frota escondida em um grid {{gridSize}}x{{gridSize}}.",
   "tutorial.fleet": "Frota escondida no seu grid",
@@ -61,7 +58,6 @@
   "tutorial.next": "PROXIMO",
   "tutorial.start": "INICIAR",
   "tutorial.skip": "PULAR TUTORIAL",
-
   "placement.title": "POSICIONAR FROTA",
   "placement.hint": "Toque no grid para posicionar • Toque em {{shipName}} novamente para girar",
   "placement.allDeployedPvp": "Todos os navios posicionados! Toque em PRONTO quando terminar.",
@@ -80,7 +76,6 @@
   "placement.auto": "AUTO",
   "placement.ready": "PRONTO",
   "placement.selectShipTitle": "SELECIONAR NAVIO",
-
   "battle.yourTurn": "SUA VEZ",
   "battle.enemyFiring": "INIMIGO DISPARANDO...",
   "battle.enemyWaters": "AGUAS INIMIGAS",
@@ -96,7 +91,6 @@
   "battle.yours": "SEU",
   "battle.shipSunk": "NAVIO AFUNDADO!",
   "battle.proving": "VERIFICANDO PROVA...",
-
   "gameover.victory": "VITORIA",
   "gameover.defeat": "DERROTA",
   "gameover.victoryMsg": "Frota inimiga destruida",
@@ -121,18 +115,12 @@
   "gameover.rematch": "REVANCHE",
   "gameover.playAgain": "JOGAR NOVAMENTE",
   "gameover.returnToBase": "VOLTAR A BASE",
-
   "settings.title": "CONFIGURACOES",
   "settings.gridFleet": "GRID E FROTA",
   "settings.rank": "PATENTE",
   "settings.grid": "GRID",
   "settings.fleet": "FROTA",
   "settings.gridHint": "Grid e frota sao desbloqueados por patente",
-  "settings.battleView": "VISAO DE BATALHA",
-  "settings.stacked": "EMPILHADO",
-  "settings.stackedDesc": "Ambos tabuleiros visiveis simultaneamente",
-  "settings.swipe": "DESLIZAR",
-  "settings.swipeDesc": "Tabuleiro em tela cheia, deslize para trocar",
   "settings.difficulty": "DIFICULDADE",
   "settings.easy": "FACIL",
   "settings.easyDesc": "IA Relaxada • 0.5x XP",
@@ -144,7 +132,6 @@
   "settings.reviewTutorial": "REVER TUTORIAL",
   "settings.reviewTutorialDesc": "Assista o tutorial novamente",
   "settings.backToBase": "VOLTAR A BASE",
-
   "profile.title": "PERFIL DO COMANDANTE",
   "profile.combatRecord": "REGISTRO DE COMBATE",
   "profile.victories": "VITORIAS",
@@ -155,14 +142,13 @@
   "profile.totalShots": "TOTAL DE DISPAROS",
   "profile.totalHits": "TOTAL DE ACERTOS",
   "profile.backToBase": "VOLTAR A BASE",
-
   "matchHistory.title": "SEU HISTORICO",
   "matchHistory.empty": "NENHUMA PARTIDA AINDA",
   "matchHistory.emptyDesc": "Complete uma batalha para ver seu historico",
   "matchHistory.win": "V",
   "matchHistory.loss": "D",
   "matchHistory.backToBase": "VOLTAR A BASE",
-
+  "matchHistory.zkVerified": "ZK",
   "matchDetail.victory": "VITORIA",
   "matchDetail.defeat": "DERROTA",
   "matchDetail.loading": "Carregando...",
@@ -177,7 +163,20 @@
   "matchDetail.perfectKills": "Abates Perfeitos",
   "matchDetail.turn": "Turno {{number}}",
   "matchDetail.backToHistory": "VOLTAR AO HISTORICO",
-
+  "matchDetail.zkProofs": "PROVAS ZK",
+  "matchDetail.zkBoardValidity": "Validade do Tabuleiro",
+  "matchDetail.zkBoardValidityDesc": "Prova que os navios foram posicionados conforme as regras",
+  "matchDetail.zkShotProof": "Prova de Disparo",
+  "matchDetail.zkShotProofDesc": "Prova que cada resultado de disparo foi honesto",
+  "matchDetail.zkBoardHash": "Hash do Tabuleiro",
+  "matchDetail.zkProofSize": "Tamanho da Prova",
+  "matchDetail.zkProofBytes": "{{size}} bytes",
+  "matchDetail.zkVerified": "VERIFICADO",
+  "matchDetail.zkPending": "PENDENTE",
+  "matchDetail.zkNone": "SEM PROVAS",
+  "matchDetail.zkNoneDesc": "Esta partida foi jogada sem verificacao ZK",
+  "matchDetail.zkPlayer": "JOGADOR",
+  "matchDetail.zkOpponent": "OPONENTE",
   "pvpMode.title": "PvP ONLINE",
   "pvpMode.subtitle": "Escolha seu modo de batalha",
   "pvpMode.random": "PARTIDA ALEATORIA",
@@ -185,11 +184,9 @@
   "pvpMode.friend": "JOGAR COM AMIGO",
   "pvpMode.friendSub": "Crie ou entre em uma partida",
   "pvpMode.back": "VOLTAR",
-
   "pvpLobby.searching": "PROCURANDO OPONENTE...",
   "pvpLobby.found": "OPONENTE ENCONTRADO!",
   "pvpLobby.cancel": "CANCELAR",
-
   "pvpFriend.title": "JOGAR COM AMIGO",
   "pvpFriend.subtitle": "Crie uma partida ou entre em uma",
   "pvpFriend.create": "CRIAR PARTIDA",
@@ -205,31 +202,25 @@
   "pvpFriend.enterCode": "Digite o codigo da partida",
   "pvpFriend.connecting": "CONECTANDO...",
   "pvpFriend.joinBtn": "ENTRAR",
-
   "turnIndicator.yourTurn": "SUA VEZ",
   "turnIndicator.enemyFiring": "INIMIGO DISPARANDO...",
-
   "levelUp.title": "PATENTE SUBIU!",
   "levelUp.newGrid": "NOVO GRID: {{gridSize}}x{{gridSize}}",
   "levelUp.yourFleet": "SUA FROTA",
-
   "rankList.title": "TODAS AS PATENTES",
   "rankList.ships": "{{count}} navios",
-
   "ranks.Recruit": "Recruta",
   "ranks.Ensign": "Alferes",
   "ranks.Lieutenant": "Tenente",
   "ranks.Commander": "Comandante",
   "ranks.Captain": "Capitao",
   "ranks.Admiral": "Almirante",
-
   "mottos.Recruit": "Todo almirante comecou aqui",
   "mottos.Ensign": "Aprendendo as mares",
   "mottos.Lieutenant": "Uma mao firme no leme",
   "mottos.Commander": "O medo segue sua frota",
   "mottos.Captain": "Mestre dos sete mares",
   "mottos.Admiral": "Lenda da guerra naval",
-
   "ships.Scout": "Batedor",
   "ships.Patrol Boat": "Barco Patrulha",
   "ships.Destroyer": "Destroyer",
@@ -237,14 +228,11 @@
   "ships.Submarine": "Submarino",
   "ships.Battleship": "Encouracado",
   "ships.Carrier": "Porta-avioes",
-
   "difficulty.easy": "FACIL",
   "difficulty.normal": "NORMAL",
   "difficulty.hard": "DIFICIL",
-
   "common.pvpOnline": "PvP ONLINE",
   "common.dash": "—",
-
   "wallet.setup.title": "CARTEIRA STELLAR",
   "wallet.setup.subtitle": "PROTEJA SUA IDENTIDADE",
   "wallet.setup.createNew": "CRIAR NOVA CARTEIRA",
@@ -267,7 +255,6 @@
   "wallet.setup.generating": "GERANDO CARTEIRA...",
   "wallet.setup.errorGeneric": "Falha ao criar carteira",
   "wallet.setup.errorInvalidKey": "Chave secreta invalida",
-
   "wallet.view.title": "CARTEIRA",
   "wallet.view.addressLabel": "ENDERECO PUBLICO",
   "wallet.view.copied": "COPIADO!",
@@ -284,12 +271,10 @@
   "wallet.view.back": "VOLTAR",
   "wallet.view.errorTitle": "Erro",
   "wallet.view.errorInvalidPin": "PIN invalido. Tente novamente.",
-
   "wallet.pin.title": "DIGITE O PIN",
   "wallet.pin.placeholder": "••••",
   "wallet.pin.cancel": "CANCELAR",
   "wallet.pin.confirm": "CONFIRMAR",
-
   "menu.wallet": "CARTEIRA",
   "menu.walletSub": "endereco stellar"
 }

@@ -2,14 +2,12 @@
   "splash.title": "BATALLA NAVAL",
   "splash.subtitle": "ZERO KNOWLEDGE",
   "splash.loading": "INICIALIZANDO SISTEMAS...",
-
   "login.title": "BATALLA NAVAL",
   "login.subtitle": "ZERO KNOWLEDGE",
   "login.label": "NOMBRE DEL COMANDANTE",
   "login.placeholder": "Ingresa tu nombre clave...",
   "login.button": "ENTRAR EN BATALLA",
   "login.version": "v0.4.1 • MVP VISUAL",
-
   "menu.welcome": "BIENVENIDO DE VUELTA",
   "menu.pvp": "PvP EN LINEA",
   "menu.pvpSub": "desafia jugadores",
@@ -25,7 +23,6 @@
   "menu.logoutConfirm": "Salir",
   "menu.rank": "RANGO",
   "menu.winRate": "TASA DE VICTORIA",
-
   "tutorial.title": "Como Jugar\nBatalla Naval",
   "tutorial.intro": "Hunde todos los barcos enemigos antes de que hundan los tuyos. Cada jugador tiene una flota oculta en una cuadricula {{gridSize}}x{{gridSize}}.",
   "tutorial.fleet": "Flota oculta en tu cuadricula",
@@ -61,7 +58,6 @@
   "tutorial.next": "SIGUIENTE",
   "tutorial.start": "INICIAR",
   "tutorial.skip": "SALTAR TUTORIAL",
-
   "placement.title": "DESPLEGAR FLOTA",
   "placement.hint": "Toca la cuadricula para posicionar • Toca {{shipName}} de nuevo para girar",
   "placement.allDeployedPvp": "Todos los barcos desplegados! Toca LISTO cuando termines.",
@@ -80,7 +76,6 @@
   "placement.auto": "AUTO",
   "placement.ready": "LISTO",
   "placement.selectShipTitle": "SELECCIONAR BARCO",
-
   "battle.yourTurn": "TU TURNO",
   "battle.enemyFiring": "ENEMIGO DISPARANDO...",
   "battle.enemyWaters": "AGUAS ENEMIGAS",
@@ -96,7 +91,6 @@
   "battle.yours": "TUYO",
   "battle.shipSunk": "BARCO HUNDIDO!",
   "battle.proving": "VERIFICANDO PRUEBA...",
-
   "gameover.victory": "VICTORIA",
   "gameover.defeat": "DERROTA",
   "gameover.victoryMsg": "Flota enemiga destruida",
@@ -121,18 +115,12 @@
   "gameover.rematch": "REVANCHA",
   "gameover.playAgain": "JUGAR DE NUEVO",
   "gameover.returnToBase": "VOLVER A LA BASE",
-
   "settings.title": "AJUSTES",
   "settings.gridFleet": "CUADRICULA Y FLOTA",
   "settings.rank": "RANGO",
   "settings.grid": "CUADRICULA",
   "settings.fleet": "FLOTA",
   "settings.gridHint": "Cuadricula y flota se desbloquean por rango",
-  "settings.battleView": "VISTA DE BATALLA",
-  "settings.stacked": "APILADO",
-  "settings.stackedDesc": "Ambos tableros visibles simultaneamente",
-  "settings.swipe": "DESLIZAR",
-  "settings.swipeDesc": "Tablero a pantalla completa, desliza para cambiar",
   "settings.difficulty": "DIFICULTAD",
   "settings.easy": "FACIL",
   "settings.easyDesc": "IA Relajada • 0.5x XP",
@@ -144,7 +132,6 @@
   "settings.reviewTutorial": "REVISAR TUTORIAL",
   "settings.reviewTutorialDesc": "Ver el tutorial de nuevo",
   "settings.backToBase": "VOLVER A LA BASE",
-
   "profile.title": "PERFIL DEL COMANDANTE",
   "profile.combatRecord": "REGISTRO DE COMBATE",
   "profile.victories": "VICTORIAS",
@@ -155,14 +142,13 @@
   "profile.totalShots": "DISPAROS TOTALES",
   "profile.totalHits": "IMPACTOS TOTALES",
   "profile.backToBase": "VOLVER A LA BASE",
-
   "matchHistory.title": "TU HISTORIAL",
   "matchHistory.empty": "SIN PARTIDAS AUN",
   "matchHistory.emptyDesc": "Completa una batalla para ver tu historial",
   "matchHistory.win": "V",
   "matchHistory.loss": "D",
   "matchHistory.backToBase": "VOLVER A LA BASE",
-
+  "matchHistory.zkVerified": "ZK",
   "matchDetail.victory": "VICTORIA",
   "matchDetail.defeat": "DERROTA",
   "matchDetail.loading": "Cargando...",
@@ -177,7 +163,20 @@
   "matchDetail.perfectKills": "Destrucciones Perfectas",
   "matchDetail.turn": "Turno {{number}}",
   "matchDetail.backToHistory": "VOLVER AL HISTORIAL",
-
+  "matchDetail.zkProofs": "PRUEBAS ZK",
+  "matchDetail.zkBoardValidity": "Validez del Tablero",
+  "matchDetail.zkBoardValidityDesc": "Prueba que los barcos fueron colocados segun las reglas",
+  "matchDetail.zkShotProof": "Prueba de Disparo",
+  "matchDetail.zkShotProofDesc": "Prueba que cada resultado de disparo fue honesto",
+  "matchDetail.zkBoardHash": "Hash del Tablero",
+  "matchDetail.zkProofSize": "Tamano de la Prueba",
+  "matchDetail.zkProofBytes": "{{size}} bytes",
+  "matchDetail.zkVerified": "VERIFICADO",
+  "matchDetail.zkPending": "PENDIENTE",
+  "matchDetail.zkNone": "SIN PRUEBAS",
+  "matchDetail.zkNoneDesc": "Esta partida se jugo sin verificacion ZK",
+  "matchDetail.zkPlayer": "JUGADOR",
+  "matchDetail.zkOpponent": "OPONENTE",
   "pvpMode.title": "PvP EN LINEA",
   "pvpMode.subtitle": "Elige tu modo de batalla",
   "pvpMode.random": "PARTIDA ALEATORIA",
@@ -185,11 +184,9 @@
   "pvpMode.friend": "JUGAR CON AMIGO",
   "pvpMode.friendSub": "Crea o unete a una partida",
   "pvpMode.back": "ATRAS",
-
   "pvpLobby.searching": "BUSCANDO OPONENTE...",
   "pvpLobby.found": "OPONENTE ENCONTRADO!",
   "pvpLobby.cancel": "CANCELAR",
-
   "pvpFriend.title": "JUGAR CON AMIGO",
   "pvpFriend.subtitle": "Crea una partida o unete a una",
   "pvpFriend.create": "CREAR PARTIDA",
@@ -205,31 +202,25 @@
   "pvpFriend.enterCode": "Ingresa el codigo de la partida",
   "pvpFriend.connecting": "CONECTANDO...",
   "pvpFriend.joinBtn": "UNIRSE",
-
   "turnIndicator.yourTurn": "TU TURNO",
   "turnIndicator.enemyFiring": "ENEMIGO DISPARANDO...",
-
   "levelUp.title": "RANGO SUBIO!",
   "levelUp.newGrid": "NUEVA CUADRICULA: {{gridSize}}x{{gridSize}}",
   "levelUp.yourFleet": "TU FLOTA",
-
   "rankList.title": "TODOS LOS RANGOS",
   "rankList.ships": "{{count}} barcos",
-
   "ranks.Recruit": "Recluta",
   "ranks.Ensign": "Alferez",
   "ranks.Lieutenant": "Teniente",
   "ranks.Commander": "Comandante",
   "ranks.Captain": "Capitan",
   "ranks.Admiral": "Almirante",
-
   "mottos.Recruit": "Todo almirante empezo aqui",
   "mottos.Ensign": "Aprendiendo las mareas",
   "mottos.Lieutenant": "Una mano firme en el timon",
   "mottos.Commander": "El miedo sigue a tu flota",
   "mottos.Captain": "Maestro de los siete mares",
   "mottos.Admiral": "Leyenda de la guerra naval",
-
   "ships.Scout": "Explorador",
   "ships.Patrol Boat": "Lancha Patrulla",
   "ships.Destroyer": "Destructor",
@@ -237,14 +228,11 @@
   "ships.Submarine": "Submarino",
   "ships.Battleship": "Acorazado",
   "ships.Carrier": "Portaaviones",
-
   "difficulty.easy": "FACIL",
   "difficulty.normal": "NORMAL",
   "difficulty.hard": "DIFICIL",
-
   "common.pvpOnline": "PvP EN LINEA",
   "common.dash": "—",
-
   "wallet.setup.title": "BILLETERA STELLAR",
   "wallet.setup.subtitle": "ASEGURA TU IDENTIDAD",
   "wallet.setup.createNew": "CREAR NUEVA BILLETERA",
@@ -267,7 +255,6 @@
   "wallet.setup.generating": "GENERANDO BILLETERA...",
   "wallet.setup.errorGeneric": "Error al crear billetera",
   "wallet.setup.errorInvalidKey": "Clave secreta invalida",
-
   "wallet.view.title": "BILLETERA",
   "wallet.view.addressLabel": "DIRECCION PUBLICA",
   "wallet.view.copied": "COPIADO!",
@@ -284,12 +271,10 @@
   "wallet.view.back": "VOLVER",
   "wallet.view.errorTitle": "Error",
   "wallet.view.errorInvalidPin": "PIN invalido. Intenta de nuevo.",
-
   "wallet.pin.title": "INGRESA PIN",
   "wallet.pin.placeholder": "••••",
   "wallet.pin.cancel": "CANCELAR",
   "wallet.pin.confirm": "CONFIRMAR",
-
   "menu.wallet": "BILLETERA",
   "menu.walletSub": "direccion stellar"
 }

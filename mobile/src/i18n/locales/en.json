@@ -2,14 +2,12 @@
   "splash.title": "BATTLESHIP",
   "splash.subtitle": "ZERO KNOWLEDGE",
   "splash.loading": "INITIALIZING SYSTEMS...",
-
   "login.title": "BATTLESHIP",
   "login.subtitle": "ZERO KNOWLEDGE",
   "login.label": "COMMANDER NAME",
   "login.placeholder": "Enter your callsign...",
   "login.button": "ENTER BATTLE",
   "login.version": "v0.4.1 • VISUAL MVP",
-
   "menu.welcome": "WELCOME BACK",
   "menu.pvp": "PvP ONLINE",
   "menu.pvpSub": "challenge players",
@@ -25,7 +23,6 @@
   "menu.logoutConfirm": "Logout",
   "menu.rank": "RANK",
   "menu.winRate": "WIN RATE",
-
   "tutorial.title": "How to Play\nBattleship",
   "tutorial.intro": "Sink all enemy ships before they sink yours. Each player has a hidden fleet on a {{gridSize}}x{{gridSize}} grid.",
   "tutorial.fleet": "Hidden fleet on your grid",
@@ -61,7 +58,6 @@
   "tutorial.next": "NEXT",
   "tutorial.start": "START",
   "tutorial.skip": "SKIP TUTORIAL",
-
   "placement.title": "DEPLOY FLEET",
   "placement.hint": "Tap grid to position • Tap {{shipName}} again to rotate",
   "placement.allDeployedPvp": "All ships deployed! Tap READY when done.",
@@ -80,7 +76,6 @@
   "placement.auto": "AUTO",
   "placement.ready": "READY",
   "placement.selectShipTitle": "SELECT SHIP",
-
   "battle.yourTurn": "YOUR TURN",
   "battle.enemyFiring": "ENEMY FIRING...",
   "battle.enemyWaters": "ENEMY WATERS",
@@ -96,7 +91,6 @@
   "battle.yours": "YOURS",
   "battle.shipSunk": "SHIP SUNK!",
   "battle.proving": "VERIFYING PROOF...",
-
   "gameover.victory": "VICTORY",
   "gameover.defeat": "DEFEAT",
   "gameover.victoryMsg": "Enemy fleet destroyed",
@@ -121,18 +115,12 @@
   "gameover.rematch": "REMATCH",
   "gameover.playAgain": "PLAY AGAIN",
   "gameover.returnToBase": "RETURN TO BASE",
-
   "settings.title": "SETTINGS",
   "settings.gridFleet": "GRID & FLEET",
   "settings.rank": "RANK",
   "settings.grid": "GRID",
   "settings.fleet": "FLEET",
   "settings.gridHint": "Grid and fleet are unlocked by rank",
-  "settings.battleView": "BATTLE VIEW",
-  "settings.stacked": "STACKED",
-  "settings.stackedDesc": "Both boards visible simultaneously",
-  "settings.swipe": "SWIPE",
-  "settings.swipeDesc": "Full-size board, swipe to switch",
   "settings.difficulty": "DIFFICULTY",
   "settings.easy": "EASY",
   "settings.easyDesc": "Relaxed AI • 0.5x XP",
@@ -144,7 +132,6 @@
   "settings.reviewTutorial": "REVIEW TUTORIAL",
   "settings.reviewTutorialDesc": "Watch the tutorial again",
   "settings.backToBase": "BACK TO BASE",
-
   "profile.title": "COMMANDER PROFILE",
   "profile.combatRecord": "COMBAT RECORD",
   "profile.victories": "VICTORIES",
@@ -155,14 +142,13 @@
   "profile.totalShots": "TOTAL SHOTS",
   "profile.totalHits": "TOTAL HITS",
   "profile.backToBase": "BACK TO BASE",
-
   "matchHistory.title": "YOUR HISTORY",
   "matchHistory.empty": "NO MATCHES YET",
   "matchHistory.emptyDesc": "Complete a battle to see your history",
   "matchHistory.win": "W",
   "matchHistory.loss": "L",
   "matchHistory.backToBase": "BACK TO BASE",
-
+  "matchHistory.zkVerified": "ZK",
   "matchDetail.victory": "VICTORY",
   "matchDetail.defeat": "DEFEAT",
   "matchDetail.loading": "Loading...",
@@ -177,7 +163,20 @@
   "matchDetail.perfectKills": "Perfect Kills",
   "matchDetail.turn": "Turn {{number}}",
   "matchDetail.backToHistory": "BACK TO HISTORY",
-
+  "matchDetail.zkProofs": "ZK PROOFS",
+  "matchDetail.zkBoardValidity": "Board Validity",
+  "matchDetail.zkBoardValidityDesc": "Proves ships were placed according to the rules",
+  "matchDetail.zkShotProof": "Shot Proof",
+  "matchDetail.zkShotProofDesc": "Proves each shot result was honest",
+  "matchDetail.zkBoardHash": "Board Hash",
+  "matchDetail.zkProofSize": "Proof Size",
+  "matchDetail.zkProofBytes": "{{size}} bytes",
+  "matchDetail.zkVerified": "VERIFIED",
+  "matchDetail.zkPending": "PENDING",
+  "matchDetail.zkNone": "NO PROOFS",
+  "matchDetail.zkNoneDesc": "This match was played without ZK verification",
+  "matchDetail.zkPlayer": "PLAYER",
+  "matchDetail.zkOpponent": "OPPONENT",
   "pvpMode.title": "PvP ONLINE",
   "pvpMode.subtitle": "Choose your battle mode",
   "pvpMode.random": "RANDOM MATCH",
@@ -185,11 +184,9 @@
   "pvpMode.friend": "PLAY WITH FRIEND",
   "pvpMode.friendSub": "Create or join a match",
   "pvpMode.back": "BACK",
-
   "pvpLobby.searching": "SEARCHING FOR OPPONENT...",
   "pvpLobby.found": "OPPONENT FOUND!",
   "pvpLobby.cancel": "CANCEL",
-
   "pvpFriend.title": "PLAY WITH FRIEND",
   "pvpFriend.subtitle": "Create a match or join one",
   "pvpFriend.create": "CREATE MATCH",
@@ -205,31 +202,25 @@
   "pvpFriend.enterCode": "Enter the match code",
   "pvpFriend.connecting": "CONNECTING...",
   "pvpFriend.joinBtn": "JOIN",
-
   "turnIndicator.yourTurn": "YOUR TURN",
   "turnIndicator.enemyFiring": "ENEMY FIRING...",
-
   "levelUp.title": "RANK UP!",
   "levelUp.newGrid": "NEW GRID: {{gridSize}}x{{gridSize}}",
   "levelUp.yourFleet": "YOUR FLEET",
-
   "rankList.title": "ALL RANKS",
   "rankList.ships": "{{count}} ships",
-
   "ranks.Recruit": "Recruit",
   "ranks.Ensign": "Ensign",
   "ranks.Lieutenant": "Lieutenant",
   "ranks.Commander": "Commander",
   "ranks.Captain": "Captain",
   "ranks.Admiral": "Admiral",
-
   "mottos.Recruit": "Every admiral started here",
   "mottos.Ensign": "Learning the tides",
   "mottos.Lieutenant": "A steady hand on the helm",
   "mottos.Commander": "Fear follows your fleet",
   "mottos.Captain": "Master of the seven seas",
   "mottos.Admiral": "Legend of naval warfare",
-
   "ships.Scout": "Scout",
   "ships.Patrol Boat": "Patrol Boat",
   "ships.Destroyer": "Destroyer",
@@ -237,14 +228,11 @@
   "ships.Submarine": "Submarine",
   "ships.Battleship": "Battleship",
   "ships.Carrier": "Carrier",
-
   "difficulty.easy": "EASY",
   "difficulty.normal": "NORMAL",
   "difficulty.hard": "HARD",
-
   "common.pvpOnline": "PvP ONLINE",
   "common.dash": "—",
-
   "wallet.setup.title": "STELLAR WALLET",
   "wallet.setup.subtitle": "SECURE YOUR IDENTITY",
   "wallet.setup.createNew": "CREATE NEW WALLET",
@@ -267,7 +255,6 @@
   "wallet.setup.generating": "GENERATING WALLET...",
   "wallet.setup.errorGeneric": "Failed to create wallet",
   "wallet.setup.errorInvalidKey": "Invalid secret key",
-
   "wallet.view.title": "WALLET",
   "wallet.view.addressLabel": "PUBLIC ADDRESS",
   "wallet.view.copied": "COPIED!",
@@ -284,12 +271,10 @@
   "wallet.view.back": "BACK",
   "wallet.view.errorTitle": "Error",
   "wallet.view.errorInvalidPin": "Invalid PIN. Please try again.",
-
   "wallet.pin.title": "ENTER PIN",
   "wallet.pin.placeholder": "••••",
   "wallet.pin.cancel": "CANCEL",
   "wallet.pin.confirm": "CONFIRM",
-
   "menu.wallet": "WALLET",
   "menu.walletSub": "stellar address"
 }
