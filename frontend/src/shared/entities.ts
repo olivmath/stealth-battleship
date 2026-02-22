@@ -109,10 +109,18 @@ export interface MatchRecord {
 
 // --- Cryptographic commitment (ZK-ready) ---
 
+export interface ZKCommitment {
+  boardHash: string;   // Poseidon2 hash
+  nonce: string;       // nonce used in hash
+  proof: Uint8Array;   // boardValidity proof
+}
+
 export interface GameCommitment {
-  boardHash: string;
-  shipPositionHash: string;
+  boardHash: string;         // SHA-256 (legacy)
+  shipPositionHash: string;  // SHA-256 (legacy)
   timestamp: number;
+  playerZk?: ZKCommitment;   // ZK commitment for player
+  opponentZk?: ZKCommitment; // ZK commitment for AI/opponent
 }
 
 export interface Move {

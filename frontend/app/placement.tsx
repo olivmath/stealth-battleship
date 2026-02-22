@@ -25,8 +25,8 @@ import { ShipDefinition, Orientation, Position, GridSizeOption } from '../src/sh
 import { calculatePositions, validatePlacement, autoPlaceShips } from '../src/game/engine';
 import { createEmptyBoard } from '../src/game/engine';
 import { computeBoardCommitment } from '../src/game/engine';
-import { boardValidity } from '../src/zk';
-import type { ShipTuple } from '../src/zk';
+import { boardValidity, toShipTuples } from '../src/zk';
+import type { ShipTuples } from '../src/zk';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../src/shared/theme';
@@ -229,31 +229,44 @@ export default function PlacementScreen() {
 
     const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
 
-    // --- ZK: Generate board_validity proof ---
+    // --- ZK: Generate board_validity proofs for player and AI ---
     console.log('[ZK] === BOARD VALIDITY PROOF START ===');
 
-    // Convert PlacedShip[] to ShipTuple[] for circuit
-    const shipTuples = state.playerShips.map((s): ShipTuple => {
-      const row = s.positions[0].row;
-      const col = s.positions[0].col;
-      const horizontal = s.orientation === 'horizontal';
-      return [row, col, s.size, horizontal];
-    }) as [ShipTuple, ShipTuple, ShipTuple];
+    const playerShipTuples = toShipTuples(state.playerShips);
+    const aiShipTuples = toShipTuples(aiResult.ships);
+    const playerNonce = String(Math.floor(Math.random() * 1000000));
+    const aiNonce = String(Math.floor(Math.random() * 1000000));
 
-    const nonce = String(Math.floor(Math.random() * 1000000));
-    console.log('[ZK] Ship tuples:', shipTuples);
-    console.log('[ZK] Nonce:', nonce);
+    console.log('[ZK] Player ships:', playerShipTuples);
+    console.log('[ZK] Player nonce:', playerNonce);
+    console.log('[ZK] AI ships:', aiShipTuples);
+    console.log('[ZK] AI nonce:', aiNonce);
+
+    let playerZk: typeof commitment.playerZk;
+    let opponentZk: typeof commitment.opponentZk;
 
     try {
-      const zkResult = await boardValidity({ ships: shipTuples, nonce }, (step) => {
-        setProofStep(step);
+      // Generate player proof
+      setProofStep('Player board proof (1/2)...');
+      const playerResult = await boardValidity({ ships: playerShipTuples, nonce: playerNonce }, (step) => {
+        setProofStep(`Player: ${step}`);
       });
-
       if (proofCancelledRef.current) return;
 
-      console.log('[ZK] === PROOF GENERATED ===');
-      console.log('[ZK] Proof size:', zkResult.proof.length, 'bytes');
-      console.log('[ZK] Board hash:', zkResult.boardHash);
+      playerZk = { boardHash: playerResult.boardHash, nonce: playerNonce, proof: playerResult.proof };
+      console.log('[ZK] Player proof OK — hash:', playerResult.boardHash, 'size:', playerResult.proof.length);
+
+      // Generate AI proof
+      setProofStep('AI board proof (2/2)...');
+      const aiResultZk = await boardValidity({ ships: aiShipTuples, nonce: aiNonce }, (step) => {
+        setProofStep(`AI: ${step}`);
+      });
+      if (proofCancelledRef.current) return;
+
+      opponentZk = { boardHash: aiResultZk.boardHash, nonce: aiNonce, proof: aiResultZk.proof };
+      console.log('[ZK] AI proof OK — hash:', aiResultZk.boardHash, 'size:', aiResultZk.proof.length);
+
+      console.log('[ZK] === BOTH PROOFS GENERATED ===');
     } catch (err: any) {
       if (proofCancelledRef.current) return;
       console.error('[ZK] === PROOF FAILED ===');
@@ -271,7 +284,7 @@ export default function PlacementScreen() {
       type: 'START_GAME',
       opponentShips: aiResult.ships,
       opponentBoard: aiResult.board,
-      commitment,
+      commitment: { ...commitment, playerZk, opponentZk },
     });
 
     if (isPvP) {
