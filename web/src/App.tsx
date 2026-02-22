@@ -36,6 +36,7 @@ const fallbackStyle: React.CSSProperties = {
 
 export default function App() {
   const [fontsReady, setFontsReady] = useState(false);
+  const [zkReady, setZkReady] = useState(false);
 
   useEffect(() => {
     document.fonts.ready.then(() => setFontsReady(true));
@@ -49,15 +50,17 @@ export default function App() {
     console.log(`[ZK] Initializing ZK provider (mode=${ZK_MODE})...`);
     initZK(provider).then(() => {
       console.log('[ZK] Provider ready');
+      setZkReady(true);
     }).catch((err) => {
       console.error('[ZK] Provider init failed:', err);
+      setZkReady(true); // proceed anyway, proofs will fail gracefully
     });
   }, []);
 
-  if (!fontsReady) {
+  if (!fontsReady || !zkReady) {
     return (
       <div style={fallbackStyle}>
-        <RadarSpinner size={80} label="LOADING" />
+        <RadarSpinner size={80} label={!zkReady ? "LOADING ZK..." : "LOADING"} />
       </div>
     );
   }

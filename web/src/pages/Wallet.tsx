@@ -36,15 +36,19 @@ export default function Wallet() {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const [pinError, setPinError] = useState(false);
+
   const handlePinSuccess = async (pin: string) => {
-    setShowPin(false);
     try {
+      setPinError(false);
       const secret = await getSecretKey(pin);
+      setShowPin(false);
       setSecretKey(secret);
       haptics.success();
       setTimeout(() => setSecretKey(null), 30000);
     } catch {
-      alert(`${t('wallet.view.errorTitle')}: ${t('wallet.view.errorInvalidPin')}`);
+      haptics.error();
+      setPinError(true);
     }
   };
 
@@ -134,8 +138,9 @@ export default function Wallet() {
         <PinModal
           visible={showPin}
           title={t('wallet.view.enterPin', 'Enter PIN')}
+          error={pinError}
           onSubmit={handlePinSuccess}
-          onCancel={() => setShowPin(false)}
+          onCancel={() => { setShowPin(false); setPinError(false); }}
         />
       </div>
     </GradientContainer>

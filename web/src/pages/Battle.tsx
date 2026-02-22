@@ -82,10 +82,11 @@ export default function Battle() {
     setTimeout(() => setShowSunkModal(false), 2000);
   }, []);
 
-  // ZK blocking shotProof
+  // ZK shotProof — fire-and-forget, does NOT block turns
   const [provingShot, setProvingShot] = useState(false);
+  const proofQueueRef = useRef(0);
 
-  const generateShotProof = useCallback(async (
+  const generateShotProof = useCallback((
     ships: ShipTuples,
     nonce: string,
     boardHash: string,
@@ -94,20 +95,21 @@ export default function Battle() {
     isHit: boolean,
     label: string,
   ) => {
+    proofQueueRef.current++;
     setProvingShot(true);
-    try {
-      const result = await shotProof({ ships, nonce, boardHash, row, col, isHit });
+    shotProof({ ships, nonce, boardHash, row, col, isHit }).then((result) => {
       console.log(`[ZK] shotProof ${label} OK - ${result.proof.length} bytes`);
-    } catch (err: any) {
+    }).catch((err: any) => {
       console.warn(`[ZK] shotProof ${label} FAILED:`, err.message);
-    } finally {
-      setProvingShot(false);
-    }
+    }).finally(() => {
+      proofQueueRef.current--;
+      if (proofQueueRef.current === 0) setProvingShot(false);
+    });
   }, []);
 
   // Player attack
-  const handlePlayerAttack = useCallback(async (position: Position) => {
-    if (!state.isPlayerTurn || state.phase !== 'battle' || provingShot) return;
+  const handlePlayerAttack = useCallback((position: Position) => {
+    if (!state.isPlayerTurn || state.phase !== 'battle') return;
 
     const cell = state.opponentBoard[position.row][position.col];
     if (cell.state !== 'empty' && cell.state !== 'ship') return;
@@ -128,24 +130,23 @@ export default function Battle() {
 
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
 
+    // ZK proof in background — does not block turn
     if (state.commitment?.opponentZk) {
       const { nonce, boardHash } = state.commitment.opponentZk;
       try {
         const opponentTuples = toShipTuples(state.opponentShips);
-        await generateShotProof(opponentTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'player->opponent');
+        generateShotProof(opponentTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'player->opponent');
       } catch (e) {
         // toShipTuples may fail if ships count doesn't match during game end
       }
     }
-  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.commitment, dispatch, haptics, showSunkAnimation, generateShotProof, provingShot]);
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.commitment, dispatch, haptics, showSunkAnimation, generateShotProof]);
 
   // Opponent turn
   useEffect(() => {
-    if (state.isPlayerTurn || state.phase !== 'battle' || provingShot) return;
+    if (state.isPlayerTurn || state.phase !== 'battle') return;
 
-    let cancelled = false;
-
-    const runOpponentTurn = async () => {
+    const timer = setTimeout(() => {
       const strategy = strategyRef.current;
       const position = strategy.computeMove(state.playerBoard, state.playerShips, gridSize);
       if (!position) return;
@@ -163,24 +164,23 @@ export default function Battle() {
 
       strategy.onMoveResult(position, result, shipId, newShips);
 
+      // Dispatch FIRST to update board and switch turn
+      dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
+
+      // ZK proof in background — does not block turn
       if (state.commitment?.playerZk) {
         const { nonce, boardHash } = state.commitment.playerZk;
         try {
           const playerTuples = toShipTuples(state.playerShips);
-          await generateShotProof(playerTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'opponent->player');
+          generateShotProof(playerTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'opponent->player');
         } catch (e) {
           // toShipTuples may fail
         }
       }
+    }, 800);
 
-      if (!cancelled) {
-        dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
-      }
-    };
-
-    runOpponentTurn();
-    return () => { cancelled = true; };
-  }, [state.isPlayerTurn, state.phase, provingShot]);
+    return () => clearTimeout(timer);
+  }, [state.isPlayerTurn, state.phase]);
 
   // Win detection: player victory
   useEffect(() => {
@@ -370,8 +370,8 @@ export default function Battle() {
               <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
               <GameBoard
                 board={state.opponentBoard}
-                onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
-                disabled={!state.isPlayerTurn || provingShot}
+                onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
+                disabled={!state.isPlayerTurn}
                 showShips={false}
                 gridSize={gridSize}
                 isOpponent

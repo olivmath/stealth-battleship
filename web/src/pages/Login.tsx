@@ -18,6 +18,7 @@ export default function Login() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState(false);
   const navigate = useNavigate();
   const { dispatch } = useGame();
   const haptics = useHaptics();
@@ -49,12 +50,14 @@ export default function Login() {
 
   const handlePinSuccess = async (pin: string) => {
     try {
+      setPinError(false);
       await getSecretKey(pin);
       setShowPin(false);
       haptics.success();
       navigate('/menu', { replace: true });
     } catch {
-      alert(`${t('wallet.view.errorTitle')}: ${t('wallet.view.errorInvalidPin')}`);
+      haptics.error();
+      setPinError(true);
     }
   };
 
@@ -72,6 +75,7 @@ export default function Login() {
         <PinModal
           visible={true}
           title={t('wallet.view.enterPin', 'Enter PIN')}
+          error={pinError}
           onSubmit={handlePinSuccess}
           onCancel={() => {
             setShowPin(false);
