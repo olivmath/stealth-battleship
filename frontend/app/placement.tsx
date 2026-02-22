@@ -29,11 +29,13 @@ import { boardValidity, toShipTuples } from '../src/zk';
 import type { ShipTuples } from '../src/zk';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS, LAYOUT } from '../src/shared/theme';
+import NavalText from '../src/components/UI/NavalText';
+import Spacer from '../src/components/UI/Spacer';
 
-const SCREEN_PADDING = 16;
+const SCREEN_PADDING = LAYOUT.screenPadding;
 const screenWidth = Dimensions.get('window').width;
-const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, 400);
+const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, LAYOUT.maxContentWidth);
 const VARIANT = 'full' as const;
 const LABEL_SIZE = getLabelSize(VARIANT);
 
@@ -340,8 +342,8 @@ export default function PlacementScreen() {
 
         {/* Header */}
         <View style={[styles.header, isPvP && styles.headerPvP]}>
-          <Text style={styles.title}>{t('placement.title')}</Text>
-          <Text style={styles.subtitle}>{subtitleText}</Text>
+          <NavalText variant="h3">{t('placement.title')}</NavalText>
+          <NavalText variant="bodyLight" style={{ fontSize: 11, textAlign: 'center', minHeight: 18 }}>{subtitleText}</NavalText>
           {isLocked && !opponentReady && (
             <View style={styles.waitingRow}>
               <RadarSpinner size={20} />
@@ -349,7 +351,7 @@ export default function PlacementScreen() {
           )}
         </View>
 
-        <View style={{ height: 8 }} />
+        <Spacer size="sm" />
 
         {/* Grid */}
         <View
@@ -411,7 +413,7 @@ export default function PlacementScreen() {
           </View>
         </View>
 
-        <View style={{ height: 16 }} />
+        <Spacer size="md" />
 
         {/* Ship selector (hidden when PvP and ready) */}
         {!isLocked && (
@@ -509,19 +511,6 @@ const styles = StyleSheet.create({
   headerPvP: {
     marginTop: SPACING.sm,
   },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 20,
-    color: COLORS.text.accent,
-    letterSpacing: 3,
-  },
-  subtitle: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 11,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
-    minHeight: 18,
-  },
   waitingRow: {
     marginTop: SPACING.xs,
     alignItems: 'center',
@@ -580,10 +569,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 32,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: 'rgba(10, 25, 47, 0.95)',
+    ...SHADOWS.lg,
   },
   proofTitle: {
     fontFamily: FONTS.heading,
