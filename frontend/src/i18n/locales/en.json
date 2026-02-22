@@ -95,6 +95,7 @@
   "battle.enemy": "ENEMY",
   "battle.yours": "YOURS",
   "battle.shipSunk": "SHIP SUNK!",
+  "battle.proving": "VERIFYING PROOF...",
 
   "gameover.victory": "VICTORY",
   "gameover.defeat": "DEFEAT",

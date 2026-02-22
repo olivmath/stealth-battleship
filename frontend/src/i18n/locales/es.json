@@ -95,6 +95,7 @@
   "battle.enemy": "ENEMIGO",
   "battle.yours": "TUYO",
   "battle.shipSunk": "BARCO HUNDIDO!",
+  "battle.proving": "VERIFICANDO PRUEBA...",
 
   "gameover.victory": "VICTORIA",
   "gameover.defeat": "DERROTA",
