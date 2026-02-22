@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import { initReactI18next } from 'node_modules/react-i18next';
+import { initReactI18next } from 'react-i18next';
 import { storage } from '../shared/storage';
 
 import en from './locales/en.json';

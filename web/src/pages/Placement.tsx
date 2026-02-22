@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import { confirm } from '../hooks/useConfirm';
 import { GradientContainer } from '../components/UI/GradientContainer';
 import { NavalButton } from '../components/UI/NavalButton';

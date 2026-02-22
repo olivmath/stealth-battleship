@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'node_modules/react-i18next';
+import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import { GradientContainer } from '../components/UI/GradientContainer';
 import { NavalButton } from '../components/UI/NavalButton';
