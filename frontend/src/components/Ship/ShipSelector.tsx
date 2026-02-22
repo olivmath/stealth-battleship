@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ShipDefinition } from '../../shared/entities';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
 
 interface Props {
   ships: ShipDefinition[];
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: SPACING.sm,
     minHeight: 44,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: COLORS.surface.card,

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PlacedShip } from '../../shared/entities';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
 
 interface Props {
   ships: PlacedShip[];
@@ -87,7 +87,7 @@ export default function FleetStatus({ ships, label, compact = false }: Props) {
 const styles = StyleSheet.create({
   container: {
     padding: SPACING.sm,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: COLORS.surface.card,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   // Compact styles
   compactContainer: {
     padding: 4,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: COLORS.surface.card,

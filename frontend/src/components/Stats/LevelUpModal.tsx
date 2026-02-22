@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LevelInfo } from '../../shared/entities';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../shared/theme';
 
 interface Props {
   visible: boolean;
@@ -53,9 +53,10 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     borderWidth: 2,
     borderColor: COLORS.accent.gold,
-    borderRadius: 8,
+    borderRadius: RADIUS.md,
     padding: SPACING.xl,
     backgroundColor: COLORS.background.dark,
+    ...SHADOWS.lg,
   },
   label: {
     fontFamily: FONTS.heading,

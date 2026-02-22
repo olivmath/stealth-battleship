@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../shared/theme';
 
 interface Props {
   visible: boolean;
@@ -77,12 +77,13 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     backgroundColor: COLORS.background.dark,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     padding: SPACING.lg,
     gap: SPACING.lg,
     alignItems: 'center',
+    ...SHADOWS.md,
   },
   title: {
     fontFamily: FONTS.heading,
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   cancelBtn: {
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
   },

@@ -10,7 +10,7 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 import { PlacedShip } from '../../shared/entities';
 import { getShipStyle } from '../../shared/constants';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../shared/theme';
 
 interface Props {
   visible: boolean;
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   shipCell: {
     width: 36,
     height: 36,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
   },
 });

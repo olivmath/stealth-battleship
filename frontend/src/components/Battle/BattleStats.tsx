@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BattleTracking } from '../../shared/entities';
-import { COLORS, FONTS } from '../../shared/theme';
+import { COLORS, FONTS, RADIUS } from '../../shared/theme';
 
 interface Props {
   tracking: BattleTracking;
@@ -39,7 +39,7 @@ function StatRow({ name, value, color }: { name: string; value: string; color?: 
 const styles = StyleSheet.create({
   container: {
     padding: 4,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: COLORS.surface.card,
