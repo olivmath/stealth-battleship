@@ -115,6 +115,75 @@ export default function MatchDetail() {
             </div>
           </div>
 
+          {/* ZK Proofs */}
+          {match.commitment?.playerZk || match.commitment?.opponentZk ? (
+            <div style={styles.zkContainer}>
+              <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
+
+              {match.commitment?.playerZk && (
+                <div style={styles.zkSection}>
+                  <span style={styles.zkSectionLabel}>{t('matchDetail.zkPlayer')}</span>
+
+                  <div style={styles.zkProofCard}>
+                    <div style={styles.zkProofHeader}>
+                      <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
+                      <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
+                    </div>
+                    <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
+
+                    <div style={styles.zkDetailRow}>
+                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
+                      <span style={styles.zkDetailValue}>
+                        {match.commitment.playerZk.boardHash.slice(0, 10)}...{match.commitment.playerZk.boardHash.slice(-6)}
+                      </span>
+                    </div>
+                    <div style={styles.zkDetailRow}>
+                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
+                      <span style={styles.zkDetailValue}>
+                        {t('matchDetail.zkProofBytes', { size: match.commitment.playerZk.proof?.length ?? 0 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {match.commitment?.opponentZk && (
+                <div style={styles.zkSection}>
+                  <span style={styles.zkSectionLabel}>{t('matchDetail.zkOpponent')}</span>
+
+                  <div style={styles.zkProofCard}>
+                    <div style={styles.zkProofHeader}>
+                      <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
+                      <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
+                    </div>
+                    <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
+
+                    <div style={styles.zkDetailRow}>
+                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
+                      <span style={styles.zkDetailValue}>
+                        {match.commitment.opponentZk.boardHash.slice(0, 10)}...{match.commitment.opponentZk.boardHash.slice(-6)}
+                      </span>
+                    </div>
+                    <div style={styles.zkDetailRow}>
+                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
+                      <span style={styles.zkDetailValue}>
+                        {t('matchDetail.zkProofBytes', { size: match.commitment.opponentZk.proof?.length ?? 0 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={styles.zkContainer}>
+              <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
+              <div style={styles.zkNone}>
+                <span style={styles.zkNoneTitle}>{t('matchDetail.zkNone')}</span>
+                <span style={styles.zkNoneDesc}>{t('matchDetail.zkNoneDesc')}</span>
+              </div>
+            </div>
+          )}
+
           {/* Back */}
           <NavalButton
             title={t('matchDetail.backToHistory')}
@@ -179,4 +248,114 @@ const styles: Record<string, React.CSSProperties> = {
   reportLabel: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.secondary },
   reportValue: { fontFamily: FONTS.heading, fontSize: 14, color: COLORS.text.primary },
   perfectText: { color: COLORS.accent.gold },
+  zkContainer: {
+    border: '1px solid ' + COLORS.status.pvp + '33',
+    borderRadius: 4,
+    padding: SPACING.md,
+    backgroundColor: 'rgba(34, 211, 238, 0.03)',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: SPACING.md,
+  },
+  zkTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.status.pvp,
+    letterSpacing: 2,
+    textAlign: 'center' as const,
+  },
+  zkSection: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: SPACING.sm,
+  },
+  zkSectionLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+  },
+  zkProofCard: {
+    border: '1px solid ' + COLORS.surface.cardBorder,
+    borderRadius: 4,
+    padding: SPACING.sm,
+    backgroundColor: COLORS.surface.card,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: SPACING.xs,
+  },
+  zkProofHeader: {
+    display: 'flex',
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  zkProofName: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.text.primary,
+    letterSpacing: 1,
+  },
+  zkStatusBadge: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    color: COLORS.status.online,
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderStyle: 'solid' as const,
+    borderColor: COLORS.status.online,
+    borderRadius: 3,
+    paddingLeft: 6,
+    paddingRight: 6,
+    paddingTop: 2,
+    paddingBottom: 2,
+  },
+  zkProofDesc: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    opacity: 0.8,
+  },
+  zkDetailRow: {
+    display: 'flex',
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 3,
+    paddingBottom: 3,
+    borderTop: '1px solid ' + COLORS.surface.cardBorder,
+  },
+  zkDetailLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+  },
+  zkDetailValue: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.status.pvp,
+    letterSpacing: 0.5,
+  },
+  zkNone: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
+  },
+  zkNoneTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    opacity: 0.6,
+  },
+  zkNoneDesc: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    opacity: 0.5,
+    textAlign: 'center' as const,
+  },
 };

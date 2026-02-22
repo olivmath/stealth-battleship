@@ -15,18 +15,23 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: COLORS.accent.fire,
 };
 
+function hasZkProofs(match: MatchRecord): boolean {
+  return !!(match.commitment?.playerZk || match.commitment?.opponentZk);
+}
+
 function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () => void }) {
   const { t } = useTranslation();
   const isVictory = match.result === 'victory';
   const dateStr = new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const difficulty = match.difficulty ?? 'normal';
   const diffColor = DIFFICULTY_COLORS[difficulty] ?? COLORS.text.secondary;
+  const zkVerified = hasZkProofs(match);
 
   return (
     <button
       style={itemStyles.item}
       onClick={onPress}
-      aria-label={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, ${difficulty}, score ${match.score}`}
+      aria-label={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, ${difficulty}, score ${match.score}${zkVerified ? ', ZK verified' : ''}`}
     >
       <div style={itemStyles.left}>
         <span style={{ ...itemStyles.result, ...(isVictory ? itemStyles.win : itemStyles.loss) }}>
@@ -41,6 +46,13 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
                 {difficulty.toUpperCase()}
               </span>
             </span>
+            {zkVerified && (
+              <span style={itemStyles.zkBadge}>
+                <span style={itemStyles.zkText}>
+                  {t('matchHistory.zkVerified')}
+                </span>
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -119,6 +131,24 @@ const itemStyles: Record<string, React.CSSProperties> = {
     fontFamily: FONTS.heading,
     fontSize: 8,
     letterSpacing: 1,
+  },
+  zkBadge: {
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: COLORS.status.pvp,
+    borderRadius: 3,
+    paddingLeft: 4,
+    paddingRight: 4,
+    paddingTop: 1,
+    paddingBottom: 1,
+    display: 'inline-block',
+    backgroundColor: 'rgba(34, 211, 238, 0.1)',
+  },
+  zkText: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    letterSpacing: 1,
+    color: COLORS.status.pvp,
   },
   score: {
     fontFamily: FONTS.heading,
