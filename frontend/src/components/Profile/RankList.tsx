@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { RANKS } from '../../engine/stats';
-import { RANK_PROGRESSION } from '../../constants/game';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { RANKS } from '../../stats/interactor';
+import { RANK_PROGRESSION } from '../../shared/constants';
+import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 interface Props {
   totalXP: number;

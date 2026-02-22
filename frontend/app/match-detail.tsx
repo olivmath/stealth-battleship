@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getMatchHistory } from '../src/storage/scores';
-import { MatchRecord } from '../src/types/game';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getMatchHistory } from '../src/stats/adapter';
+import { MatchRecord } from '../src/shared/entities';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 import KillEfficiencyBar from '../src/components/Stats/KillEfficiencyBar';
 
 export default function MatchDetailScreen() {

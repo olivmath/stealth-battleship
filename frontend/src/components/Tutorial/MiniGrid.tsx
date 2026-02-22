@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { COLORS } from '../../constants/theme';
+import { COLORS } from '../../shared/theme';
 
 export type MiniCellType = 'empty' | 'ship' | 'hit' | 'miss' | 'sunk' | 'water';
 

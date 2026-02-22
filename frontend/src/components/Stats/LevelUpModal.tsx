@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { LevelInfo } from '../../types/game';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { LevelInfo } from '../../shared/entities';
+import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 interface Props {
   visible: boolean;

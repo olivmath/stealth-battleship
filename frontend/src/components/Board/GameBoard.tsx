@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Cell from './Cell';
-import { Board, Position, GridSizeOption } from '../../types/game';
-import { getColumnLabels, getRowLabels, getShipStyle } from '../../constants/game';
-import { COLORS, FONTS } from '../../constants/theme';
+import { Board, Position, GridSizeOption } from '../../shared/entities';
+import { getColumnLabels, getRowLabels, getShipStyle } from '../../shared/constants';
+import { COLORS, FONTS } from '../../shared/theme';
 
 type Variant = 'full' | 'mini';
 

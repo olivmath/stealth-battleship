@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BattleTracking } from '../../types/game';
-import { COLORS, FONTS } from '../../constants/theme';
+import { BattleTracking } from '../../shared/entities';
+import { COLORS, FONTS } from '../../shared/theme';
 
 interface Props {
   tracking: BattleTracking;

@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RankList from '../src/components/Profile/RankList';
-import { useGame } from '../src/context/GameContext';
-import { usePlayerStats } from '../src/hooks/useStorage';
+import { useGame } from '../src/game/translator';
+import { usePlayerStats } from '../src/stats/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getLevelInfo } from '../src/engine/stats';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getLevelInfo } from '../src/stats/interactor';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 function LevelBadge({ totalXP }: { totalXP: number }) {
   const { t } = useTranslation();

@@ -1,0 +1,38 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { GameSettings } from './entities';
+
+const SETTINGS_KEY = '@battleship_settings';
+const TUTORIAL_KEY = '@battleship_tutorial';
+
+const DEFAULT_SETTINGS: GameSettings = {
+  gridSize: 6,
+  battleView: 'stacked',
+  difficulty: 'normal',
+};
+
+function safeParse<T>(data: string, fallback: T): T {
+  try {
+    return JSON.parse(data) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function getSettings(): Promise<GameSettings> {
+  const data = await AsyncStorage.getItem(SETTINGS_KEY);
+  if (!data) return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...safeParse(data, {}) };
+}
+
+export async function saveSettings(settings: GameSettings): Promise<void> {
+  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+export async function hasSeenTutorial(): Promise<boolean> {
+  const data = await AsyncStorage.getItem(TUTORIAL_KEY);
+  return data === 'true';
+}
+
+export async function setTutorialSeen(seen: boolean = true): Promise<void> {
+  await AsyncStorage.setItem(TUTORIAL_KEY, seen ? 'true' : 'false');
+}

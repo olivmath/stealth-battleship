@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
-import { useMatchHistory } from '../src/hooks/useStorage';
+import { useMatchHistory } from '../src/stats/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { MatchRecord } from '../src/types/game';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { MatchRecord } from '../src/shared/entities';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: COLORS.status.online,

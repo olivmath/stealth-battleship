@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function PvPModeScreen() {
   const { t } = useTranslation();

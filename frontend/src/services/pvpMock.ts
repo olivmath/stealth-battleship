@@ -1,5 +1,5 @@
-import { Board, Position } from '../types/game';
-import { posKey } from '../engine/board';
+import { Board, Position } from '../shared/entities';
+import { posKey } from '../game/engine';
 
 export const MOCK_OPPONENT = 'Captain_Nemo';
 

@@ -6,12 +6,12 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import GameBoard from '../src/components/Board/GameBoard';
-import { useGame } from '../src/context/GameContext';
+import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { usePlayerStats } from '../src/hooks/useStorage';
-import { getLevelInfo } from '../src/engine/stats';
-import { DIFFICULTY_CONFIG } from '../src/constants/game';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { usePlayerStats } from '../src/stats/translator';
+import { getLevelInfo } from '../src/stats/interactor';
+import { DIFFICULTY_CONFIG } from '../src/shared/constants';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 import KillEfficiencyBar from '../src/components/Stats/KillEfficiencyBar';
 import LevelUpModal from '../src/components/Stats/LevelUpModal';
 import { MOCK_OPPONENT } from '../src/services/pvpMock';
@@ -69,7 +69,7 @@ export default function GameOverScreen() {
     if (currentLevel.gridSize !== state.settings.gridSize) {
       const updated = { ...state.settings, gridSize: currentLevel.gridSize };
       dispatch({ type: 'LOAD_SETTINGS', settings: updated });
-      import('../src/storage/scores').then(m => m.saveSettings(updated));
+      import('../src/settings/interactor').then(m => m.saveSettings(updated));
     }
     dispatch({ type: 'RESET_GAME' });
     router.replace(isPvP ? '/placement?mode=pvp' : '/placement');

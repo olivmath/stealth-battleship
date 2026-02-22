@@ -6,8 +6,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { CellState } from '../../types/game';
-import { COLORS, FONTS } from '../../constants/theme';
+import { CellState } from '../../shared/entities';
+import { COLORS, FONTS } from '../../shared/theme';
 
 interface Props {
   state: CellState;

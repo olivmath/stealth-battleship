@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ShipDefinition } from '../../types/game';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { ShipDefinition } from '../../shared/entities';
+import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 interface Props {
   ships: ShipDefinition[];

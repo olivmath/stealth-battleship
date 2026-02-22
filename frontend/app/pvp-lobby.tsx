@@ -6,10 +6,10 @@ import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 import OpponentStatus from '../src/components/PvP/OpponentStatus';
-import { useGame } from '../src/context/GameContext';
+import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { MOCK_OPPONENT, MATCHMAKING_DELAY, FOUND_DELAY } from '../src/services/pvpMock';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function PvPLobbyScreen() {
   const router = useRouter();

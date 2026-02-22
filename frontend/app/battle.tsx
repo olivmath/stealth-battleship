@@ -10,20 +10,20 @@ import BattleStats from '../src/components/Battle/BattleStats';
 import SunkShipModal from '../src/components/Battle/SunkShipModal';
 import OpponentStatus from '../src/components/PvP/OpponentStatus';
 import TurnTimer from '../src/components/PvP/TurnTimer';
-import { useGame } from '../src/context/GameContext';
+import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { processAttack, checkWinCondition } from '../src/engine/board';
-import { Position, PlacedShip } from '../src/types/game';
-import { useGameEffects } from '../src/hooks/useGameEffects';
-import { DIFFICULTY_CONFIG } from '../src/constants/game';
+import { processAttack, checkWinCondition } from '../src/game/engine';
+import { Position, PlacedShip } from '../src/shared/entities';
+import { useGameEffects } from '../src/game/translator';
+import { DIFFICULTY_CONFIG } from '../src/shared/constants';
 import {
   MOCK_OPPONENT,
   OPPONENT_ATTACK_DELAY_MIN,
   OPPONENT_ATTACK_DELAY_MAX,
   TURN_TIMER_SECONDS,
 } from '../src/services/pvpMock';
-import { OpponentStrategy, LocalAIStrategy, MockPvPStrategy } from '../src/engine/opponentStrategy';
-import { COLORS, FONTS } from '../src/constants/theme';
+import { OpponentStrategy, LocalAIStrategy, MockPvPStrategy } from '../src/game/engine';
+import { COLORS, FONTS } from '../src/shared/theme';
 import { useTranslation } from 'react-i18next';
 
 const SCREEN_PADDING = 16;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../shared/theme';
 
 export function ShipShape({ length, label }: { length: number; label: string }) {
   return (

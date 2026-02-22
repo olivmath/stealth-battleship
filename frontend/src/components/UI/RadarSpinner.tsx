@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { COLORS } from '../../constants/theme';
+import { COLORS } from '../../shared/theme';
 
 interface Props {
   size?: number;

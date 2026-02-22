@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 import RadarSpinner from './RadarSpinner';
-import { getSketchfabViewerHtml } from '../../constants/ships3d';
+import { getSketchfabViewerHtml } from '../../shared/ships3d';
 
 interface Props {
   modelId: string;

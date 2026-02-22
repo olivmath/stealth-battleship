@@ -4,13 +4,14 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import { useSettings, usePlayerStats } from '../src/hooks/useStorage';
+import { usePlayerStats } from '../src/stats/translator';
+import { useSettings } from '../src/settings/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getLevelInfo } from '../src/engine/stats';
-import { BattleViewMode, DifficultyLevel } from '../src/types/game';
+import { getLevelInfo } from '../src/stats/interactor';
+import { BattleViewMode, DifficultyLevel } from '../src/shared/entities';
 import { saveLanguage } from '../src/i18n';
-import { setTutorialSeen } from '../src/storage/scores';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { setTutorialSeen } from '../src/settings/interactor';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 function ToggleOption({
   label,

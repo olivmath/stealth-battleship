@@ -7,11 +7,12 @@ import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 
 const ShipModel = lazy(() => import('../src/components/UI/ShipModel'));
-import { useGame } from '../src/context/GameContext';
-import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
+import { useGame } from '../src/game/translator';
+import { usePlayerStats } from '../src/stats/translator';
+import { useSettings } from '../src/settings/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getLevelInfo } from '../src/engine/stats';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getLevelInfo } from '../src/stats/interactor';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function MenuScreen() {
   const { t } = useTranslation();
@@ -46,7 +47,7 @@ export default function MenuScreen() {
       const updated = { ...settings, gridSize: level.gridSize };
       dispatch({ type: 'LOAD_SETTINGS', settings: updated });
       // Persist updated settings + reset tutorial for new grid (fire-and-forget)
-      import('../src/storage/scores').then(m => {
+      import('../src/settings/interactor').then(m => {
         m.saveSettings(updated);
         m.setTutorialSeen(false);
       });
@@ -56,7 +57,7 @@ export default function MenuScreen() {
   const handleStartBattle = async () => {
     haptics.light();
     dispatch({ type: 'RESET_GAME' });
-    const { hasSeenTutorial } = await import('../src/storage/scores');
+    const { hasSeenTutorial } = await import('../src/settings/interactor');
     const seen = await hasSeenTutorial();
     router.replace(seen ? '/placement' : '/tutorial');
   };
@@ -138,7 +139,7 @@ export default function MenuScreen() {
                     text: t('menu.logoutConfirm'),
                     style: 'destructive',
                     onPress: async () => {
-                      const { clearPlayerData } = await import('../src/storage/scores');
+                      const { clearPlayerData } = await import('../src/game/adapter');
                       await clearPlayerData();
                       router.replace('/login');
                     },

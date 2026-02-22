@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber/native';
 import { OrbitControls, useGLTF, Center } from '@react-three/drei/native';
 import { Asset } from 'expo-asset';
 import RadarSpinner from './RadarSpinner';
-import { COLORS, FONTS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../shared/theme';
 
 // Silence EXGL pixelStorei spam (known expo-gl limitation, harmless)
 const _origLog = console.log;

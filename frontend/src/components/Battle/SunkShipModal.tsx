@@ -8,9 +8,9 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { PlacedShip } from '../../types/game';
-import { getShipStyle } from '../../constants/game';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { PlacedShip } from '../../shared/entities';
+import { getShipStyle } from '../../shared/constants';
+import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 interface Props {
   visible: boolean;

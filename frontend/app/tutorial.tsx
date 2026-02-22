@@ -13,13 +13,13 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import { MiniGrid, MiniCell } from '../src/components/Tutorial/MiniGrid';
 import { ShipShape } from '../src/components/Tutorial/ShipShape';
-import { useGame } from '../src/context/GameContext';
+import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getShipDefinitionsForRank, RANK_PROGRESSION } from '../src/constants/game';
-import { getLevelInfo } from '../src/engine/stats';
-import { setTutorialSeen } from '../src/storage/scores';
-import { ShipDefinition } from '../src/types/game';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getShipDefinitionsForRank, RANK_PROGRESSION } from '../src/shared/constants';
+import { getLevelInfo } from '../src/stats/interactor';
+import { setTutorialSeen } from '../src/settings/interactor';
+import { ShipDefinition } from '../src/shared/entities';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

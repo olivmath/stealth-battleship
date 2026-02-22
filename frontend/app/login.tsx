@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
-import { useGame } from '../src/context/GameContext';
+import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
-import { getPlayerName, savePlayerName } from '../src/storage/scores';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getPlayerName, savePlayerName } from '../src/game/adapter';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function LoginScreen() {
   const { t } = useTranslation();

@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
-import { getPlayerName } from '../src/storage/scores';
-import { COLORS, FONTS, SPACING } from '../src/constants/theme';
+import { getPlayerName } from '../src/game/adapter';
+import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 
 export default function SplashScreen() {
   const { t } = useTranslation();

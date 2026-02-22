@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Orientation } from '../../types/game';
-import { COLORS, SPACING } from '../../constants/theme';
+import { Orientation } from '../../shared/entities';
+import { COLORS, SPACING } from '../../shared/theme';
 
 interface Props {
   shipSize: number;

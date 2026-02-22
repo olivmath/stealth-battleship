@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 type Status = 'searching' | 'online' | 'ready' | 'offline';
 
