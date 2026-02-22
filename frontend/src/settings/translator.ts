@@ -4,7 +4,7 @@ import type { GameSettings } from './entities';
 
 export function useSettings() {
   const [settings, setSettingsState] = useState<GameSettings>({
-    gridSize: 6,
+    gridSize: 10,
     battleView: 'stacked',
     difficulty: 'normal',
   });

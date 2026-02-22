@@ -7,7 +7,6 @@ import {
   getColumnLabels,
   getRowLabels,
   getShipStyle,
-  COMPACT_SHIPS,
   CLASSIC_SHIPS,
   SHIP_STYLES,
   DIFFICULTY_CONFIG,
@@ -33,15 +32,15 @@ describe('getRankConfig', () => {
 // --- getShipDefinitionsForRank ---
 
 describe('getShipDefinitionsForRank', () => {
-  it('returns ships for Recruit', () => {
+  it('returns 5 classic ships for Recruit', () => {
     const ships = getShipDefinitionsForRank('Recruit');
-    expect(ships).toHaveLength(3);
-    expect(ships[0].name).toBe('Patrol Boat');
+    expect(ships).toHaveLength(5);
+    expect(ships[0].name).toBe('Carrier');
   });
 
-  it('returns 3 ships for Admiral', () => {
+  it('returns 5 ships for Admiral', () => {
     const ships = getShipDefinitionsForRank('Admiral');
-    expect(ships).toHaveLength(3);
+    expect(ships).toHaveLength(5);
   });
 
   it('returns Recruit ships for unknown rank', () => {
@@ -53,39 +52,39 @@ describe('getShipDefinitionsForRank', () => {
 // --- getGridSizeForRank ---
 
 describe('getGridSizeForRank', () => {
-  it('returns 6 for all ranks', () => {
-    expect(getGridSizeForRank('Recruit')).toBe(6);
-    expect(getGridSizeForRank('Ensign')).toBe(6);
-    expect(getGridSizeForRank('Lieutenant')).toBe(6);
-    expect(getGridSizeForRank('Commander')).toBe(6);
-    expect(getGridSizeForRank('Captain')).toBe(6);
-    expect(getGridSizeForRank('Admiral')).toBe(6);
+  it('returns 10 for all ranks', () => {
+    expect(getGridSizeForRank('Recruit')).toBe(10);
+    expect(getGridSizeForRank('Ensign')).toBe(10);
+    expect(getGridSizeForRank('Lieutenant')).toBe(10);
+    expect(getGridSizeForRank('Commander')).toBe(10);
+    expect(getGridSizeForRank('Captain')).toBe(10);
+    expect(getGridSizeForRank('Admiral')).toBe(10);
   });
 });
 
 // --- getShipDefinitions ---
 
 describe('getShipDefinitions', () => {
-  it('returns compact ships for gridSize 6', () => {
-    expect(getShipDefinitions(6)).toBe(COMPACT_SHIPS);
+  it('returns classic ships for any gridSize', () => {
+    expect(getShipDefinitions(10)).toBe(CLASSIC_SHIPS);
   });
 });
 
 // --- getColumnLabels ---
 
 describe('getColumnLabels', () => {
-  it('returns 6 labels for gridSize 6', () => {
-    const labels = getColumnLabels(6);
-    expect(labels).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+  it('returns 10 labels for gridSize 10', () => {
+    const labels = getColumnLabels(10);
+    expect(labels).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']);
   });
 });
 
 // --- getRowLabels ---
 
 describe('getRowLabels', () => {
-  it('returns 6 numeric labels for gridSize 6', () => {
-    const labels = getRowLabels(6);
-    expect(labels).toEqual(['1', '2', '3', '4', '5', '6']);
+  it('returns 10 numeric labels for gridSize 10', () => {
+    const labels = getRowLabels(10);
+    expect(labels).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
   });
 });
 
@@ -133,15 +132,15 @@ describe('RANK_PROGRESSION', () => {
     expect(new Set(names).size).toBe(6);
   });
 
-  it('each rank has at least 1 ship', () => {
+  it('each rank has 5 ships', () => {
     for (const config of RANK_PROGRESSION) {
-      expect(config.ships.length).toBeGreaterThanOrEqual(1);
+      expect(config.ships).toHaveLength(5);
     }
   });
 
-  it('grid sizes are valid options', () => {
+  it('all ranks use gridSize 10', () => {
     for (const config of RANK_PROGRESSION) {
-      expect([6, 8, 10]).toContain(config.gridSize);
+      expect(config.gridSize).toBe(10);
     }
   });
 

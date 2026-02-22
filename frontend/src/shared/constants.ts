@@ -1,5 +1,36 @@
 import { ShipDefinition, GridSizeOption, DifficultyLevel } from './entities';
 
+// --- Default grid ---
+export const GRID_SIZE = 10;
+
+// --- Fleet definitions ---
+
+export const CLASSIC_SHIPS: ShipDefinition[] = [
+  { id: 'carrier', name: 'Carrier', size: 5 },
+  { id: 'battleship', name: 'Battleship', size: 4 },
+  { id: 'cruiser', name: 'Cruiser', size: 3 },
+  { id: 'submarine', name: 'Submarine', size: 3 },
+  { id: 'destroyer', name: 'Destroyer', size: 2 },
+];
+
+export function getShipDefinitions(_gridSize: GridSizeOption): ShipDefinition[] {
+  return CLASSIC_SHIPS;
+}
+
+export function getColumnLabels(gridSize: GridSizeOption): string[] {
+  return 'ABCDEFGHIJ'.slice(0, gridSize).split('');
+}
+
+export function getRowLabels(gridSize: GridSizeOption): string[] {
+  return Array.from({ length: gridSize }, (_, i) => String(i + 1));
+}
+
+// Backwards compat exports
+export const SHIP_DEFINITIONS = CLASSIC_SHIPS;
+export const TOTAL_SHIP_CELLS = CLASSIC_SHIPS.reduce((sum, s) => sum + s.size, 0);
+export const COLUMN_LABELS = getColumnLabels(10);
+export const ROW_LABELS = getRowLabels(10);
+
 // --- Rank progression config ---
 
 export interface RankConfig {
@@ -8,62 +39,14 @@ export interface RankConfig {
   ships: ShipDefinition[];
 }
 
-// All ranks use 6x6 grid with 3 ships (ZK circuit constraint)
+// All ranks use 10x10 grid with 5 classic ships
 export const RANK_PROGRESSION: RankConfig[] = [
-  {
-    rank: 'Recruit',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
-  {
-    rank: 'Ensign',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
-  {
-    rank: 'Lieutenant',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
-  {
-    rank: 'Commander',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
-  {
-    rank: 'Captain',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
-  {
-    rank: 'Admiral',
-    gridSize: 6,
-    ships: [
-      { id: 'patrol', name: 'Patrol Boat', size: 2 },
-      { id: 'cruiser', name: 'Cruiser', size: 2 },
-      { id: 'destroyer', name: 'Destroyer', size: 3 },
-    ],
-  },
+  { rank: 'Recruit', gridSize: 10, ships: CLASSIC_SHIPS },
+  { rank: 'Ensign', gridSize: 10, ships: CLASSIC_SHIPS },
+  { rank: 'Lieutenant', gridSize: 10, ships: CLASSIC_SHIPS },
+  { rank: 'Commander', gridSize: 10, ships: CLASSIC_SHIPS },
+  { rank: 'Captain', gridSize: 10, ships: CLASSIC_SHIPS },
+  { rank: 'Admiral', gridSize: 10, ships: CLASSIC_SHIPS },
 ];
 
 export function getRankConfig(rank: string): RankConfig {
@@ -77,43 +60,6 @@ export function getShipDefinitionsForRank(rank: string): ShipDefinition[] {
 export function getGridSizeForRank(rank: string): GridSizeOption {
   return getRankConfig(rank).gridSize;
 }
-
-// --- Default grid (used as fallback) ---
-export const GRID_SIZE = 6;
-
-// --- Fleet definitions per grid size ---
-
-export const COMPACT_SHIPS: ShipDefinition[] = [
-  { id: 'patrol', name: 'Patrol Boat', size: 2 },
-  { id: 'cruiser', name: 'Cruiser', size: 2 },
-  { id: 'destroyer', name: 'Destroyer', size: 3 },
-];
-
-export const CLASSIC_SHIPS: ShipDefinition[] = [
-  { id: 'carrier', name: 'Carrier', size: 5 },
-  { id: 'battleship', name: 'Battleship', size: 4 },
-  { id: 'cruiser', name: 'Cruiser', size: 3 },
-  { id: 'submarine', name: 'Submarine', size: 3 },
-  { id: 'destroyer', name: 'Destroyer', size: 2 },
-];
-
-export function getShipDefinitions(_gridSize: GridSizeOption): ShipDefinition[] {
-  return COMPACT_SHIPS;
-}
-
-export function getColumnLabels(gridSize: GridSizeOption): string[] {
-  return 'ABCDEFGHIJ'.slice(0, gridSize).split('');
-}
-
-export function getRowLabels(gridSize: GridSizeOption): string[] {
-  return Array.from({ length: gridSize }, (_, i) => String(i + 1));
-}
-
-// Backwards compat exports
-export const SHIP_DEFINITIONS = COMPACT_SHIPS;
-export const TOTAL_SHIP_CELLS = COMPACT_SHIPS.reduce((sum, s) => sum + s.size, 0);
-export const COLUMN_LABELS = getColumnLabels(6);
-export const ROW_LABELS = getRowLabels(6);
 
 export const AI_DELAY_MIN = 600;
 export const AI_DELAY_MAX = 1200;

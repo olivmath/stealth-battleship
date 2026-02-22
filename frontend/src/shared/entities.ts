@@ -126,7 +126,7 @@ export interface Move {
 
 // --- Settings ---
 
-export type GridSizeOption = 6;
+export type GridSizeOption = 10;
 export type BattleViewMode = 'stacked' | 'swipe';
 export type DifficultyLevel = 'easy' | 'normal' | 'hard';
 

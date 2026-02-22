@@ -29,7 +29,7 @@ beforeEach(async () => {
 });
 
 describe('Settings', () => {
-  const DEFAULT_SETTINGS = { gridSize: 6, battleView: 'stacked', difficulty: 'normal' };
+  const DEFAULT_SETTINGS = { gridSize: 10, battleView: 'stacked', difficulty: 'normal' };
 
   it('returns default settings when none saved', async () => {
     const settings = await getSettings();
@@ -37,7 +37,7 @@ describe('Settings', () => {
   });
 
   it('saves and retrieves settings', async () => {
-    const settings = { gridSize: 6 as const, battleView: 'swipe' as const, difficulty: 'hard' as const };
+    const settings = { gridSize: 10 as const, battleView: 'swipe' as const, difficulty: 'hard' as const };
     await saveSettings(settings);
     const result = await getSettings();
     expect(result).toEqual(settings);
