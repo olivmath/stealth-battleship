@@ -4,7 +4,8 @@
 
 import React, { createContext, useContext, useReducer, useState, useCallback, useEffect, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
-import { GameState, GameAction, BattleTracking, PlacedShip, Position, Orientation, AttackResult, DifficultyLevel, GameCommitment } from '../shared/entities';
+import { GameState, GameAction, BattleTracking, PlacedShip, Position, Orientation, AttackResult, DifficultyLevel, GameCommitment, ZKCommitment } from '../shared/entities';
+import { turnsProof, toShipTuples, toAttackTuples } from '../zk';
 import { createEmptyBoard, createInitialAIState } from './engine';
 import { computeMatchStats } from '../stats/interactor';
 import { updateStatsAfterGame, saveMatchToHistory } from '../stats/adapter';
@@ -362,7 +363,7 @@ export function useGameEffects() {
   const router = useRouter();
   const { dispatch } = useGame();
 
-  const endGame = useCallback(({
+  const endGame = useCallback(async ({
     won,
     tracking,
     opponentShips,
@@ -372,6 +373,29 @@ export function useGameEffects() {
     navigateTo,
     commitment,
   }: EndGameParams) => {
+    // ZK: generate turnsProof before ending game
+    if (commitment?.playerZk && commitment?.opponentZk) {
+      try {
+        console.log('[ZK] === TURNS PROOF START ===');
+        const result = await turnsProof({
+          shipsPlayer: toShipTuples(playerShips),
+          shipsAi: toShipTuples(opponentShips),
+          noncePlayer: commitment.playerZk.nonce,
+          nonceAi: commitment.opponentZk.nonce,
+          boardHashPlayer: commitment.playerZk.boardHash,
+          boardHashAi: commitment.opponentZk.boardHash,
+          attacksPlayer: toAttackTuples(tracking.playerShots),
+          attacksAi: toAttackTuples(tracking.opponentShots),
+          shipSizes: [5, 4, 3, 3, 2],
+          winner: won ? 0 : 1,
+        });
+        console.log(`[ZK] turnsProof OK — ${result.proof.length} bytes, winner=${result.winner}`);
+        console.log('[ZK] === TURNS PROOF END ===');
+      } catch (err: any) {
+        console.warn('[ZK] turnsProof FAILED:', err.message);
+      }
+    }
+
     const matchStats = computeMatchStats(tracking, opponentShips, playerShips, won, gridSize, difficulty);
     dispatch({ type: 'END_GAME', winner: won ? 'player' : 'opponent', matchStats });
     updateStatsAfterGame(won, matchStats);

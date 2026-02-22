@@ -14,6 +14,8 @@ import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { processAttack, checkWinCondition } from '../src/game/engine';
 import { Position, PlacedShip } from '../src/shared/entities';
+import { shotProof, toShipTuples } from '../src/zk';
+import type { ShipTuples } from '../src/zk';
 import { useGameEffects } from '../src/game/translator';
 import { DIFFICULTY_CONFIG } from '../src/shared/constants';
 import {
@@ -84,6 +86,25 @@ export default function BattleScreen() {
     setTimeout(() => setShowSunkModal(false), 2000);
   }, []);
 
+  // ZK: fire-and-forget shotProof in background
+  const generateShotProof = useCallback((
+    ships: ShipTuples,
+    nonce: string,
+    boardHash: string,
+    row: number,
+    col: number,
+    isHit: boolean,
+    label: string,
+  ) => {
+    shotProof({ ships, nonce, boardHash, row, col, isHit })
+      .then((result) => {
+        console.log(`[ZK] shotProof ${label} OK — ${result.proof.length} bytes`);
+      })
+      .catch((err) => {
+        console.warn(`[ZK] shotProof ${label} FAILED:`, err.message);
+      });
+  }, []);
+
   // Player attack (shared between arcade and pvp)
   const handlePlayerAttack = useCallback((position: Position) => {
     if (!state.isPlayerTurn || state.phase !== 'battle') return;
@@ -106,7 +127,18 @@ export default function BattleScreen() {
     }
 
     dispatch({ type: 'PLAYER_ATTACK', position, result, shipId });
-  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, dispatch, haptics, showSunkAnimation]);
+
+    // ZK: prove attack result against opponent's board (background)
+    if (state.commitment?.opponentZk) {
+      const { nonce, boardHash } = state.commitment.opponentZk;
+      try {
+        const opponentTuples = toShipTuples(state.opponentShips);
+        generateShotProof(opponentTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'player→opponent');
+      } catch (e) {
+        // toShipTuples may fail if ships count doesn't match during game end
+      }
+    }
+  }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, state.commitment, dispatch, haptics, showSunkAnimation, generateShotProof]);
 
   // Opponent turn: unified via strategy pattern
   useEffect(() => {
@@ -134,6 +166,17 @@ export default function BattleScreen() {
 
       strategy.onMoveResult(position, result, shipId, newShips);
       dispatch({ type: 'OPPONENT_ATTACK', position, result, shipId, opponentState: strategy.getState() });
+
+      // ZK: prove attack result against player's board (background)
+      if (state.commitment?.playerZk) {
+        const { nonce, boardHash } = state.commitment.playerZk;
+        try {
+          const playerTuples = toShipTuples(state.playerShips);
+          generateShotProof(playerTuples, nonce, boardHash, position.row, position.col, result !== 'miss', 'opponent→player');
+        } catch (e) {
+          // toShipTuples may fail if ships count doesn't match during game end
+        }
+      }
     }, delay);
 
     return () => {
