@@ -89,6 +89,64 @@ export const SPACING = {
   xxl: 48,
 } as const;
 
+export const RADIUS = {
+  sharp: 2,
+  default: 4,
+  md: 8,
+  lg: 12,
+  pill: 999,
+} as const;
+
+export const SHADOWS = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  glow: {
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+} as const;
+
+export const LAYOUT = {
+  maxContentWidth: 400,
+  screenPadding: 16,
+} as const;
+
+export const FONT_SIZES = {
+  caption: 9,
+  label: 10,
+  sm: 11,
+  body: 13,
+  md: 14,
+  lg: 18,
+  h3: 20,
+  h2: 28,
+  h1: 32,
+  hero: 42,
+  score: 48,
+} as const;
+
 export const GRADIENT = {
   background: ['#0a0e1a', '#0c2d48', '#0a0e1a'] as const,
   card: ['rgba(30, 58, 95, 0.4)', 'rgba(12, 45, 72, 0.6)'] as const,
