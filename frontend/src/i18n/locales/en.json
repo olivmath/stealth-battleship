@@ -273,6 +273,8 @@
   "wallet.view.tapToCopy": "TAP TO COPY",
   "wallet.view.secretLabel": "SECRET KEY",
   "wallet.view.secretWarning": "Never share your secret key!",
+  "wallet.view.balance": "BALANCE",
+  "wallet.view.copyBtn": "COPY",
   "wallet.view.viewSecret": "VIEW SECRET KEY",
   "wallet.view.viewSecretSub": "requires PIN",
   "wallet.view.exportSecret": "COPY SECRET KEY",

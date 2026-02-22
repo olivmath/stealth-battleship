@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ export default function WalletSetupScreen() {
   const [mode, setMode] = useState<Mode>('choose');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
+  const pinConfirmRef = useRef<TextInput>(null);
   const [secretInput, setSecretInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -126,7 +127,13 @@ export default function WalletSetupScreen() {
           <TextInput
             style={styles.input}
             value={pin}
-            onChangeText={setPin}
+            onChangeText={(text) => {
+              const digits = text.replace(/\D/g, '');
+              setPin(digits);
+              if (digits.length >= 4) {
+                setTimeout(() => pinConfirmRef.current?.focus(), 50);
+              }
+            }}
             placeholder={t('wallet.setup.pinPlaceholder')}
             placeholderTextColor={COLORS.text.secondary}
             keyboardType="number-pad"
@@ -136,14 +143,19 @@ export default function WalletSetupScreen() {
 
           <Text style={styles.label}>{t('wallet.setup.pinConfirmLabel')}</Text>
           <TextInput
+            ref={pinConfirmRef}
             style={styles.input}
             value={pinConfirm}
-            onChangeText={setPinConfirm}
+            onChangeText={(text) => {
+              const digits = text.replace(/\D/g, '');
+              setPinConfirm(digits);
+            }}
             placeholder={t('wallet.setup.pinConfirmPlaceholder')}
             placeholderTextColor={COLORS.text.secondary}
             keyboardType="number-pad"
             secureTextEntry
             maxLength={6}
+            onSubmitEditing={mode === 'create' ? handleCreate : handleImport}
           />
 
           {pin.length > 0 && !pinValid && (

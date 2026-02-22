@@ -8,7 +8,7 @@ import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../src/shared/theme';
-import { getPublicKey, getSecretKey } from '../src/wallet/interactor';
+import { getPublicKey, getSecretKey, getBalance } from '../src/wallet/interactor';
 import PinModal from '../src/components/UI/PinModal';
 
 export default function WalletScreen() {
@@ -17,14 +17,17 @@ export default function WalletScreen() {
   const haptics = useHaptics();
 
   const [publicKey, setPublicKey] = useState('');
+  const [balance, setBalance] = useState<string | null>(null);
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [showPin, setShowPin] = useState(false);
-  const [pinAction, setPinAction] = useState<'view' | 'export'>('view');
   const [copied, setCopied] = useState<'address' | 'secret' | null>(null);
 
   useEffect(() => {
     getPublicKey().then(pk => {
-      if (pk) setPublicKey(pk);
+      if (pk) {
+        setPublicKey(pk);
+        getBalance(pk).then(setBalance);
+      }
     });
   }, []);
 
@@ -39,17 +42,9 @@ export default function WalletScreen() {
     setShowPin(false);
     try {
       const secret = await getSecretKey(pin);
-      if (pinAction === 'export') {
-        await Clipboard.setStringAsync(secret);
-        haptics.success();
-        setCopied('secret');
-        setTimeout(() => setCopied(null), 3000);
-      } else {
-        setSecretKey(secret);
-        haptics.success();
-        // Hide after 30s
-        setTimeout(() => setSecretKey(null), 30000);
-      }
+      setSecretKey(secret);
+      haptics.success();
+      setTimeout(() => setSecretKey(null), 30000);
     } catch {
       Alert.alert(t('wallet.view.errorTitle'), t('wallet.view.errorInvalidPin'));
     }
@@ -82,16 +77,42 @@ export default function WalletScreen() {
           </View>
           <TouchableOpacity onPress={handleCopyAddress} style={styles.addressRow}>
             <Text style={styles.addressText}>{truncated}</Text>
-            <Text style={styles.copyHint}>
-              {copied === 'address' ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
-            </Text>
+            <View style={[styles.copyBadge, copied === 'address' && styles.copyBadgeCopied]}>
+              <Text style={[styles.copyBadgeText, copied === 'address' && styles.copyBadgeTextCopied]}>
+                {copied === 'address' ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
+              </Text>
+            </View>
           </TouchableOpacity>
+
+          {/* Balance */}
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceLabel}>{t('wallet.view.balance')}</Text>
+            <Text style={styles.balanceValue}>
+              {balance !== null ? `${parseFloat(balance).toFixed(2)} XLM` : '—'}
+            </Text>
+            <Text style={styles.balanceNetwork}>TESTNET</Text>
+          </View>
         </View>
 
         {/* Secret Key (shown temporarily after PIN) */}
         {secretKey && (
           <View style={styles.secretBox}>
-            <Text style={styles.label}>{t('wallet.view.secretLabel')}</Text>
+            <View style={styles.secretHeader}>
+              <Text style={styles.label}>{t('wallet.view.secretLabel')}</Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  await Clipboard.setStringAsync(secretKey);
+                  haptics.success();
+                  setCopied('secret');
+                  setTimeout(() => setCopied(null), 3000);
+                }}
+                style={[styles.copyBtn, copied === 'secret' && styles.copyBtnCopied]}
+              >
+                <Text style={[styles.copyBtnText, copied === 'secret' && styles.copyBtnTextCopied]}>
+                  {copied === 'secret' ? t('wallet.view.copied') : t('wallet.view.copyBtn')}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.secretText} selectable>{secretKey}</Text>
             <Text style={styles.secretWarning}>{t('wallet.view.secretWarning')}</Text>
           </View>
@@ -103,17 +124,8 @@ export default function WalletScreen() {
             title={t('wallet.view.viewSecret')}
             subtitle={t('wallet.view.viewSecretSub')}
             variant="pvp"
-            onPress={() => { haptics.light(); setPinAction('view'); setShowPin(true); }}
+            onPress={() => { haptics.light(); setShowPin(true); }}
           />
-          <NavalButton
-            title={t('wallet.view.exportSecret')}
-            subtitle={t('wallet.view.exportSecretSub')}
-            variant="danger"
-            onPress={() => { haptics.light(); setPinAction('export'); setShowPin(true); }}
-          />
-          {copied === 'secret' && (
-            <Text style={styles.copiedFeedback}>{t('wallet.view.secretCopied')}</Text>
-          )}
           <NavalButton
             title={t('wallet.view.back')}
             variant="secondary"
@@ -173,7 +185,7 @@ const styles = StyleSheet.create({
   },
   addressRow: {
     alignItems: 'center',
-    gap: 2,
+    gap: SPACING.xs,
   },
   addressText: {
     fontFamily: FONTS.body,
@@ -181,11 +193,54 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     letterSpacing: 1,
   },
-  copyHint: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 10,
+  copyBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.grid.border,
+  },
+  copyBadgeCopied: {
+    borderColor: COLORS.status.online,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+  },
+  copyBadgeText: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
     color: COLORS.text.secondary,
     letterSpacing: 1,
+  },
+  copyBadgeTextCopied: {
+    color: COLORS.status.online,
+  },
+  balanceRow: {
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    gap: 2,
+  },
+  balanceLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    letterSpacing: 2,
+  },
+  balanceValue: {
+    fontFamily: FONTS.heading,
+    fontSize: 24,
+    color: COLORS.text.accent,
+    letterSpacing: 1,
+  },
+  balanceNetwork: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.status.pvp,
+    letterSpacing: 2,
+    borderWidth: 1,
+    borderColor: COLORS.status.pvp,
+    borderRadius: 4,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 1,
+    opacity: 0.7,
   },
   secretBox: {
     marginTop: SPACING.md,
@@ -195,6 +250,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.accent.fire,
     gap: SPACING.xs,
+  },
+  secretHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  copyBtn: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.accent.fire,
+  },
+  copyBtnCopied: {
+    borderColor: COLORS.status.online,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+  },
+  copyBtnText: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.accent.fire,
+    letterSpacing: 1,
+  },
+  copyBtnTextCopied: {
+    color: COLORS.status.online,
   },
   secretText: {
     fontFamily: FONTS.bodyLight,
@@ -211,12 +291,5 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: 'auto',
     gap: SPACING.md,
-  },
-  copiedFeedback: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.status.online,
-    textAlign: 'center',
-    letterSpacing: 1,
   },
 });

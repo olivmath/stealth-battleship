@@ -1,57 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING } from '../../shared/theme';
 
 interface Props {
   visible: boolean;
+  pinLength?: number;
   onSubmit: (pin: string) => void;
   onCancel: () => void;
 }
 
-export default function PinModal({ visible, onSubmit, onCancel }: Props) {
+export default function PinModal({ visible, pinLength = 4, onSubmit, onCancel }: Props) {
   const { t } = useTranslation();
   const [pin, setPin] = useState('');
+  const submitted = useRef(false);
 
   useEffect(() => {
-    if (visible) setPin('');
+    if (visible) {
+      setPin('');
+      submitted.current = false;
+    }
   }, [visible]);
 
-  const handleSubmit = () => {
-    if (pin.length >= 4) onSubmit(pin);
+  // Auto-submit when PIN reaches target length
+  useEffect(() => {
+    if (pin.length >= pinLength && !submitted.current) {
+      submitted.current = true;
+      onSubmit(pin);
+    }
+  }, [pin, pinLength, onSubmit]);
+
+  const handleChange = (text: string) => {
+    // Only digits
+    const digits = text.replace(/\D/g, '');
+    setPin(digits);
   };
+
+  // Visual dots
+  const dots = Array.from({ length: pinLength }, (_, i) => (
+    <View key={i} style={[styles.dot, i < pin.length && styles.dotFilled]} />
+  ));
 
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <Text style={styles.title}>{t('wallet.pin.title')}</Text>
+          <View style={styles.dotsRow}>{dots}</View>
           <TextInput
-            style={styles.input}
+            style={styles.hiddenInput}
             value={pin}
-            onChangeText={setPin}
-            placeholder={t('wallet.pin.placeholder')}
-            placeholderTextColor={COLORS.text.secondary}
+            onChangeText={handleChange}
             keyboardType="number-pad"
-            secureTextEntry
-            maxLength={6}
+            maxLength={pinLength}
             autoFocus
-            onSubmitEditing={handleSubmit}
+            caretHidden
           />
-          <View style={styles.buttons}>
-            <TouchableOpacity onPress={onCancel} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>{t('wallet.pin.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSubmit}
-              style={[styles.confirmBtn, pin.length < 4 && styles.disabledBtn]}
-              disabled={pin.length < 4}
-            >
-              <Text style={[styles.confirmText, pin.length < 4 && styles.disabledText]}>
-                {t('wallet.pin.confirm')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={onCancel} style={styles.cancelBtn}>
+            <Text style={styles.cancelText}>{t('wallet.pin.cancel')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -74,7 +81,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     padding: SPACING.lg,
-    gap: SPACING.md,
+    gap: SPACING.lg,
+    alignItems: 'center',
   },
   title: {
     fontFamily: FONTS.heading,
@@ -83,56 +91,39 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
   },
-  input: {
-    fontFamily: FONTS.body,
-    fontSize: 24,
-    color: COLORS.text.primary,
-    borderWidth: 1,
-    borderColor: COLORS.grid.border,
-    borderRadius: 4,
-    padding: SPACING.md,
-    backgroundColor: COLORS.surface.cardBorder,
-    textAlign: 'center',
-    letterSpacing: 8,
-  },
-  buttons: {
+  dotsRow: {
     flexDirection: 'row',
     gap: SPACING.md,
   },
+  dot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: COLORS.grid.border,
+    backgroundColor: 'transparent',
+  },
+  dotFilled: {
+    backgroundColor: COLORS.status.pvp,
+    borderColor: COLORS.status.pvp,
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    height: 0,
+    width: 0,
+  },
   cancelBtn: {
-    flex: 1,
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    alignItems: 'center',
   },
   cancelText: {
     fontFamily: FONTS.heading,
     fontSize: 11,
     color: COLORS.text.secondary,
     letterSpacing: 1,
-  },
-  confirmBtn: {
-    flex: 1,
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.status.pvp,
-    backgroundColor: COLORS.ui.buttonBg,
-    alignItems: 'center',
-  },
-  disabledBtn: {
-    borderColor: COLORS.ui.disabledBorder,
-    backgroundColor: COLORS.ui.disabledBg,
-  },
-  confirmText: {
-    fontFamily: FONTS.heading,
-    fontSize: 11,
-    color: COLORS.status.pvp,
-    letterSpacing: 1,
-  },
-  disabledText: {
-    color: COLORS.text.secondary,
   },
 });
