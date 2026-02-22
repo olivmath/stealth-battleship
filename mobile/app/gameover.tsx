@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useResponsive } from '../src/hooks/useResponsive';
 import { useSharedValue, useAnimatedProps, withTiming, useDerivedValue } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -23,9 +24,6 @@ import LevelUpModal from '../src/components/Stats/LevelUpModal';
 import { MOCK_OPPONENT } from '../src/services/pvpMock';
 
 const AnimatedText = Animated.createAnimatedComponent(Text);
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BOARD_MAX = Math.floor((SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm) / 2);
 
 function AnimatedCounter({ to, suffix = '', style, delay = 0 }: { to: number; suffix?: string; style: any; delay?: number }) {
   const progress = useSharedValue(0);
@@ -63,6 +61,8 @@ export default function GameOverScreen() {
   const [previousXP, setPreviousXP] = useState<number | null>(null);
   const [waitingProof, setWaitingProof] = useState(false);
 
+  const { width: screenWidth, isMobile, isDesktop } = useResponsive();
+  const BOARD_MAX = Math.floor((Math.min(screenWidth, isDesktop ? 800 : 600) - SPACING.lg * 2 - SPACING.sm) / 2);
   const isVictory = state.winner === 'player';
   const ms = state.lastMatchStats;
   const xpEarned = ms?.score ?? 0;
@@ -128,7 +128,7 @@ export default function GameOverScreen() {
 
   return (
     <GradientContainer>
-      {isVictory && (
+      {isVictory && Platform.OS !== 'web' && (
         <ConfettiCannon
           count={200}
           origin={{ x: -10, y: 0 }}
@@ -138,7 +138,7 @@ export default function GameOverScreen() {
           explosionSpeed={350}
         />
       )}
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.container} contentContainerStyle={[styles.content, !isMobile && { maxWidth: isDesktop ? 800 : 600, alignSelf: 'center' as const, width: '100%' as any }]}>
         {/* Header */}
         <View style={styles.header}>
           <NavalText variant="h1" color={isVictory ? COLORS.accent.victory : COLORS.accent.fire} letterSpacing={6} style={{ fontSize: FONT_SIZES.hero }}>

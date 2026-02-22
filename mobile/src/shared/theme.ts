@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const COLORS = {
   background: {
     dark: '#0a0e1a',
@@ -98,38 +100,52 @@ export const RADIUS = {
 } as const;
 
 export const SHADOWS = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  glow: {
-    shadowColor: '#f59e0b',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-} as const;
+  sm: Platform.select({
+    web: { boxShadow: '0px 1px 2px rgba(0,0,0,0.2)' } as any,
+    default: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+  }),
+  md: Platform.select({
+    web: { boxShadow: '0px 2px 4px rgba(0,0,0,0.3)' } as any,
+    default: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+  }),
+  lg: Platform.select({
+    web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.4)' } as any,
+    default: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+  }),
+  glow: Platform.select({
+    web: { boxShadow: '0px 0px 12px rgba(245,158,11,0.4)' } as any,
+    default: {
+      shadowColor: '#f59e0b',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+  }),
+};
 
 export const LAYOUT = {
   maxContentWidth: 400,
+  maxContentWidthTablet: 600,
+  maxContentWidthDesktop: 800,
   screenPadding: 16,
 } as const;
 

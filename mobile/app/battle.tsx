@@ -1,5 +1,7 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { confirm } from '../src/hooks/useConfirm';
+import { useResponsive, BREAKPOINTS } from '../src/hooks/useResponsive';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
@@ -31,8 +33,6 @@ import Spacer from '../src/components/UI/Spacer';
 import { useTranslation } from 'react-i18next';
 
 const SCREEN_PADDING = LAYOUT.screenPadding;
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CONTENT_WIDTH = Math.min(SCREEN_WIDTH - SCREEN_PADDING * 2, LAYOUT.maxContentWidth);
 
 export default function BattleScreen() {
   const router = useRouter();
@@ -42,6 +42,9 @@ export default function BattleScreen() {
   const haptics = useHaptics();
   const { t } = useTranslation();
   const { endGame } = useGameEffects();
+  const { width: screenWidth, isMobile, isDesktop } = useResponsive();
+  const maxContent = isDesktop ? LAYOUT.maxContentWidthDesktop : isMobile ? LAYOUT.maxContentWidth : LAYOUT.maxContentWidthTablet;
+  const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, maxContent);
   const gridSize = state.settings.gridSize;
   const difficulty = 'hard' as const;
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
@@ -230,20 +233,15 @@ export default function BattleScreen() {
   }, [state.isPlayerTurn, state.phase, state.opponentBoard, state.opponentShips, dispatch, haptics]);
 
   const handleSurrender = () => {
-    Alert.alert(
-      t('battle.surrenderTitle'),
-      isPvP ? t('battle.surrenderPvpMsg') : t('battle.surrenderMsg'),
-      [
-        { text: t('battle.cancel'), style: 'cancel' },
-        {
-          text: t('battle.surrenderTitle'),
-          style: 'destructive',
-          onPress: () => {
-            endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
-          },
-        },
-      ]
-    );
+    confirm({
+      title: t('battle.surrenderTitle'),
+      message: isPvP ? t('battle.surrenderPvpMsg') : t('battle.surrenderMsg'),
+      cancelText: t('battle.cancel'),
+      confirmText: t('battle.surrenderTitle'),
+      onConfirm: () => {
+        endGame({ won: false, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
+      },
+    });
   };
 
   // PvP custom turn indicator text
@@ -362,42 +360,77 @@ export default function BattleScreen() {
           </View>
         )}
 
-        {/* Tier 2 — Enemy grid (primary interaction) */}
-        <View style={{ width: GRID_TOTAL_WIDTH }}>
-          <GameBoard
-            board={state.opponentBoard}
-            onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
-            disabled={!state.isPlayerTurn || provingShot}
-            showShips={false}
-            gridSize={gridSize}
-            isOpponent
-            maxWidth={GRID_TOTAL_WIDTH}
-            variant="full"
-          />
-
-          <Spacer size="sm" />
-
-          {/* Tier 3 — Info panel: mini-map + fleet + stats */}
-          <View style={styles.bottomPanel}>
-            <View style={styles.miniMapColumn}>
+        {/* Tier 2+3 — Grids and info */}
+        {!isMobile ? (
+          /* Tablet/Desktop: side-by-side grids */
+          <View style={styles.sideBySide}>
+            <View style={styles.sideBySideGrid}>
+              <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
               <GameBoard
                 board={state.playerBoard}
                 showShips
                 disabled
                 gridSize={gridSize}
-                maxWidth={MINI_MAX_WIDTH}
-                variant="mini"
-                colLabelsBottom
+                maxWidth={Math.floor(CONTENT_WIDTH * 0.46)}
+                variant="full"
                 lastAttackPosition={lastEnemyAttack}
               />
             </View>
-            <View style={styles.fleetColumn}>
-              <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
-              <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
+            <View style={styles.sideBySideStats}>
               <BattleStats tracking={state.tracking} />
             </View>
+            <View style={styles.sideBySideGrid}>
+              <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
+              <GameBoard
+                board={state.opponentBoard}
+                onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
+                disabled={!state.isPlayerTurn || provingShot}
+                showShips={false}
+                gridSize={gridSize}
+                isOpponent
+                maxWidth={Math.floor(CONTENT_WIDTH * 0.46)}
+                variant="full"
+              />
+            </View>
           </View>
-        </View>
+        ) : (
+          /* Mobile: stacked layout */
+          <View style={{ width: GRID_TOTAL_WIDTH }}>
+            <GameBoard
+              board={state.opponentBoard}
+              onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
+              disabled={!state.isPlayerTurn || provingShot}
+              showShips={false}
+              gridSize={gridSize}
+              isOpponent
+              maxWidth={GRID_TOTAL_WIDTH}
+              variant="full"
+            />
+
+            <Spacer size="sm" />
+
+            {/* Info panel: mini-map + fleet + stats */}
+            <View style={styles.bottomPanel}>
+              <View style={styles.miniMapColumn}>
+                <GameBoard
+                  board={state.playerBoard}
+                  showShips
+                  disabled
+                  gridSize={gridSize}
+                  maxWidth={MINI_MAX_WIDTH}
+                  variant="mini"
+                  colLabelsBottom
+                  lastAttackPosition={lastEnemyAttack}
+                />
+              </View>
+              <View style={styles.fleetColumn}>
+                <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
+                <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
+                <BattleStats tracking={state.tracking} />
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Tier 4 — Surrender (destructive, minimal weight) */}
         <View style={{ marginTop: 'auto' }}>
@@ -425,6 +458,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+  },
+  sideBySide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  },
+  sideBySideGrid: {
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  sideBySideStats: {
+    justifyContent: 'center',
+    paddingTop: SPACING.xxl,
   },
   bottomPanel: {
     flexDirection: 'row',

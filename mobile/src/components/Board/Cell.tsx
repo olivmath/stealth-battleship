@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Text, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -90,6 +90,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
             backgroundColor: bgColor,
             borderColor,
           },
+          Platform.OS === 'web' && onPress && !disabled ? { cursor: 'pointer' } as any : undefined,
         ]}
         onPress={onPress}
         disabled={disabled || !onPress}
@@ -97,6 +98,7 @@ function CellComponent({ state, size, onPress, disabled, isPreview, isInvalid, r
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={isOpponent && state === 'empty' ? 'Tap to fire' : undefined}
+        {...(Platform.OS === 'web' ? { onContextMenu: (e: any) => e.preventDefault() } : {})}
       >
         {state === 'hit' && (
           <View style={styles.hitMarker}>

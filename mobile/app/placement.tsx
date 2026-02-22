@@ -5,8 +5,8 @@ import {
   StyleSheet,
   Dimensions,
   GestureResponderEvent,
-  Alert,
 } from 'react-native';
+import { confirm } from '../src/hooks/useConfirm';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
@@ -30,12 +30,12 @@ import type { ShipTuples } from '../src/zk';
 import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../src/services/pvpMock';
 import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS, LAYOUT } from '../src/shared/theme';
+import { useResponsive } from '../src/hooks/useResponsive';
 import NavalText from '../src/components/UI/NavalText';
 import Spacer from '../src/components/UI/Spacer';
+import { useWebKeyboard } from '../src/hooks/useWebKeyboard';
 
 const SCREEN_PADDING = LAYOUT.screenPadding;
-const screenWidth = Dimensions.get('window').width;
-const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, LAYOUT.maxContentWidth);
 const VARIANT = 'full' as const;
 const LABEL_SIZE = getLabelSize(VARIANT);
 
@@ -47,6 +47,9 @@ export default function PlacementScreen() {
   const haptics = useHaptics();
   const { settings } = useSettings();
   const { t } = useTranslation();
+  const { width: screenWidth, isMobile } = useResponsive();
+  const maxContent = isMobile ? LAYOUT.maxContentWidth : LAYOUT.maxContentWidthTablet;
+  const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, maxContent);
 
   const gridSize = state.settings.gridSize;
   const level = getLevelInfo(state.stats.totalXP);
@@ -300,24 +303,28 @@ export default function PlacementScreen() {
   };
 
   const handleBack = () => {
-    Alert.alert(
-      isPvP ? t('placement.leaveTitle') : t('placement.abandonTitle'),
-      isPvP
-        ? t('placement.leaveMsg')
-        : t('placement.abandonMsg'),
-      [
-        { text: t('placement.cancel'), style: 'cancel' },
-        {
-          text: isPvP ? t('placement.leave') : t('placement.abandon'),
-          style: 'destructive',
-          onPress: () => {
-            timersRef.current.forEach(clearTimeout);
-            router.replace('/menu');
-          },
-        },
-      ]
-    );
+    confirm({
+      title: isPvP ? t('placement.leaveTitle') : t('placement.abandonTitle'),
+      message: isPvP ? t('placement.leaveMsg') : t('placement.abandonMsg'),
+      cancelText: t('placement.cancel'),
+      confirmText: isPvP ? t('placement.leave') : t('placement.abandon'),
+      onConfirm: () => {
+        timersRef.current.forEach(clearTimeout);
+        router.replace('/menu');
+      },
+    });
   };
+
+  // Keyboard shortcut: R to rotate ship (web only)
+  useWebKeyboard((key) => {
+    if (isLocked) return;
+    if ((key === 'r' || key === 'R') && selectedShip) {
+      haptics.light();
+      setOrientation(o => o === 'horizontal' ? 'vertical' : 'horizontal');
+      setPreviewPositions([]);
+      setPreviewValid(false);
+    }
+  }, [selectedShip, isLocked]);
 
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
@@ -353,93 +360,94 @@ export default function PlacementScreen() {
 
         <Spacer size="sm" />
 
-        {/* Grid */}
-        <View
-          style={styles.gridSection}
-          pointerEvents={isLocked ? 'none' : 'auto'}
-          onLayout={(e) => {
-            e.target.measureInWindow((x: number, y: number) => {
-              gridLayoutRef.current = { x, y };
-            });
-          }}
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          onResponderGrant={handleGridTouchStart}
-          onResponderMove={handleGridTouchMove}
-          onResponderRelease={handleGridTouchEnd}
-        >
-          {/* Column labels */}
-          <View style={styles.labelRow}>
-            {colLabels.map(label => (
-              <Text
-                key={label}
-                style={[styles.label, { width: CELL_SIZE, height: LABEL_SIZE, lineHeight: LABEL_SIZE }]}
-              >
-                {label}
-              </Text>
-            ))}
-            <View style={{ width: LABEL_SIZE, height: LABEL_SIZE }} />
-          </View>
-
-          {/* Grid body */}
-          <View style={styles.gridBody}>
-            {state.playerBoard.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.row}>
-                {row.map((cell, colIndex) => {
-                  const key = `${rowIndex},${colIndex}`;
-                  const isPreview = previewSet.has(key);
-                  const isInvalidPreview = isPreview && !previewValid;
-                  const shipColor = cell.shipId ? getShipStyle(cell.shipId).color : undefined;
-
-                  return (
-                    <Cell
-                      key={`${rowIndex}-${colIndex}`}
-                      state={cell.state}
-                      size={CELL_SIZE}
-                      isPreview={isPreview}
-                      isInvalid={isInvalidPreview}
-                      shipColor={shipColor}
-                      disabled
-                    />
-                  );
-                })}
+        {/* Grid + Selector: side-by-side on tablet/desktop */}
+        <View style={!isMobile ? styles.desktopGridRow : undefined}>
+          {/* Grid */}
+          <View
+            style={styles.gridSection}
+            pointerEvents={isLocked ? 'none' : 'auto'}
+            onLayout={(e) => {
+              e.target.measureInWindow((x: number, y: number) => {
+                gridLayoutRef.current = { x, y };
+              });
+            }}
+            onStartShouldSetResponder={() => true}
+            onMoveShouldSetResponder={() => true}
+            onResponderGrant={handleGridTouchStart}
+            onResponderMove={handleGridTouchMove}
+            onResponderRelease={handleGridTouchEnd}
+          >
+            {/* Column labels */}
+            <View style={styles.labelRow}>
+              {colLabels.map(label => (
                 <Text
-                  style={[styles.label, { width: LABEL_SIZE, height: CELL_SIZE, lineHeight: CELL_SIZE }]}
+                  key={label}
+                  style={[styles.label, { width: CELL_SIZE, height: LABEL_SIZE, lineHeight: LABEL_SIZE }]}
                 >
-                  {rowLabels[rowIndex]}
+                  {label}
                 </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <Spacer size="md" />
-
-        {/* Ship selector (hidden when PvP and ready) */}
-        {!isLocked && (
-          <View style={styles.selectorSection}>
-            <View style={styles.selectorLeft}>
-              <ShipSelector
-                ships={shipDefs}
-                placedShipIds={placedShipIds}
-                selectedShipId={selectedShip?.id ?? null}
-                onSelect={handleShipSelect}
-              />
+              ))}
+              <View style={{ width: LABEL_SIZE, height: LABEL_SIZE }} />
             </View>
-            <View style={styles.selectorRight}>
-              {selectedShip && (
-                <ShipPreview
-                  shipSize={selectedShip.size}
-                  orientation={orientation}
-                  onToggle={() => {
-                    haptics.light();
-                    setOrientation(o => o === 'horizontal' ? 'vertical' : 'horizontal');
-                  }}
+
+            {/* Grid body */}
+            <View style={styles.gridBody}>
+              {state.playerBoard.map((row, rowIndex) => (
+                <View key={rowIndex} style={styles.row}>
+                  {row.map((cell, colIndex) => {
+                    const key = `${rowIndex},${colIndex}`;
+                    const isPreview = previewSet.has(key);
+                    const isInvalidPreview = isPreview && !previewValid;
+                    const shipColor = cell.shipId ? getShipStyle(cell.shipId).color : undefined;
+
+                    return (
+                      <Cell
+                        key={`${rowIndex}-${colIndex}`}
+                        state={cell.state}
+                        size={CELL_SIZE}
+                        isPreview={isPreview}
+                        isInvalid={isInvalidPreview}
+                        shipColor={shipColor}
+                        disabled
+                      />
+                    );
+                  })}
+                  <Text
+                    style={[styles.label, { width: LABEL_SIZE, height: CELL_SIZE, lineHeight: CELL_SIZE }]}
+                  >
+                    {rowLabels[rowIndex]}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Ship selector (hidden when PvP and ready) */}
+          {!isLocked && (
+            <View style={[styles.selectorSection, !isMobile && styles.selectorSectionDesktop]}>
+              <View style={styles.selectorLeft}>
+                <ShipSelector
+                  ships={shipDefs}
+                  placedShipIds={placedShipIds}
+                  selectedShipId={selectedShip?.id ?? null}
+                  onSelect={handleShipSelect}
                 />
-              )}
+              </View>
+              <View style={styles.selectorRight}>
+                {selectedShip && (
+                  <ShipPreview
+                    shipSize={selectedShip.size}
+                    orientation={orientation}
+                    onToggle={() => {
+                      haptics.light();
+                      setOrientation(o => o === 'horizontal' ? 'vertical' : 'horizontal');
+                    }}
+                  />
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
+        </View>
 
         <View style={styles.flexSpacer} />
 
@@ -517,7 +525,6 @@ const styles = StyleSheet.create({
   },
   gridSection: {
     alignSelf: 'center',
-    maxWidth: CONTENT_WIDTH,
   },
   labelRow: {
     flexDirection: 'row',
@@ -535,9 +542,20 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     textAlign: 'center',
   },
+  desktopGridRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.lg,
+    justifyContent: 'center',
+  },
   selectorSection: {
     flexDirection: 'row',
     gap: 8,
+  },
+  selectorSectionDesktop: {
+    flexDirection: 'column',
+    width: 200,
+    marginTop: SPACING.lg,
   },
   selectorLeft: {
     flex: 1,

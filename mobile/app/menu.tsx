@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,9 @@ import { usePlayerStats } from '../src/stats/translator';
 import { useSettings } from '../src/settings/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getLevelInfo } from '../src/stats/interactor';
-import { COLORS, FONTS, SPACING, RADIUS } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../src/shared/theme';
+import { confirm } from '../src/hooks/useConfirm';
+import { useResponsive } from '../src/hooks/useResponsive';
 import NavalText from '../src/components/UI/NavalText';
 import Divider from '../src/components/UI/Divider';
 
@@ -21,6 +23,7 @@ export default function MenuScreen() {
   const { stats, refresh } = usePlayerStats();
   const { settings, refresh: refreshSettings } = useSettings();
   const haptics = useHaptics();
+  const { isMobile, isDesktop } = useResponsive();
 
   useEffect(() => {
     refresh();
@@ -64,7 +67,7 @@ export default function MenuScreen() {
 
   return (
     <GradientContainer>
-      <View style={styles.container}>
+      <View style={[styles.container, !isMobile && { maxWidth: isDesktop ? LAYOUT.maxContentWidthDesktop : LAYOUT.maxContentWidthTablet, alignSelf: 'center' as const, width: '100%' as any }]}>
         <View style={styles.header}>
           <NavalText variant="label" letterSpacing={3}>{t('menu.welcome')}</NavalText>
           <NavalText variant="h2" style={{ marginTop: SPACING.xs }}>{state.playerName}</NavalText>
@@ -158,24 +161,19 @@ export default function MenuScreen() {
             <TouchableOpacity
               onPress={() => {
                 haptics.light();
-                Alert.alert(
-                  t('menu.logoutTitle'),
-                  t('menu.logoutMsg'),
-                  [
-                    { text: t('menu.logoutCancel'), style: 'cancel' },
-                    {
-                      text: t('menu.logoutConfirm'),
-                      style: 'destructive',
-                      onPress: async () => {
-                        const { clearPlayerData } = await import('../src/game/adapter');
-                        const { clearWallet } = await import('../src/wallet/interactor');
-                        await clearPlayerData();
-                        await clearWallet();
-                        router.replace('/login');
-                      },
-                    },
-                  ]
-                );
+                confirm({
+                  title: t('menu.logoutTitle'),
+                  message: t('menu.logoutMsg'),
+                  cancelText: t('menu.logoutCancel'),
+                  confirmText: t('menu.logoutConfirm'),
+                  onConfirm: async () => {
+                    const { clearPlayerData } = await import('../src/game/adapter');
+                    const { clearWallet } = await import('../src/wallet/interactor');
+                    await clearPlayerData();
+                    await clearWallet();
+                    router.replace('/login');
+                  },
+                });
               }}
               style={styles.logoutButton}
               activeOpacity={0.7}

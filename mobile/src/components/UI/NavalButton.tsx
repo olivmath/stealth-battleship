@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, Platform } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
 
@@ -38,7 +38,7 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
 
   return (
     <AnimatedPressable
-      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, animatedStyle, style]}
+      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, Platform.OS === 'web' && !disabled ? { cursor: 'pointer' } as any : undefined, animatedStyle, style]}
       onPress={onPress}
       onPressIn={() => { scale.value = withSpring(0.97, { damping: 15, stiffness: 300 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}

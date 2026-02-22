@@ -1,5 +1,6 @@
 export { initZK, boardValidity, shotProof, turnsProof, destroyZK } from './interactor';
 export { ZKWebView, webViewZKProvider, ServerZKProvider } from './adapter';
+export { WebWasmZKProvider } from './webWasmProvider';
 export { toShipTuples, toAttackTuples } from './entities';
 export type {
   ZKProvider,
