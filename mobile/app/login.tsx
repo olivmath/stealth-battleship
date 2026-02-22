@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState(false);
   const router = useRouter();
   const { dispatch } = useGame();
   const haptics = useHaptics();
@@ -53,12 +54,14 @@ export default function LoginScreen() {
 
   const handlePinSuccess = async (pin: string) => {
     try {
-      await getSecretKey(pin); // validates PIN
+      setPinError(false);
+      await getSecretKey(pin);
       setShowPin(false);
       haptics.success();
       router.replace('/menu');
     } catch {
-      Alert.alert(t('wallet.view.errorTitle'), t('wallet.view.errorInvalidPin'));
+      haptics.error();
+      setPinError(true);
     }
   };
 
@@ -75,10 +78,12 @@ export default function LoginScreen() {
       <View style={styles.loadingContainer}>
         <PinModal
           visible={true}
+          title={t('wallet.view.enterPin', 'Enter PIN')}
+          error={pinError}
           onSubmit={handlePinSuccess}
           onCancel={() => {
-            // Cannot cancel PIN on login — just dismiss and stay
             setShowPin(false);
+            setPinError(false);
             setLoading(false);
           }}
         />

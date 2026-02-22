@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
@@ -20,6 +20,7 @@ export default function WalletScreen() {
   const [balance, setBalance] = useState<string | null>(null);
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [showPin, setShowPin] = useState(false);
+  const [pinError, setPinError] = useState(false);
   const [copied, setCopied] = useState<'address' | 'secret' | null>(null);
 
   useEffect(() => {
@@ -39,14 +40,16 @@ export default function WalletScreen() {
   };
 
   const handlePinSuccess = async (pin: string) => {
-    setShowPin(false);
     try {
+      setPinError(false);
       const secret = await getSecretKey(pin);
+      setShowPin(false);
       setSecretKey(secret);
       haptics.success();
       setTimeout(() => setSecretKey(null), 30000);
     } catch {
-      Alert.alert(t('wallet.view.errorTitle'), t('wallet.view.errorInvalidPin'));
+      haptics.error();
+      setPinError(true);
     }
   };
 
@@ -135,8 +138,10 @@ export default function WalletScreen() {
 
         <PinModal
           visible={showPin}
+          title={t('wallet.view.enterPin', 'Enter PIN')}
+          error={pinError}
           onSubmit={handlePinSuccess}
-          onCancel={() => setShowPin(false)}
+          onCancel={() => { setShowPin(false); setPinError(false); }}
         />
       </View>
     </GradientContainer>

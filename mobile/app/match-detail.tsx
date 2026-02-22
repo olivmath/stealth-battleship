@@ -114,6 +114,75 @@ export default function MatchDetailScreen() {
           </View>
         </View>
 
+        {/* ZK Proofs */}
+        {match.commitment?.playerZk || match.commitment?.opponentZk ? (
+          <View style={styles.zkContainer}>
+            <Text style={styles.zkTitle}>{t('matchDetail.zkProofs')}</Text>
+
+            {match.commitment?.playerZk && (
+              <View style={styles.zkSection}>
+                <Text style={styles.zkSectionLabel}>{t('matchDetail.zkPlayer')}</Text>
+
+                <View style={styles.zkProofCard}>
+                  <View style={styles.zkProofHeader}>
+                    <Text style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</Text>
+                    <Text style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</Text>
+                  </View>
+                  <Text style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</Text>
+
+                  <View style={styles.zkDetailRow}>
+                    <Text style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</Text>
+                    <Text style={styles.zkDetailValue}>
+                      {match.commitment.playerZk.boardHash.slice(0, 10)}...{match.commitment.playerZk.boardHash.slice(-6)}
+                    </Text>
+                  </View>
+                  <View style={styles.zkDetailRow}>
+                    <Text style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</Text>
+                    <Text style={styles.zkDetailValue}>
+                      {t('matchDetail.zkProofBytes', { size: match.commitment.playerZk.proof?.length ?? 0 })}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {match.commitment?.opponentZk && (
+              <View style={styles.zkSection}>
+                <Text style={styles.zkSectionLabel}>{t('matchDetail.zkOpponent')}</Text>
+
+                <View style={styles.zkProofCard}>
+                  <View style={styles.zkProofHeader}>
+                    <Text style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</Text>
+                    <Text style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</Text>
+                  </View>
+                  <Text style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</Text>
+
+                  <View style={styles.zkDetailRow}>
+                    <Text style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</Text>
+                    <Text style={styles.zkDetailValue}>
+                      {match.commitment.opponentZk.boardHash.slice(0, 10)}...{match.commitment.opponentZk.boardHash.slice(-6)}
+                    </Text>
+                  </View>
+                  <View style={styles.zkDetailRow}>
+                    <Text style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</Text>
+                    <Text style={styles.zkDetailValue}>
+                      {t('matchDetail.zkProofBytes', { size: match.commitment.opponentZk.proof?.length ?? 0 })}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={styles.zkContainer}>
+            <Text style={styles.zkTitle}>{t('matchDetail.zkProofs')}</Text>
+            <View style={styles.zkNone}>
+              <Text style={styles.zkNoneTitle}>{t('matchDetail.zkNone')}</Text>
+              <Text style={styles.zkNoneDesc}>{t('matchDetail.zkNoneDesc')}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Back */}
         <NavalButton
           title={t('matchDetail.backToHistory')}
@@ -176,4 +245,103 @@ const styles = StyleSheet.create({
   reportLabel: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.text.secondary },
   reportValue: { fontFamily: FONTS.heading, fontSize: 14, color: COLORS.text.primary },
   perfectText: { color: COLORS.accent.gold },
+  zkContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(34, 211, 238, 0.2)',
+    borderRadius: 4,
+    padding: SPACING.md,
+    backgroundColor: 'rgba(34, 211, 238, 0.03)',
+    gap: SPACING.md,
+  },
+  zkTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.status.pvp,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  zkSection: {
+    gap: SPACING.sm,
+  },
+  zkSectionLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+  },
+  zkProofCard: {
+    borderWidth: 1,
+    borderColor: COLORS.surface.cardBorder,
+    borderRadius: 4,
+    padding: SPACING.sm,
+    backgroundColor: COLORS.surface.card,
+    gap: SPACING.xs,
+  },
+  zkProofHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  zkProofName: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.text.primary,
+    letterSpacing: 1,
+  },
+  zkStatusBadge: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    color: COLORS.status.online,
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: COLORS.status.online,
+    borderRadius: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  zkProofDesc: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    opacity: 0.8,
+  },
+  zkDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 3,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surface.cardBorder,
+  },
+  zkDetailLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+  },
+  zkDetailValue: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.status.pvp,
+    letterSpacing: 0.5,
+  },
+  zkNone: {
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+  },
+  zkNoneTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    opacity: 0.6,
+  },
+  zkNoneDesc: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    opacity: 0.5,
+    textAlign: 'center',
+  },
 });

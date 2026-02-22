@@ -16,12 +16,17 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   hard: COLORS.accent.fire,
 };
 
+function hasZkProofs(match: MatchRecord): boolean {
+  return !!(match.commitment?.playerZk || match.commitment?.opponentZk);
+}
+
 function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () => void }) {
   const { t } = useTranslation();
   const isVictory = match.result === 'victory';
   const dateStr = new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const difficulty = match.difficulty ?? 'normal';
   const diffColor = DIFFICULTY_COLORS[difficulty] ?? COLORS.text.secondary;
+  const zkVerified = hasZkProofs(match);
 
   return (
     <TouchableOpacity
@@ -29,7 +34,7 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, ${difficulty}, score ${match.score}`}
+      accessibilityLabel={`${isVictory ? 'Victory' : 'Defeat'}, ${dateStr}, ${match.gridSize}x${match.gridSize}, ${difficulty}, score ${match.score}${zkVerified ? ', ZK verified' : ''}`}
     >
       <View style={itemStyles.left}>
         <Text style={[itemStyles.result, isVictory ? itemStyles.win : itemStyles.loss]}>
@@ -44,6 +49,13 @@ function MatchHistoryItem({ match, onPress }: { match: MatchRecord; onPress: () 
                 {difficulty.toUpperCase()}
               </Text>
             </View>
+            {zkVerified && (
+              <View style={itemStyles.zkBadge}>
+                <Text style={itemStyles.zkText}>
+                  {t('matchHistory.zkVerified')}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -106,6 +118,20 @@ const itemStyles = StyleSheet.create({
     fontFamily: FONTS.heading,
     fontSize: 8,
     letterSpacing: 1,
+  },
+  zkBadge: {
+    borderWidth: 1,
+    borderColor: COLORS.status.pvp,
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    backgroundColor: 'rgba(34, 211, 238, 0.1)',
+  },
+  zkText: {
+    fontFamily: FONTS.heading,
+    fontSize: 8,
+    letterSpacing: 1,
+    color: COLORS.status.pvp,
   },
   score: {
     fontFamily: FONTS.heading,
