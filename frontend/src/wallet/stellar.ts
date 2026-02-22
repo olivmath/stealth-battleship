@@ -1,6 +1,13 @@
 // wallet/stellar.ts — Stellar keypair generation (pure JS, no Node deps)
 
 import nacl from 'tweetnacl';
+import * as Crypto from 'expo-crypto';
+
+// Provide PRNG for tweetnacl in React Native
+nacl.setPRNG((x: Uint8Array, n: number) => {
+  const randomBytes = Crypto.getRandomBytes(n);
+  for (let i = 0; i < n; i++) x[i] = randomBytes[i];
+});
 
 // Base32 encoding (RFC 4648)
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';

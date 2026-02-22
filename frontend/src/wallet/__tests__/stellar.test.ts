@@ -1,3 +1,12 @@
+import crypto from 'crypto';
+
+// Mock expo-crypto for Node test environment
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(crypto.randomBytes(n)),
+  digestStringAsync: jest.fn(),
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+}));
+
 import { generateKeypair, keypairFromSecret, isValidSecretKey } from '../stellar';
 
 describe('Stellar keypair', () => {
