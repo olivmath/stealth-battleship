@@ -1,8 +1,16 @@
+import type { PlacedShip, ShotRecord } from '../shared/entities';
+
 /** Ship tuple matching Noir circuit format: (row, col, size, horizontal) */
 export type ShipTuple = [number, number, number, boolean];
 
 /** 5 classic ships for 10x10 grid */
 export type ShipTuples = [ShipTuple, ShipTuple, ShipTuple, ShipTuple, ShipTuple];
+
+/** Attack coordinate pair: [row, col] */
+export type AttackTuple = [number, number];
+
+/** Number of ships in standard game */
+export const NUM_SHIPS = 5;
 
 /** Max attacks = 10x10 grid */
 export const MAX_ATTACKS = 100;
@@ -38,13 +46,13 @@ export interface ShotProofResult {
 /** Input for turns_proof circuit */
 export interface TurnsProofInput {
   shipsPlayer: ShipTuples;
-  shipsAI: ShipTuples;
+  shipsAi: ShipTuples;
   noncePlayer: string;
-  nonceAI: string;
+  nonceAi: string;
   boardHashPlayer: string;
-  boardHashAI: string;
-  attacksPlayer: [number, number][];
-  attacksAI: [number, number][];
+  boardHashAi: string;
+  attacksPlayer: AttackTuple[];
+  attacksAi: AttackTuple[];
   shipSizes: [number, number, number, number, number];
   winner: 0 | 1;
 }
@@ -65,4 +73,24 @@ export interface ZKProvider {
   shotProof(input: ShotProofInput, onProgress?: OnProgressCallback): Promise<ShotProofResult>;
   turnsProof(input: TurnsProofInput, onProgress?: OnProgressCallback): Promise<TurnsProofResult>;
   destroy(): void;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+/** Convert PlacedShip[] to ShipTuples for ZK circuits */
+export function toShipTuples(ships: PlacedShip[]): ShipTuples {
+  if (ships.length !== NUM_SHIPS) {
+    throw new Error(`Expected ${NUM_SHIPS} ships, got ${ships.length}`);
+  }
+  return ships.map((s): ShipTuple => {
+    const row = s.positions[0].row;
+    const col = s.positions[0].col;
+    const horizontal = s.orientation === 'horizontal';
+    return [row, col, s.size, horizontal];
+  }) as ShipTuples;
+}
+
+/** Convert ShotRecord[] to AttackTuple[] for ZK circuits */
+export function toAttackTuples(shots: ShotRecord[]): AttackTuple[] {
+  return shots.map((s) => [s.position.row, s.position.col]);
 }

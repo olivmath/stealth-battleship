@@ -94,13 +94,13 @@ describe('ZKService', () => {
   describe('turnsProof', () => {
     const mockInput: TurnsProofInput = {
       shipsPlayer: fiveShips,
-      shipsAI: [[0, 5, 5, true], [2, 5, 4, true], [4, 5, 3, true], [6, 5, 3, true], [8, 5, 2, true]],
+      shipsAi: [[0, 5, 5, true], [2, 5, 4, true], [4, 5, 3, true], [6, 5, 3, true], [8, 5, 2, true]],
       noncePlayer: '123',
-      nonceAI: '456',
+      nonceAi: '456',
       boardHashPlayer: '0xabc',
-      boardHashAI: '0xdef',
+      boardHashAi: '0xdef',
       attacksPlayer: [[0, 0]],
-      attacksAI: [[1, 1]],
+      attacksAi: [[1, 1]],
       shipSizes: [5, 4, 3, 3, 2],
       winner: 0,
     };

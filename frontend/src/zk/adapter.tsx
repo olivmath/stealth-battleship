@@ -146,21 +146,21 @@ export class ServerZKProvider implements ZKProvider {
   ): Promise<TurnsProofResult> {
     console.log(`${SERVER_TAG} ${info('━━━ turnsProof() ━━━')}`);
     console.log(`${SERVER_TAG} ${label('Winner')}: ${input.winner === 0 ? 'player' : 'AI'}`);
-    console.log(`${SERVER_TAG} ${label('Attacks')}: player=${input.attacksPlayer.length}, AI=${input.attacksAI.length}`);
+    console.log(`${SERVER_TAG} ${label('Attacks')}: player=${input.attacksPlayer.length}, AI=${input.attacksAi.length}`);
 
     const data = await this.postProof<{ proof: number[] }>(
       '/api/prove/turns-proof',
       {
         shipsPlayer: input.shipsPlayer,
-        shipsAi: input.shipsAI,
+        shipsAi: input.shipsAi,
         noncePlayer: input.noncePlayer,
-        nonceAi: input.nonceAI,
+        nonceAi: input.nonceAi,
         boardHashPlayer: input.boardHashPlayer,
-        boardHashAi: input.boardHashAI,
+        boardHashAi: input.boardHashAi,
         attacksPlayer: input.attacksPlayer,
-        attacksAi: input.attacksAI,
+        attacksAi: input.attacksAi,
         nAttacksPlayer: input.attacksPlayer.length,
-        nAttacksAi: input.attacksAI.length,
+        nAttacksAi: input.attacksAi.length,
         shipSizes: input.shipSizes,
         winner: input.winner,
       },
@@ -381,7 +381,7 @@ export const webViewZKProvider: ZKProvider = {
   async turnsProof(input: TurnsProofInput, onProgress?: OnProgressCallback): Promise<TurnsProofResult> {
     console.log(`${WV_TAG} turnsProof() called`);
     console.log(`${WV_TAG}   winner: ${input.winner === 0 ? 'player' : 'AI'}`);
-    console.log(`${WV_TAG}   attacks: player=${input.attacksPlayer.length}, AI=${input.attacksAI.length}`);
+    console.log(`${WV_TAG}   attacks: player=${input.attacksPlayer.length}, AI=${input.attacksAi.length}`);
 
     onProgress?.('Generating game result proof...');
     console.log(`${WV_TAG}   Generating turns_proof...`);
@@ -391,15 +391,15 @@ export const webViewZKProvider: ZKProvider = {
       name: 'turns_proof',
       inputs: {
         ships_player: toNoirShips(input.shipsPlayer),
-        ships_ai: toNoirShips(input.shipsAI),
+        ships_ai: toNoirShips(input.shipsAi),
         nonce_player: input.noncePlayer,
-        nonce_ai: input.nonceAI,
+        nonce_ai: input.nonceAi,
         board_hash_player: input.boardHashPlayer,
-        board_hash_ai: input.boardHashAI,
+        board_hash_ai: input.boardHashAi,
         attacks_player: padAttacks(input.attacksPlayer),
-        attacks_ai: padAttacks(input.attacksAI),
+        attacks_ai: padAttacks(input.attacksAi),
         n_attacks_player: String(input.attacksPlayer.length),
-        n_attacks_ai: String(input.attacksAI.length),
+        n_attacks_ai: String(input.attacksAi.length),
         ship_sizes: input.shipSizes.map(String),
         winner: String(input.winner),
       },
