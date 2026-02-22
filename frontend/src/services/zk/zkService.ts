@@ -6,6 +6,7 @@ import type {
   ShotProofResult,
   TurnsProofInput,
   TurnsProofResult,
+  OnProgressCallback,
 } from './types';
 
 let provider: ZKProvider | null = null;
@@ -22,8 +23,9 @@ function getProvider(): ZKProvider {
 
 export async function boardValidity(
   input: BoardValidityInput,
+  onProgress?: OnProgressCallback,
 ): Promise<BoardValidityResult> {
-  return getProvider().boardValidity(input);
+  return getProvider().boardValidity(input, onProgress);
 }
 
 export async function shotProof(

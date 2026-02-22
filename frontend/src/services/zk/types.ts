@@ -49,11 +49,14 @@ export interface TurnsProofResult {
   winner: 0 | 1;
 }
 
+/** Callback for proof generation progress */
+export type OnProgressCallback = (step: string) => void;
+
 /** Abstract ZK provider — swap implementation without changing consumers */
 export interface ZKProvider {
   init(): Promise<void>;
-  boardValidity(input: BoardValidityInput): Promise<BoardValidityResult>;
-  shotProof(input: ShotProofInput): Promise<ShotProofResult>;
-  turnsProof(input: TurnsProofInput): Promise<TurnsProofResult>;
+  boardValidity(input: BoardValidityInput, onProgress?: OnProgressCallback): Promise<BoardValidityResult>;
+  shotProof(input: ShotProofInput, onProgress?: OnProgressCallback): Promise<ShotProofResult>;
+  turnsProof(input: TurnsProofInput, onProgress?: OnProgressCallback): Promise<TurnsProofResult>;
   destroy(): void;
 }

@@ -9,6 +9,7 @@ import type {
   ShotProofResult,
   TurnsProofInput,
   TurnsProofResult,
+  OnProgressCallback,
 } from '../types';
 import { ZK_WORKER_HTML } from './zkWorkerHtml';
 
@@ -159,7 +160,7 @@ export const webViewZKProvider: ZKProvider = {
     console.log(`${TAG} Circuits loaded (${Date.now() - t0}ms)`);
   },
 
-  async boardValidity(input: BoardValidityInput): Promise<BoardValidityResult> {
+  async boardValidity(input: BoardValidityInput, onProgress?: OnProgressCallback): Promise<BoardValidityResult> {
     console.log(`${TAG} boardValidity() called`);
     console.log(`${TAG}   ships:`, JSON.stringify(input.ships));
     console.log(`${TAG}   nonce:`, input.nonce);
@@ -169,7 +170,8 @@ export const webViewZKProvider: ZKProvider = {
     const shipSizes = input.ships.map(([, , s]) => String(s));
 
     // Step 1: Compute board hash using hash_helper circuit
-    console.log(`${TAG}   Computing board hash (Poseidon2)...`);
+    onProgress?.('1/2 — Computing board hash...');
+    console.log(`${TAG}   [1/2] Computing board hash (Poseidon2)...`);
     const t0 = Date.now();
 
     const hashResult = await sendToWebView('execute', {
@@ -177,10 +179,11 @@ export const webViewZKProvider: ZKProvider = {
       inputs: { ships, nonce: input.nonce },
     });
     const boardHash = hashResult.returnValue;
-    console.log(`${TAG}   Board hash computed (${Date.now() - t0}ms): ${boardHash}`);
+    console.log(`${TAG}   [1/2] Board hash computed (${Date.now() - t0}ms): ${boardHash}`);
 
     // Step 2: Generate proof with the correct hash
-    console.log(`${TAG}   Generating board_validity proof...`);
+    onProgress?.('2/2 — Generating proof...');
+    console.log(`${TAG}   [2/2] Generating board_validity proof...`);
     const t1 = Date.now();
 
     const circuitInput = {
@@ -197,7 +200,7 @@ export const webViewZKProvider: ZKProvider = {
 
     const elapsed = Date.now() - t1;
     const proofBytes = new Uint8Array(result.proof);
-    console.log(`${TAG}   Proof generated! (${elapsed}ms)`);
+    console.log(`${TAG}   [2/2] Proof generated! (${elapsed}ms)`);
     console.log(`${TAG}   Proof size: ${proofBytes.length} bytes`);
 
     return {

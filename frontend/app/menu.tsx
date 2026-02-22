@@ -6,13 +6,12 @@ import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 
-const SketchfabModel = lazy(() => import('../src/components/UI/SketchfabModel'));
+const ShipModel = lazy(() => import('../src/components/UI/ShipModel'));
 import { useGame } from '../src/context/GameContext';
 import { usePlayerStats, useSettings } from '../src/hooks/useStorage';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getLevelInfo } from '../src/engine/stats';
 import { COLORS, FONTS, SPACING } from '../src/constants/theme';
-import { MENU_MODEL_ID } from '../src/constants/ships3d';
 
 export default function MenuScreen() {
   const { t } = useTranslation();
@@ -84,7 +83,7 @@ export default function MenuScreen() {
         )}
 
         <Suspense fallback={<View style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}><RadarSpinner size={40} /></View>}>
-          <SketchfabModel modelId={MENU_MODEL_ID} height={200} />
+          <ShipModel height={200} />
         </Suspense>
 
         {/* Actions */}

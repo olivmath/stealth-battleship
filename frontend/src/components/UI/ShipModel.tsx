@@ -18,9 +18,16 @@ interface Props {
   style?: ViewStyle;
 }
 
+const t0 = performance.now();
+
 function NagatoModel({ uri }: { uri: string }) {
   const { scene } = useGLTF(uri);
+  console.log(`[ShipModel] GLB parsed: ${(performance.now() - t0).toFixed(0)}ms`);
   const clone = useMemo(() => scene.clone(true), [scene]);
+
+  useEffect(() => {
+    console.log(`[ShipModel] rendered: ${(performance.now() - t0).toFixed(0)}ms`);
+  }, []);
 
   return (
     <group position={[0, 0, 0]}>
@@ -35,8 +42,10 @@ export default function ShipModel({ height = 200, style }: Props) {
   const [uri, setUri] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log(`[ShipModel] start: 0ms`);
     const asset = Asset.fromModule(require('../../../assets/nagato-nodraco.glb'));
     asset.downloadAsync().then(() => {
+      console.log(`[ShipModel] asset ready: ${(performance.now() - t0).toFixed(0)}ms`);
       setUri(asset.localUri || asset.uri);
     });
   }, []);

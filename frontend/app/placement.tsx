@@ -62,7 +62,10 @@ export default function PlacementScreen() {
   // PvP ready state
   const [playerReady, setPlayerReady] = useState(false);
   const [opponentReady, setOpponentReady] = useState(false);
-  const isLocked = isPvP && playerReady;
+  const [generatingProof, setGeneratingProof] = useState(false);
+  const [proofStep, setProofStep] = useState('');
+  const proofCancelledRef = useRef(false);
+  const isLocked = (isPvP && playerReady) || generatingProof;
 
   const gridLayoutRef = useRef({ x: 0, y: 0 });
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -206,19 +209,28 @@ export default function PlacementScreen() {
     setPreviewPositions([]);
   };
 
+  const handleCancelProof = () => {
+    console.log('[ZK] Proof generation cancelled by user');
+    proofCancelledRef.current = true;
+    setGeneratingProof(false);
+    setProofStep('');
+  };
+
   const handleReady = async () => {
     haptics.heavy();
+    setGeneratingProof(true);
+    proofCancelledRef.current = false;
+
     const aiResult = autoPlaceShips(createEmptyBoard(gridSize), shipDefs, gridSize);
-    if (!aiResult) return;
+    if (!aiResult) {
+      setGeneratingProof(false);
+      return;
+    }
 
     const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
 
     // --- ZK: Generate board_validity proof ---
     console.log('[ZK] === BOARD VALIDITY PROOF START ===');
-    console.log('[ZK] Player ships:', state.playerShips.map(s => ({
-      id: s.id, size: s.size, orientation: s.orientation,
-      pos0: s.positions[0],
-    })));
 
     // Convert PlacedShip[] to ShipTuple[] for circuit
     const shipTuples = state.playerShips.map((s): ShipTuple => {
@@ -233,16 +245,27 @@ export default function PlacementScreen() {
     console.log('[ZK] Nonce:', nonce);
 
     try {
-      const zkResult = await boardValidity({ ships: shipTuples, nonce });
+      const zkResult = await boardValidity({ ships: shipTuples, nonce }, (step) => {
+        setProofStep(step);
+      });
+
+      if (proofCancelledRef.current) return;
+
       console.log('[ZK] === PROOF GENERATED ===');
       console.log('[ZK] Proof size:', zkResult.proof.length, 'bytes');
       console.log('[ZK] Board hash:', zkResult.boardHash);
     } catch (err: any) {
+      if (proofCancelledRef.current) return;
       console.error('[ZK] === PROOF FAILED ===');
       console.error('[ZK] Error:', err.message);
     }
     console.log('[ZK] === BOARD VALIDITY PROOF END ===');
     // --- End ZK ---
+
+    if (proofCancelledRef.current) return;
+
+    setGeneratingProof(false);
+    setProofStep('');
 
     dispatch({
       type: 'START_GAME',
@@ -253,7 +276,6 @@ export default function PlacementScreen() {
 
     if (isPvP) {
       setPlayerReady(true);
-      // Mock opponent ready delay
       const delay = OPPONENT_READY_DELAY_MIN + Math.random() * (OPPONENT_READY_DELAY_MAX - OPPONENT_READY_DELAY_MIN);
       const t = setTimeout(() => setOpponentReady(true), delay);
       timersRef.current.push(t);
@@ -435,6 +457,28 @@ export default function PlacementScreen() {
             </>
           )}
         </View>
+
+        {/* ZK Proof loading overlay */}
+        {generatingProof && (
+          <View style={styles.proofOverlay}>
+            <View style={styles.proofCard}>
+              <RadarSpinner size={48} />
+              <Text style={styles.proofTitle}>{t('placement.generatingProof', 'Generating ZK Proof')}</Text>
+              {proofStep ? (
+                <Text style={styles.proofStep}>{proofStep}</Text>
+              ) : (
+                <Text style={styles.proofSubtitle}>{t('placement.generatingProofHint', 'Preparing...')}</Text>
+              )}
+              <NavalButton
+                title={t('placement.cancelProof', 'Cancel')}
+                onPress={handleCancelProof}
+                variant="danger"
+                size="small"
+                style={styles.cancelButton}
+              />
+            </View>
+          </View>
+        )}
       </View>
     </GradientContainer>
   );
@@ -511,5 +555,41 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+  },
+  proofOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  proofCard: {
+    alignItems: 'center',
+    gap: 12,
+    padding: 32,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.grid.border,
+    backgroundColor: 'rgba(10, 25, 47, 0.95)',
+  },
+  proofTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 16,
+    color: COLORS.text.accent,
+    letterSpacing: 2,
+  },
+  proofSubtitle: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+  },
+  proofStep: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.text.primary,
+  },
+  cancelButton: {
+    marginTop: 8,
+    minWidth: 120,
   },
 });

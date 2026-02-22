@@ -8,7 +8,10 @@ import { View, StyleSheet } from 'react-native';
 import { GameProvider } from '../src/context/GameContext';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { COLORS } from '../src/constants/theme';
-import { ZKWebView, initZK, webViewZKProvider } from '../src/services/zk';
+import { ZKWebView, initZK, webViewZKProvider, ServerZKProvider } from '../src/services/zk';
+
+const ZK_MODE = process.env.EXPO_PUBLIC_ZK_MODE || 'local';
+const ZK_SERVER_URL = process.env.EXPO_PUBLIC_ZK_SERVER_URL || 'http://localhost:3000';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -19,8 +22,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    console.log('[ZK] Initializing ZK provider...');
-    initZK(webViewZKProvider).then(() => {
+    const provider = ZK_MODE === 'server'
+      ? new ServerZKProvider(ZK_SERVER_URL)
+      : webViewZKProvider;
+
+    console.log(`[ZK] Initializing ZK provider (mode=${ZK_MODE})...`);
+    initZK(provider).then(() => {
       console.log('[ZK] Provider ready ✓');
     }).catch((err) => {
       console.error('[ZK] Provider init failed:', err);
@@ -37,7 +44,7 @@ export default function RootLayout() {
 
   return (
     <GameProvider>
-      <ZKWebView />
+      {ZK_MODE === 'local' && <ZKWebView />}
       <StatusBar style="light" />
       <Stack
         screenOptions={{
