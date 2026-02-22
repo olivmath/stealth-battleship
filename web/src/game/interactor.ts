@@ -53,7 +53,7 @@ export class StartGameUseCase {
         shipSunkTurn: {}
       },
       lastMatchStats: null,
-      settings: { gridSize: 10, battleView: 'stacked', difficulty: 'hard' }
+      settings: { gridSize: 10, difficulty: 'hard' }
     };
 
     await this.gameRepo.saveGameState(initialState);

@@ -1,26 +1,44 @@
 import React from 'react';
-import { NavalText } from '../UI/NavalText';
-import { COLORS, SPACING } from '../../shared/theme';
+import { COLORS, FONTS, FONT_SIZES } from '../../shared/theme';
 
-interface ShipShapeProps {
-  name?: string;
-  label?: string;
-  size?: number;
-  length?: number;
-  color?: string;
+interface Props {
+  length: number;
+  label: string;
 }
 
-export function ShipShape({ name: nameProp, label, size: sizeProp, length, color = COLORS.grid.ship }: ShipShapeProps) {
-  const name = nameProp ?? label ?? '';
-  const size = sizeProp ?? length ?? 1;
+export function ShipShape({ length, label }: Props) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: SPACING.sm }}>
-      <div style={{ display: 'flex', gap: 2 }}>
-        {Array.from({ length: size }).map((_, i) => (
-          <div key={i} style={{ width: 14, height: 14, borderRadius: 2, backgroundColor: color }} />
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 2,
+      }}>
+        {Array.from({ length }).map((_, i) => (
+          <div key={i} style={{
+            width: 22,
+            height: 22,
+            backgroundColor: COLORS.grid.ship,
+            border: `1px solid ${COLORS.grid.shipLight}`,
+            borderTopLeftRadius: i === 0 ? 6 : 0,
+            borderBottomLeftRadius: i === 0 ? 6 : 0,
+            borderTopRightRadius: i === length - 1 ? 6 : 0,
+            borderBottomRightRadius: i === length - 1 ? 6 : 0,
+          }} />
         ))}
       </div>
-      <NavalText variant="caption" color={COLORS.text.secondary}>{name} ({size})</NavalText>
+      <span style={{
+        fontFamily: FONTS.body,
+        fontSize: FONT_SIZES.body,
+        color: COLORS.text.secondary,
+      }}>
+        {label}
+      </span>
     </div>
   );
 }

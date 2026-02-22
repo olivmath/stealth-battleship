@@ -26,7 +26,7 @@ const initialState: GameState = {
   stats: { wins: 0, losses: 0, totalShots: 0, totalHits: 0, totalXP: 0 },
   tracking: createInitialTracking(),
   lastMatchStats: null,
-  settings: { gridSize: 10, battleView: 'stacked', difficulty: 'hard' },
+  settings: { gridSize: 10, difficulty: 'hard' },
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {

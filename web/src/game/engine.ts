@@ -1,6 +1,7 @@
 // game/engine.ts — Pure functions: board ops, AI, ship placement, opponent strategy, crypto
 // Merged from: engine/board.ts, engine/ai.ts, engine/shipPlacement.ts, engine/opponentStrategy.ts, engine/crypto.ts
 
+import { sha256Hex } from '../shared/sha256';
 import {
   Board, Cell, Position, AttackResult, PlacedShip, ShipDefinition,
   Orientation, AIState, DifficultyLevel, GameCommitment,
@@ -458,11 +459,6 @@ export function serializeShipPositions(ships: PlacedShip[]): string {
       size: s.size,
     }))
   );
-}
-
-async function sha256Hex(s: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export async function computeBoardCommitment(

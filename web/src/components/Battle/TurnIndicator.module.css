@@ -1,28 +1,5 @@
-.indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 4px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.player {
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.enemy {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
-}
-
 .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes pulse {

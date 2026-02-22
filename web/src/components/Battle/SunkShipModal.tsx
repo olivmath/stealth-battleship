@@ -1,43 +1,75 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { COLORS, FONTS, FONT_SIZES } from '../../shared/theme';
-import styles from './SunkShipModal.module.css';
+import { useTranslation } from 'react-i18next';
+import { PlacedShip } from '../../shared/entities';
+import { getShipStyle } from '../../shared/constants';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
 
-interface SunkShipModalProps {
+interface Props {
   visible: boolean;
-  shipName?: string;
-  ship?: { name: string } | null;
-  onDismiss: () => void;
+  ship: PlacedShip | null;
+  onDismiss?: () => void;
 }
 
-export function SunkShipModal({ visible, shipName: shipNameProp, ship, onDismiss }: SunkShipModalProps) {
-  const shipName = shipNameProp ?? ship?.name ?? '';
+export function SunkShipModal({ visible, ship, onDismiss }: Props) {
+  const { t } = useTranslation();
+
+  const shipStyle = ship ? getShipStyle(ship.id) : null;
+  const shipColor = shipStyle?.color ?? COLORS.grid.ship;
+
   useEffect(() => {
-    if (visible) {
-      const t = setTimeout(onDismiss, 2000);
-      return () => clearTimeout(t);
+    if (visible && onDismiss) {
+      const timer = setTimeout(onDismiss, 2000);
+      return () => clearTimeout(timer);
     }
   }, [visible, onDismiss]);
+
+  if (!visible || !ship) return null;
 
   return createPortal(
     <AnimatePresence>
       {visible && (
-        <motion.div className={styles.overlay}
+        <motion.div
+          style={backdropStyle}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onDismiss}>
-          <motion.div className={styles.content}
-            initial={{ y: -50, rotate: 0, opacity: 0 }}
-            animate={{ y: 0, rotate: 5, opacity: 1 }}
-            exit={{ y: 100, rotate: 15, opacity: 0 }}
-            transition={{ type: 'spring', damping: 12 }}>
-            <div style={{ fontFamily: FONTS.heading, fontSize: FONT_SIZES.h3, color: COLORS.accent.fire, letterSpacing: 3, textTransform: 'uppercase' }}>
-              SHIP SUNK!
-            </div>
-            <div style={{ fontFamily: FONTS.body, fontSize: FONT_SIZES.lg, color: COLORS.text.primary }}>
-              {shipName}
+          onClick={onDismiss}
+        >
+          <motion.div
+            style={containerStyle}
+            role="alert"
+            aria-label={`Ship sunk! ${ship?.name ?? 'Unknown'} destroyed`}
+            initial={{ y: 0, rotate: 0, opacity: 1 }}
+            animate={{
+              y: [-20, 200],
+              rotate: [0, 15],
+              opacity: [1, 1, 0],
+            }}
+            transition={{
+              y: { duration: 1.3, times: [0, 1], ease: ['easeOut', 'easeIn'] },
+              rotate: { duration: 1.2, ease: 'easeInOut' },
+              opacity: { duration: 1.2, times: [0, 0.67, 1] },
+            }}
+          >
+            <span style={{ ...labelTextStyle, color: shipColor }}>
+              {t('battle.shipSunk')}
+            </span>
+            <span style={shipNameStyle}>
+              {t('ships.' + ship.name)}
+            </span>
+            <div style={shipGraphicStyle}>
+              {Array.from({ length: ship.size }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    ...shipCellStyle,
+                    backgroundColor: shipColor,
+                    borderColor: shipColor,
+                  }}
+                />
+              ))}
             </div>
           </motion.div>
         </motion.div>
@@ -46,3 +78,47 @@ export function SunkShipModal({ visible, shipName: shipNameProp, ship, onDismiss
     document.body
   );
 }
+
+const backdropStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: COLORS.overlay.backdropLight,
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 900,
+};
+
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: SPACING.sm,
+};
+
+const labelTextStyle: React.CSSProperties = {
+  fontFamily: FONTS.heading,
+  fontSize: 14,
+  letterSpacing: 3,
+};
+
+const shipNameStyle: React.CSSProperties = {
+  fontFamily: FONTS.heading,
+  fontSize: 22,
+  color: COLORS.text.primary,
+  letterSpacing: 2,
+};
+
+const shipGraphicStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  gap: 4,
+};
+
+const shipCellStyle: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: RADIUS.default,
+  border: '1px solid',
+  boxSizing: 'border-box',
+};

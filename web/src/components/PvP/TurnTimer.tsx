@@ -1,29 +1,72 @@
-import React from 'react';
-import { NavalText } from '../UI/NavalText';
-import { COLORS, RADIUS } from '../../shared/theme';
-import styles from './TurnTimer.module.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { COLORS, FONTS, FONT_SIZES, SPACING } from '../../shared/theme';
 
-interface TurnTimerProps {
-  seconds?: number;
-  maxSeconds?: number;
-  duration?: number;
-  isActive?: boolean;
-  isPlayerTurn?: boolean;
+interface Props {
+  duration: number;
+  isActive: boolean;
+  isPlayerTurn: boolean;
   onExpire?: () => void;
 }
 
-export function TurnTimer({ seconds: secondsProp, maxSeconds: maxSecondsProp, duration, isActive, isPlayerTurn, onExpire }: TurnTimerProps) {
-  const maxSeconds = maxSecondsProp ?? duration ?? 30;
-  const seconds = secondsProp ?? maxSeconds;
-  const pct = (seconds / maxSeconds) * 100;
-  const color = pct > 50 ? COLORS.accent.gold : pct > 25 ? COLORS.accent.fire : COLORS.accent.fireDark;
+export function TurnTimer({ duration, isActive, isPlayerTurn, onExpire }: Props) {
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
+
+  useEffect(() => {
+    setTimeLeft(duration);
+  }, [isPlayerTurn, duration]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          onExpireRef.current?.();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isActive, isPlayerTurn]);
+
+  const progress = duration > 0 ? (timeLeft / duration) * 100 : 0;
+  const barColor = isPlayerTurn ? COLORS.accent.gold : COLORS.accent.fire;
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.bar} style={{ backgroundColor: COLORS.surface.subtle }}>
-        <div className={styles.fill} style={{ width: `${pct}%`, backgroundColor: color }} />
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: SPACING.sm,
+    }}>
+      <div style={{
+        flex: 1,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.surface.elevated,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          borderRadius: 3,
+          width: `${progress}%`,
+          backgroundColor: barColor,
+          transition: 'width 1s linear',
+        }} />
       </div>
-      <NavalText variant="caption" color={color}>{seconds}s</NavalText>
+      <span style={{
+        fontFamily: FONTS.body,
+        fontSize: FONT_SIZES.body,
+        color: barColor,
+        width: 32,
+        textAlign: 'right',
+      }}>
+        {timeLeft}s
+      </span>
     </div>
   );
 }

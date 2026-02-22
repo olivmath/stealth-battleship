@@ -1,42 +1,81 @@
 import React from 'react';
-import { NavalText } from '../UI/NavalText';
-import { COLORS, SPACING } from '../../shared/theme';
-import type { BattleTracking } from '../../shared/entities';
+import { useTranslation } from 'react-i18next';
+import { BattleTracking } from '../../shared/entities';
+import { COLORS, FONTS, RADIUS } from '../../shared/theme';
 
-interface BattleStatsProps {
-  shots?: number;
-  hits?: number;
-  misses?: number;
-  streak?: number;
-  tracking?: BattleTracking;
+interface Props {
+  tracking: BattleTracking;
 }
 
-export function BattleStats(props: BattleStatsProps) {
-  const shots = props.shots ?? (props.tracking ? props.tracking.playerShots.length : 0);
-  const hits = props.hits ?? (props.tracking ? props.tracking.playerShots.filter(s => s.result !== 'miss').length : 0);
-  const misses = props.misses ?? (shots - hits);
-  const streak = props.streak ?? (props.tracking ? props.tracking.currentStreak : 0);
-  return <BattleStatsInner shots={shots} hits={hits} misses={misses} streak={streak} />;
-}
-
-function BattleStatsInner({ shots, hits, misses, streak }: { shots: number; hits: number; misses: number; streak: number }) {
+export function BattleStats({ tracking }: Props) {
+  const { t } = useTranslation();
+  const shots = tracking.playerShots.length;
+  const hits = tracking.playerShots.filter(s => s.result === 'hit' || s.result === 'sunk').length;
+  const misses = shots - hits;
   const accuracy = shots > 0 ? Math.round((hits / shots) * 100) : 0;
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-around', padding: `${SPACING.sm}px ${SPACING.md}px` }}>
-      <StatItem label="SHOTS" value={shots} />
-      <StatItem label="HITS" value={hits} color={COLORS.accent.fire} />
-      <StatItem label="MISS" value={misses} />
-      <StatItem label="ACC" value={`${accuracy}%`} color={COLORS.accent.gold} />
-      <StatItem label="STREAK" value={streak} color={streak > 0 ? COLORS.accent.victory : undefined} />
+    <div style={containerStyle}>
+      <span style={labelStyle}>STATS</span>
+      <div style={rowsStyle}>
+        <StatRow name="Shots" value={String(shots)} />
+        <StatRow name="Hits" value={String(hits)} color={COLORS.accent.fire} />
+        <StatRow name="Miss" value={String(misses)} />
+        <StatRow name="Accuracy" value={`${accuracy}%`} color={COLORS.accent.gold} />
+        <StatRow name="Streak" value={String(tracking.currentStreak)} />
+      </div>
     </div>
   );
 }
 
-function StatItem({ label, value, color }: { label: string; value: number | string; color?: string }) {
+function StatRow({ name, value, color }: { name: string; value: string; color?: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      <NavalText variant="caption" color={COLORS.text.secondary}>{label}</NavalText>
-      <NavalText variant="body" color={color || COLORS.text.primary}>{String(value)}</NavalText>
+    <div style={statRowStyle}>
+      <span style={{ ...statValueStyle, ...(color ? { color } : {}) }}>{value}</span>
+      <span style={statNameStyle}>{name}</span>
     </div>
   );
 }
+
+const containerStyle: React.CSSProperties = {
+  padding: 4,
+  borderRadius: RADIUS.default,
+  border: `1px solid ${COLORS.grid.border}`,
+  backgroundColor: COLORS.surface.card,
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: FONTS.heading,
+  fontSize: 10,
+  color: COLORS.text.secondary,
+  letterSpacing: 1,
+  marginBottom: 2,
+  display: 'block',
+};
+
+const rowsStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1,
+};
+
+const statRowStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  gap: 12,
+};
+
+const statNameStyle: React.CSSProperties = {
+  fontFamily: FONTS.body,
+  fontSize: 10,
+  color: COLORS.text.primary,
+  textAlign: 'right',
+  flex: 1,
+};
+
+const statValueStyle: React.CSSProperties = {
+  fontFamily: FONTS.body,
+  fontSize: 10,
+  color: COLORS.text.primary,
+};
