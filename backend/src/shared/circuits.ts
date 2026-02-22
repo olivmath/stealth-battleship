@@ -2,10 +2,8 @@ import { Noir } from '@noir-lang/noir_js';
 import { UltraHonkBackend } from '@aztec/bb.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { c } from '../log.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TAG = c.magenta('[circuits]');
 
 export interface CircuitBundle {
@@ -16,12 +14,14 @@ export interface CircuitBundle {
 
 const circuits = new Map<string, CircuitBundle>();
 
-const CIRCUIT_DIR = path.resolve(
-  __dirname,
-  '../../../frontend/src/zk/circuits',
-);
+function getCircuitDir(): string {
+  return process.env.CIRCUIT_DIR
+    ? path.resolve(process.env.CIRCUIT_DIR)
+    : path.resolve('circuits/compiled');
+}
 
 export async function loadCircuits(): Promise<void> {
+  const CIRCUIT_DIR = getCircuitDir();
   const names = ['hash_helper', 'board_validity', 'shot_proof', 'turns_proof'];
 
   console.log(`${TAG} Circuit dir: ${c.dim(CIRCUIT_DIR)}`);
@@ -29,7 +29,7 @@ export async function loadCircuits(): Promise<void> {
   if (!fs.existsSync(CIRCUIT_DIR)) {
     throw new Error(
       `Circuit directory not found: ${CIRCUIT_DIR}. ` +
-        'Make sure circuits are compiled (nargo compile) and copied to frontend/src/services/zk/circuits/',
+        'Make sure circuits are compiled (nargo compile) or set CIRCUIT_DIR env var.',
     );
   }
 

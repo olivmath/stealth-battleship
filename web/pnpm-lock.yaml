@@ -8,12 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@noir-lang/backend_barretenberg':
-        specifier: ^0.36.0
-        version: 0.36.0
+      '@aztec/bb.js':
+        specifier: 0.72.1
+        version: 0.72.1
       '@noir-lang/noir_js':
-        specifier: ^1.0.0-beta.19
-        version: 1.0.0-beta.19
+        specifier: 1.0.0-beta.2
+        version: 1.0.0-beta.2
       canvas-confetti:
         specifier: ^1.9.3
         version: 1.9.4
@@ -87,8 +87,8 @@ packages:
     peerDependencies:
       ajv: '>=8'
 
-  '@aztec/bb.js@0.58.0':
-    resolution: {integrity: sha512-ls9NNAkcTTOQ4TjqQ7oHb6MlM28KfXiXEN7e6YntPmmG4m1I0FqZ1uY0tFkpem1iXIORVyHVY5GqSadqhH1gvA==}
+  '@aztec/bb.js@0.72.1':
+    resolution: {integrity: sha512-CyySqBvaA/TJ/e8KksDp6vS44IUMY2LNJbigm4rKc3jJXjj0xc33V6V5DfC9kR0iVGnFFsvm+BlVBxFsCIQaAg==}
     hasBin: true
 
   '@babel/code-frame@7.29.0':
@@ -939,23 +939,17 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@noir-lang/acvm_js@1.0.0-beta.19':
-    resolution: {integrity: sha512-J4i5SkZ8SYMAfl3yNyneI3DorEfE5zsgsHljm0aY6mV4x+LcbqxzM6hdsSbXqboZ1ZUXXmmHjE9WqFMkJC94eQ==}
+  '@noir-lang/acvm_js@1.0.0-beta.2':
+    resolution: {integrity: sha512-vZYidnNS0MGRddggrq73Te0MiOb7j7ehZwM5L0dbxGwG6RqUNU+RDjG/TE7VUHOOFkZGY20lQqjHY1mj4pOH2A==}
 
-  '@noir-lang/backend_barretenberg@0.36.0':
-    resolution: {integrity: sha512-TShUJfMZskV8LOKY22jbofKnPAhMxBgUIi2FxcoNJ9y52i56GibrF0iuse3atEMWc8LnOE0ci69wsqZ2yYP8iw==}
+  '@noir-lang/noir_js@1.0.0-beta.2':
+    resolution: {integrity: sha512-CiHnU5H1tUQHoKheHh93Ss7DJificdjXFUUfdasjMd8lsCMCPqY/oUoG4FZjWb7mWT8h0d/qcpGKMbs1VkBThQ==}
 
-  '@noir-lang/noir_js@1.0.0-beta.19':
-    resolution: {integrity: sha512-KtuO37XuBn+7PHReLGCyLVxKGBk+hSvUQs0r/rtNFTYty/KmSq/NwEXkwiA7aQTNUykrzTJGFbIForQWjIJT4g==}
+  '@noir-lang/noirc_abi@1.0.0-beta.2':
+    resolution: {integrity: sha512-8/Pc6C0IY4F3UCsubs96G4Nwalzo49TVW+2jej7uNaEJB7LCqbOk5G641XGcCV2McS7n7WbLt1eN3cKJrxUWrA==}
 
-  '@noir-lang/noirc_abi@1.0.0-beta.19':
-    resolution: {integrity: sha512-rCEVNmXwfxC70VVJqOjvgP9mga+HVOIYzmsTQV9JeNG/BiWbxdHPJ+K0gT7EoCpz7VOVwfgWjFepxfbQk++GSw==}
-
-  '@noir-lang/types@0.36.0':
-    resolution: {integrity: sha512-3A/yJtnbTsn0o3T/D3YPs5b0vPOxYwos6Y5Ko6NhZsE6V31rYPv2a2NYmbfJRYuriwwzFbdE8+ui3UiV5BmvWw==}
-
-  '@noir-lang/types@1.0.0-beta.19':
-    resolution: {integrity: sha512-px/gpC8tvOvCPY6TbVYqMDqDadA75I2woOZ3b5vbyjxqaE4UtsKtcdsWQ9titSCslkYCe1WYRGiFE/LPyRgOpQ==}
+  '@noir-lang/types@1.0.0-beta.2':
+    resolution: {integrity: sha512-0CosvfeAhwjmEt5cwJtEbju+8itRpmOUOmyt6TUo6JcRxaR8d4A+7j0sOgGxs2KVqWnMi1akJdGodAu0e4H+1A==}
 
   '@remix-run/router@1.23.2':
     resolution: {integrity: sha512-Ic6m2U/rMjTkhERIa/0ZtXJP17QUi2CbWE7cqx4J58M8aA3QTfW+2UlQ4psvTX9IO1RfNVhK3pcpdjej7L+t2w==}
@@ -1451,9 +1445,9 @@ packages:
   comlink@4.4.2:
     resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
 
-  commander@10.0.1:
-    resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
-    engines: {node: '>=14'}
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
@@ -3174,11 +3168,13 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  '@aztec/bb.js@0.58.0':
+  '@aztec/bb.js@0.72.1':
     dependencies:
       comlink: 4.4.2
-      commander: 10.0.1
+      commander: 12.1.0
       debug: 4.4.3
+      fflate: 0.8.2
+      pako: 2.1.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -4205,30 +4201,19 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@noir-lang/acvm_js@1.0.0-beta.19': {}
+  '@noir-lang/acvm_js@1.0.0-beta.2': {}
 
-  '@noir-lang/backend_barretenberg@0.36.0':
+  '@noir-lang/noir_js@1.0.0-beta.2':
     dependencies:
-      '@aztec/bb.js': 0.58.0
-      '@noir-lang/types': 0.36.0
-      fflate: 0.8.2
-    transitivePeerDependencies:
-      - supports-color
+      '@noir-lang/acvm_js': 1.0.0-beta.2
+      '@noir-lang/noirc_abi': 1.0.0-beta.2
+      '@noir-lang/types': 1.0.0-beta.2
 
-  '@noir-lang/noir_js@1.0.0-beta.19':
+  '@noir-lang/noirc_abi@1.0.0-beta.2':
     dependencies:
-      '@noir-lang/acvm_js': 1.0.0-beta.19
-      '@noir-lang/noirc_abi': 1.0.0-beta.19
-      '@noir-lang/types': 1.0.0-beta.19
-      pako: 2.1.0
+      '@noir-lang/types': 1.0.0-beta.2
 
-  '@noir-lang/noirc_abi@1.0.0-beta.19':
-    dependencies:
-      '@noir-lang/types': 1.0.0-beta.19
-
-  '@noir-lang/types@0.36.0': {}
-
-  '@noir-lang/types@1.0.0-beta.19': {}
+  '@noir-lang/types@1.0.0-beta.2': {}
 
   '@remix-run/router@1.23.2': {}
 
@@ -4722,7 +4707,7 @@ snapshots:
 
   comlink@4.4.2: {}
 
-  commander@10.0.1: {}
+  commander@12.1.0: {}
 
   commander@2.20.3: {}
 

@@ -36,7 +36,13 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  esbuild: {
+    target: 'esnext',
+  },
   optimizeDeps: {
-    exclude: ['@noir-lang/noir_js', '@noir-lang/backend_barretenberg'],
+    exclude: ['@noir-lang/noir_js', '@aztec/bb.js'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
 });

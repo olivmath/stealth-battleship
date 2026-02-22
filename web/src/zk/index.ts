@@ -3,13 +3,15 @@ export { ServerZKProvider } from './adapter';
 export { WebWasmZKProvider } from './webWasmProvider';
 export { toShipTuples, toAttackTuples } from './entities';
 export type {
+  ZKProvider,
+  ShipTuple,
   ShipTuples,
   AttackTuple,
-  ZKProvider,
   BoardValidityInput,
   BoardValidityResult,
   ShotProofInput,
   ShotProofResult,
   TurnsProofInput,
   TurnsProofResult,
+  OnProgressCallback,
 } from './entities';

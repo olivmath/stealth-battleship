@@ -18,6 +18,13 @@ import turnsProofCircuit from './circuits/turns_proof.json';
 
 const TAG = '[ZK:WASM]';
 
+const CIRCUITS: Record<string, any> = {
+  hash_helper: hashHelperCircuit,
+  board_validity: boardValidityCircuit,
+  shot_proof: shotProofCircuit,
+  turns_proof: turnsProofCircuit,
+};
+
 function toNoirShips(ships: ShipTuples) {
   return ships.map(([r, c, s, h]) => [String(r), String(c), String(s), h]);
 }
@@ -31,65 +38,50 @@ function padAttacks(attacks: [number, number][]): [string, string][] {
 }
 
 /**
- * Web WASM ZK Provider — uses NoirJS + bb.js directly in the browser.
+ * Web WASM ZK Provider — uses NoirJS + @aztec/bb.js directly in the browser.
  * No WebView needed; circuit artifacts are loaded as JSON, WASM runs in-page.
  */
 export class WebWasmZKProvider implements ZKProvider {
-  private noir: Record<string, any> = {};
-  private backend: any = null;
-  private noirModule: any = null;
-  private bbModule: any = null;
+  private noirs: Record<string, any> = {};
+  private Noir: any = null;
+  private UltraHonkBackend: any = null;
 
   async init(): Promise<void> {
     console.log(`${TAG} Initializing WASM provider...`);
     const t0 = Date.now();
 
-    // Dynamic imports to avoid bundling on native
     const [noirMod, bbMod] = await Promise.all([
       import('@noir-lang/noir_js'),
-      import('@noir-lang/backend_barretenberg'),
+      import('@aztec/bb.js'),
     ]);
-    this.noirModule = noirMod;
-    this.bbModule = bbMod;
+    this.Noir = noirMod.Noir;
+    this.UltraHonkBackend = bbMod.UltraHonkBackend;
 
-    // Pre-load all circuits
-    const circuits = {
-      hash_helper: hashHelperCircuit,
-      board_validity: boardValidityCircuit,
-      shot_proof: shotProofCircuit,
-      turns_proof: turnsProofCircuit,
-    };
-
-    for (const [name, circuit] of Object.entries(circuits)) {
-      const noir = new noirMod.Noir(circuit as any);
-      this.noir[name] = noir;
+    for (const [name, circuit] of Object.entries(CIRCUITS)) {
+      this.noirs[name] = new this.Noir(circuit);
     }
 
     console.log(`${TAG} All circuits loaded (${Date.now() - t0}ms)`);
   }
 
-  private async executeAndProve(circuitName: string, inputs: Record<string, any>): Promise<{ proof: Uint8Array; returnValue?: any }> {
-    const noir = this.noir[circuitName];
+  private async executeAndProve(circuitName: string, inputs: Record<string, any>): Promise<{ proof: Uint8Array; publicInputs: string[] }> {
+    const noir = this.noirs[circuitName];
     if (!noir) throw new Error(`Circuit ${circuitName} not loaded`);
 
+    const circuit = CIRCUITS[circuitName];
     const { witness } = await noir.execute(inputs);
-    const backend = new this.bbModule.BarretenbergBackend(
-      circuitName === 'hash_helper' ? hashHelperCircuit :
-      circuitName === 'board_validity' ? boardValidityCircuit :
-      circuitName === 'shot_proof' ? shotProofCircuit :
-      turnsProofCircuit as any
-    );
 
+    const backend = new this.UltraHonkBackend(circuit.bytecode);
     try {
-      const proof = await backend.generateProof(witness);
-      return { proof: proof.proof, returnValue: proof.publicInputs?.[0] };
+      const proofData = await backend.generateProof(witness);
+      return { proof: proofData.proof, publicInputs: proofData.publicInputs };
     } finally {
       await backend.destroy();
     }
   }
 
   private async execute(circuitName: string, inputs: Record<string, any>): Promise<any> {
-    const noir = this.noir[circuitName];
+    const noir = this.noirs[circuitName];
     if (!noir) throw new Error(`Circuit ${circuitName} not loaded`);
     const { returnValue } = await noir.execute(inputs);
     return returnValue;
@@ -163,6 +155,6 @@ export class WebWasmZKProvider implements ZKProvider {
 
   destroy(): void {
     console.log(`${TAG} destroy()`);
-    this.noir = {};
+    this.noirs = {};
   }
 }
