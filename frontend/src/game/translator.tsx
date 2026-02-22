@@ -2,7 +2,7 @@
 // Merged from: context/GameContext.tsx, features/game/presentation/useGameController.ts,
 //              features/game/main/GameDI.ts, hooks/useGameEffects.ts, hooks/useStorage.ts (usePlayerName)
 
-import React, { createContext, useContext, useReducer, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
 import { GameState, GameAction, BattleTracking, PlacedShip, Position, Orientation, AttackResult, DifficultyLevel, GameCommitment, ZKCommitment } from '../shared/entities';
 import { turnsProof, toShipTuples, toAttackTuples } from '../zk';
@@ -359,11 +359,14 @@ interface EndGameParams {
   commitment?: GameCommitment;
 }
 
+// Shared ref for the background turnsProof promise
+let turnsProofPromiseRef: Promise<void> | null = null;
+
 export function useGameEffects() {
   const router = useRouter();
   const { dispatch } = useGame();
 
-  const endGame = useCallback(async ({
+  const endGame = useCallback(({
     won,
     tracking,
     opponentShips,
@@ -373,37 +376,51 @@ export function useGameEffects() {
     navigateTo,
     commitment,
   }: EndGameParams) => {
-    // ZK: generate turnsProof before ending game
-    if (commitment?.playerZk && commitment?.opponentZk) {
-      try {
-        console.log('[ZK] === TURNS PROOF START ===');
-        const result = await turnsProof({
-          shipsPlayer: toShipTuples(playerShips),
-          shipsAi: toShipTuples(opponentShips),
-          noncePlayer: commitment.playerZk.nonce,
-          nonceAi: commitment.opponentZk.nonce,
-          boardHashPlayer: commitment.playerZk.boardHash,
-          boardHashAi: commitment.opponentZk.boardHash,
-          attacksPlayer: toAttackTuples(tracking.playerShots),
-          attacksAi: toAttackTuples(tracking.opponentShots),
-          shipSizes: [5, 4, 3, 3, 2],
-          winner: won ? 0 : 1,
-        });
-        console.log(`[ZK] turnsProof OK — ${result.proof.length} bytes, winner=${result.winner}`);
-        console.log('[ZK] === TURNS PROOF END ===');
-      } catch (err: any) {
-        console.warn('[ZK] turnsProof FAILED:', err.message);
-      }
-    }
-
     const matchStats = computeMatchStats(tracking, opponentShips, playerShips, won, gridSize, difficulty);
     dispatch({ type: 'END_GAME', winner: won ? 'player' : 'opponent', matchStats });
     updateStatsAfterGame(won, matchStats);
     saveMatchToHistory(won, matchStats, gridSize, difficulty, commitment);
+
+    // ZK: start turnsProof in background (don't block navigation)
+    if (commitment?.playerZk && commitment?.opponentZk) {
+      console.log('[ZK] === TURNS PROOF START (background) ===');
+      turnsProofPromiseRef = turnsProof({
+        shipsPlayer: toShipTuples(playerShips),
+        shipsAi: toShipTuples(opponentShips),
+        noncePlayer: commitment.playerZk.nonce,
+        nonceAi: commitment.opponentZk.nonce,
+        boardHashPlayer: commitment.playerZk.boardHash,
+        boardHashAi: commitment.opponentZk.boardHash,
+        attacksPlayer: toAttackTuples(tracking.playerShots),
+        attacksAi: toAttackTuples(tracking.opponentShots),
+        shipSizes: [5, 4, 3, 3, 2],
+        winner: won ? 0 : 1,
+      })
+        .then((result) => {
+          console.log(`[ZK] turnsProof OK — ${result.proof.length} bytes, winner=${result.winner}`);
+          console.log('[ZK] === TURNS PROOF END ===');
+        })
+        .catch((err: any) => {
+          console.warn('[ZK] turnsProof FAILED:', err.message);
+        })
+        .finally(() => {
+          turnsProofPromiseRef = null;
+        });
+    } else {
+      turnsProofPromiseRef = null;
+    }
+
     router.replace(navigateTo as any);
   }, [dispatch, router]);
 
   return { endGame };
+}
+
+/** Wait for any pending turnsProof. Returns immediately if none is running. */
+export async function waitForTurnsProof(): Promise<void> {
+  if (turnsProofPromiseRef) {
+    await turnsProofPromiseRef;
+  }
 }
 
 // ─── usePlayerName ───────────────────────────────────────────────────

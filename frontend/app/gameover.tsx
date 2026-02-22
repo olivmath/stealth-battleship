@@ -6,8 +6,9 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import GameBoard from '../src/components/Board/GameBoard';
-import { useGame } from '../src/game/translator';
+import { useGame, waitForTurnsProof } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
+import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { usePlayerStats } from '../src/stats/translator';
 import { getLevelInfo } from '../src/stats/interactor';
 import { DIFFICULTY_CONFIG } from '../src/shared/constants';
@@ -30,6 +31,7 @@ export default function GameOverScreen() {
   const [showReport, setShowReport] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [previousXP, setPreviousXP] = useState<number | null>(null);
+  const [waitingProof, setWaitingProof] = useState(false);
 
   const isVictory = state.winner === 'player';
   const ms = state.lastMatchStats;
@@ -63,21 +65,31 @@ export default function GameOverScreen() {
 
   const currentLevel = getLevelInfo(stats.totalXP);
 
+  const awaitProofThenNavigate = async (navigate: () => void) => {
+    setWaitingProof(true);
+    await waitForTurnsProof();
+    setWaitingProof(false);
+    navigate();
+  };
+
   const handlePlayAgain = () => {
     haptics.light();
-    // Re-derive gridSize from current rank before resetting
-    if (currentLevel.gridSize !== state.settings.gridSize) {
-      const updated = { ...state.settings, gridSize: currentLevel.gridSize };
-      dispatch({ type: 'LOAD_SETTINGS', settings: updated });
-      import('../src/settings/interactor').then(m => m.saveSettings(updated));
-    }
-    dispatch({ type: 'RESET_GAME' });
-    router.replace(isPvP ? '/placement?mode=pvp' : '/placement');
+    awaitProofThenNavigate(() => {
+      if (currentLevel.gridSize !== state.settings.gridSize) {
+        const updated = { ...state.settings, gridSize: currentLevel.gridSize };
+        dispatch({ type: 'LOAD_SETTINGS', settings: updated });
+        import('../src/settings/interactor').then(m => m.saveSettings(updated));
+      }
+      dispatch({ type: 'RESET_GAME' });
+      router.replace(isPvP ? '/placement?mode=pvp' : '/placement');
+    });
   };
 
   const handleMenu = () => {
     haptics.light();
-    router.replace('/menu');
+    awaitProofThenNavigate(() => {
+      router.replace('/menu');
+    });
   };
 
   const subtitle = isPvP
@@ -258,6 +270,15 @@ export default function GameOverScreen() {
         </View>
       </ScrollView>
       <LevelUpModal visible={showLevelUp} levelInfo={currentLevel} previousLevelInfo={prevLevel ?? undefined} />
+      {waitingProof && (
+        <View style={styles.proofOverlay}>
+          <View style={styles.proofCard}>
+            <RadarSpinner size={48} />
+            <Text style={styles.proofTitle}>{t('gameover.verifyingProof', 'Verifying ZK Proof')}</Text>
+            <Text style={styles.proofSubtitle}>{t('gameover.pleaseWait', 'Please wait...')}</Text>
+          </View>
+        </View>
+      )}
     </GradientContainer>
   );
 }
@@ -429,4 +450,31 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   actions: { gap: SPACING.md },
+  proofOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  proofCard: {
+    alignItems: 'center',
+    gap: 12,
+    padding: 32,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.grid.border,
+    backgroundColor: 'rgba(10, 25, 47, 0.95)',
+  },
+  proofTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 16,
+    color: COLORS.text.accent,
+    letterSpacing: 2,
+  },
+  proofSubtitle: {
+    fontFamily: FONTS.bodyLight,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+  },
 });
