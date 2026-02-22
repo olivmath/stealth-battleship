@@ -10,6 +10,8 @@ export async function createWallet(pin: string): Promise<WalletData> {
   const { encrypted, salt } = await encryptSecret(secretKey, pin);
   const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt };
   await saveWallet(wallet);
+  // Fund on testnet (fire-and-forget)
+  fundWithFriendbot(publicKey).catch(() => {});
   return wallet;
 }
 
@@ -43,3 +45,29 @@ export async function getPublicKey(): Promise<string | null> {
 }
 
 export { getWallet, clearWallet } from './adapter';
+
+const HORIZON_TESTNET = 'https://horizon-testnet.stellar.org';
+const FRIENDBOT_URL = 'https://friendbot.stellar.org';
+
+export async function fundWithFriendbot(publicKey: string): Promise<void> {
+  const res = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
+  if (!res.ok) {
+    const body = await res.text();
+    // Already funded is fine
+    if (!body.includes('createAccountAlreadyExist')) {
+      throw new Error('Friendbot failed');
+    }
+  }
+}
+
+export async function getBalance(publicKey: string): Promise<string> {
+  try {
+    const res = await fetch(`${HORIZON_TESTNET}/accounts/${publicKey}`);
+    if (!res.ok) return '0';
+    const data = await res.json();
+    const native = data.balances?.find((b: any) => b.asset_type === 'native');
+    return native?.balance ?? '0';
+  } catch {
+    return '0';
+  }
+}
