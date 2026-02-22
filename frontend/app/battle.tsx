@@ -256,13 +256,15 @@ export default function BattleScreen() {
     return (
       <GradientContainer>
         <View style={styles.container}>
-          <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
-          {provingShot && (
-            <View style={styles.provingIndicator}>
-              <RadarSpinner size={16} />
-              <Text style={styles.provingText}>{t('battle.proving')}</Text>
-            </View>
-          )}
+          <View style={styles.turnRow}>
+            <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
+            {provingShot && (
+              <View style={styles.provingIndicator}>
+                <RadarSpinner size={14} />
+                <Text style={styles.provingText}>{t('battle.proving')}</Text>
+              </View>
+            )}
+          </View>
 
           <View style={styles.swipeTabs}>
             <TouchableOpacity
@@ -331,6 +333,7 @@ export default function BattleScreen() {
         {/* PvP: opponent status + custom turn indicator + timer */}
         {isPvP && <OpponentStatus name={MOCK_OPPONENT} status="online" />}
 
+        {/* Tier 1 — Turn status */}
         {isPvP ? (
           <>
             <View style={[styles.turnContainer, !state.isPlayerTurn && styles.turnContainerEnemy]}>
@@ -338,6 +341,7 @@ export default function BattleScreen() {
               <Text style={[styles.turnText, !state.isPlayerTurn && styles.turnTextEnemy]}>
                 {turnText}
               </Text>
+              {provingShot && <RadarSpinner size={14} />}
             </View>
             <TurnTimer
               duration={TURN_TIMER_SECONDS}
@@ -347,35 +351,33 @@ export default function BattleScreen() {
             />
           </>
         ) : (
-          <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
-        )}
-
-        {provingShot && (
-          <View style={styles.provingIndicator}>
-            <RadarSpinner size={16} />
-            <Text style={styles.provingText}>{t('battle.proving')}</Text>
+          <View style={styles.turnRow}>
+            <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
+            {provingShot && (
+              <View style={styles.provingIndicator}>
+                <RadarSpinner size={14} />
+                <Text style={styles.provingText}>{t('battle.proving')}</Text>
+              </View>
+            )}
           </View>
         )}
 
+        {/* Tier 2 — Enemy grid (primary interaction) */}
         <View style={{ width: GRID_TOTAL_WIDTH }}>
-          {/* Main enemy grid */}
-          <View style={styles.mainGridSection}>
-            <Text style={styles.sectionLabel}>{t('battle.enemyWaters')}</Text>
-            <GameBoard
-              board={state.opponentBoard}
-              onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
-              disabled={!state.isPlayerTurn || provingShot}
-              showShips={false}
-              gridSize={gridSize}
-              isOpponent
-              maxWidth={GRID_TOTAL_WIDTH}
-              variant="full"
-            />
-          </View>
+          <GameBoard
+            board={state.opponentBoard}
+            onCellPress={state.isPlayerTurn && !provingShot ? handlePlayerAttack : undefined}
+            disabled={!state.isPlayerTurn || provingShot}
+            showShips={false}
+            gridSize={gridSize}
+            isOpponent
+            maxWidth={GRID_TOTAL_WIDTH}
+            variant="full"
+          />
 
-          <Spacer size="md" />
+          <Spacer size="sm" />
 
-          {/* Bottom panel: mini-map + fleet status */}
+          {/* Tier 3 — Info panel: mini-map + fleet + stats */}
           <View style={styles.bottomPanel}>
             <View style={styles.miniMapColumn}>
               <GameBoard
@@ -388,25 +390,25 @@ export default function BattleScreen() {
                 colLabelsBottom
                 lastAttackPosition={lastEnemyAttack}
               />
-              <Text style={styles.miniLabel}>{t('battle.yourWaters')}</Text>
             </View>
             <View style={styles.fleetColumn}>
-              <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
               <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
+              <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
               <BattleStats tracking={state.tracking} />
             </View>
           </View>
         </View>
 
-        <View style={{ flex: 1 }} />
-
-        <NavalButton
-          title={t('battle.surrender')}
-          onPress={handleSurrender}
-          variant="danger"
-          size="small"
-          accessibilityHint="Forfeit the current battle"
-        />
+        {/* Tier 4 — Surrender (destructive, minimal weight) */}
+        <View style={{ marginTop: 'auto' }}>
+          <NavalButton
+            title={t('battle.surrender')}
+            onPress={handleSurrender}
+            variant="danger"
+            size="small"
+            accessibilityHint="Forfeit the current battle"
+          />
+        </View>
       </View>
       <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
     </GradientContainer>
@@ -417,36 +419,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: SCREEN_PADDING,
-    gap: 4,
+    gap: SPACING.sm,
   },
-  // Stacked mode
-  mainGridSection: {
-    alignItems: 'flex-start',
-  },
-  sectionLabel: {
-    fontFamily: FONTS.heading,
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    letterSpacing: 2,
-    textAlign: 'center',
-    alignSelf: 'stretch',
-    marginBottom: 2,
+  turnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   bottomPanel: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
     alignItems: 'flex-start',
   },
   miniMapColumn: {
     alignItems: 'center',
-    gap: 2,
-  },
-  miniLabel: {
-    fontFamily: FONTS.heading,
-    fontSize: 8,
-    color: COLORS.text.secondary,
-    letterSpacing: 1,
-    textAlign: 'center',
   },
   fleetColumn: {
     flex: 1,
