@@ -22,7 +22,7 @@ const CIRCUIT_DIR = path.resolve(
 );
 
 export async function loadCircuits(): Promise<void> {
-  const names = ['hash_helper', 'board_validity'];
+  const names = ['hash_helper', 'board_validity', 'shot_proof', 'turns_proof'];
 
   console.log(`${TAG} Circuit dir: ${c.dim(CIRCUIT_DIR)}`);
 

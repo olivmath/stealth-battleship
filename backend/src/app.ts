@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import boardValidityRouter from './board-validity/translator.js';
+import shotProofRouter from './shot-proof/translator.js';
+import turnsProofRouter from './turns-proof/translator.js';
 import { c } from './log.js';
 
 const app = express();
@@ -20,6 +22,8 @@ app.get('/health', (_req, res) => {
 
 // Proof routes
 app.use('/api/prove', boardValidityRouter);
+app.use('/api/prove', shotProofRouter);
+app.use('/api/prove', turnsProofRouter);
 
 // 404
 app.use((req, res) => {

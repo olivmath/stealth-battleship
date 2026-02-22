@@ -22,8 +22,10 @@ async function main() {
 
   app.listen(PORT, () => {
     console.log(c.cyan('[server]') + ` Listening on ${c.boldCyan(`http://0.0.0.0:${PORT}`)}`);
-    console.log(c.cyan('[server]') + ` Health: ${c.green('GET')}  ${c.dim(`http://localhost:${PORT}/health`)}`);
-    console.log(c.cyan('[server]') + ` Prove:  ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/board-validity`)}`);
+    console.log(c.cyan('[server]') + ` Health:         ${c.green('GET')}  ${c.dim(`http://localhost:${PORT}/health`)}`);
+    console.log(c.cyan('[server]') + ` Board Validity: ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/board-validity`)}`);
+    console.log(c.cyan('[server]') + ` Shot Proof:     ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/shot-proof`)}`);
+    console.log(c.cyan('[server]') + ` Turns Proof:    ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/turns-proof`)}`);
     console.log('');
     console.log(c.bgGreen('Ready for proof requests'));
     console.log('');
