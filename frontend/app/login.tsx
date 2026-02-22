@@ -10,7 +10,9 @@ import { useGame } from '../src/game/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../src/game/adapter';
 import { hasWallet, getSecretKey } from '../src/wallet/interactor';
-import { COLORS, FONTS, SPACING } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS } from '../src/shared/theme';
+import NavalText from '../src/components/UI/NavalText';
+import Divider from '../src/components/UI/Divider';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -91,9 +93,9 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>{t('login.title')}</Text>
-          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
-          <View style={styles.divider} />
+          <NavalText variant="h1">{t('login.title')}</NavalText>
+          <NavalText variant="bodyLight" letterSpacing={6} style={{ marginTop: SPACING.xs }}>{t('login.subtitle')}</NavalText>
+          <Divider width={60} style={{ marginTop: SPACING.md }} />
         </View>
 
         <View style={styles.form}>
@@ -139,26 +141,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xxl,
   },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 32,
-    color: COLORS.text.accent,
-    letterSpacing: 4,
-  },
-  subtitle: {
-    fontFamily: FONTS.headingLight,
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    letterSpacing: 6,
-    marginTop: SPACING.xs,
-  },
-  divider: {
-    width: 60,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   form: {
     gap: SPACING.md,
   },
@@ -174,7 +156,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     padding: SPACING.md,
     backgroundColor: COLORS.surface.cardBorder,
   },

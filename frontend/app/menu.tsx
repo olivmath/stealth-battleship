@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
@@ -9,7 +10,9 @@ import { usePlayerStats } from '../src/stats/translator';
 import { useSettings } from '../src/settings/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getLevelInfo } from '../src/stats/interactor';
-import { COLORS, FONTS, SPACING } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS } from '../src/shared/theme';
+import NavalText from '../src/components/UI/NavalText';
+import Divider from '../src/components/UI/Divider';
 
 export default function MenuScreen() {
   const { t } = useTranslation();
@@ -63,9 +66,9 @@ export default function MenuScreen() {
     <GradientContainer>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcome}>{t('menu.welcome')}</Text>
-          <Text style={styles.name}>{state.playerName}</Text>
-          <View style={styles.divider} />
+          <NavalText variant="label" letterSpacing={3}>{t('menu.welcome')}</NavalText>
+          <NavalText variant="h2" style={{ marginTop: SPACING.xs }}>{state.playerName}</NavalText>
+          <Divider style={{ marginTop: SPACING.md }} />
         </View>
 
         {/* Stats Row */}
@@ -82,80 +85,94 @@ export default function MenuScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <NavalButton
-            title={t('menu.arcade')}
-            subtitle={t('menu.arcadeSub')}
-            onPress={handleStartBattle}
-          />
-          <NavalButton
-            title={t('menu.pvp')}
-            subtitle={t('menu.pvpSub')}
-            variant="pvp"
-            onPress={() => {
-              haptics.light();
-              router.replace('/pvp-mode');
-            }}
-          />
-          <NavalButton
-            title={t('menu.history')}
-            onPress={() => {
-              haptics.light();
-              router.push('/match-history');
-            }}
-            variant="secondary"
-          />
-          <NavalButton
-            title={t('menu.profile')}
-            onPress={() => {
-              haptics.light();
-              router.push('/profile');
-            }}
-            variant="secondary"
-          />
-          <NavalButton
-            title={t('menu.wallet')}
-            subtitle={t('menu.walletSub')}
-            onPress={() => {
-              haptics.light();
-              router.push('/wallet');
-            }}
-            variant="pvp"
-          />
-          <NavalButton
-            title={t('menu.settings')}
-            onPress={() => {
-              haptics.light();
-              router.push('/settings');
-            }}
-            variant="secondary"
-          />
-          <TouchableOpacity
-            onPress={() => {
-              haptics.light();
-              Alert.alert(
-                t('menu.logoutTitle'),
-                t('menu.logoutMsg'),
-                [
-                  { text: t('menu.logoutCancel'), style: 'cancel' },
-                  {
-                    text: t('menu.logoutConfirm'),
-                    style: 'destructive',
-                    onPress: async () => {
-                      const { clearPlayerData } = await import('../src/game/adapter');
-                      const { clearWallet } = await import('../src/wallet/interactor');
-                      await clearPlayerData();
-                      await clearWallet();
-                      router.replace('/login');
+          <Animated.View entering={FadeInDown.delay(0).duration(400)}>
+            <NavalButton
+              title={t('menu.arcade')}
+              subtitle={t('menu.arcadeSub')}
+              onPress={handleStartBattle}
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(80).duration(400)}>
+            <NavalButton
+              title={t('menu.pvp')}
+              subtitle={t('menu.pvpSub')}
+              variant="pvp"
+              onPress={() => {
+                haptics.light();
+                router.replace('/pvp-mode');
+              }}
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
+            <NavalButton
+              title={t('menu.history')}
+              onPress={() => {
+                haptics.light();
+                router.push('/match-history');
+              }}
+              variant="secondary"
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(240).duration(400)}>
+            <NavalButton
+              title={t('menu.profile')}
+              onPress={() => {
+                haptics.light();
+                router.push('/profile');
+              }}
+              variant="secondary"
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(320).duration(400)}>
+            <NavalButton
+              title={t('menu.wallet')}
+              subtitle={t('menu.walletSub')}
+              onPress={() => {
+                haptics.light();
+                router.push('/wallet');
+              }}
+              variant="pvp"
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+            <NavalButton
+              title={t('menu.settings')}
+              onPress={() => {
+                haptics.light();
+                router.push('/settings');
+              }}
+              variant="secondary"
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(480).duration(400)}>
+            <TouchableOpacity
+              onPress={() => {
+                haptics.light();
+                Alert.alert(
+                  t('menu.logoutTitle'),
+                  t('menu.logoutMsg'),
+                  [
+                    { text: t('menu.logoutCancel'), style: 'cancel' },
+                    {
+                      text: t('menu.logoutConfirm'),
+                      style: 'destructive',
+                      onPress: async () => {
+                        const { clearPlayerData } = await import('../src/game/adapter');
+                        const { clearWallet } = await import('../src/wallet/interactor');
+                        await clearPlayerData();
+                        await clearWallet();
+                        router.replace('/login');
+                      },
                     },
-                  },
-                ]
-              );
-            }}
-            style={styles.logoutButton}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.logoutText}>{t('menu.logout')}</Text>
-          </TouchableOpacity>
+                  ]
+                );
+              }}
+              style={styles.logoutButton}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutText}>{t('menu.logout')}</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </View>
     </GradientContainer>
@@ -172,26 +189,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.xl,
   },
-  welcome: {
-    fontFamily: FONTS.heading,
-    fontSize: 11,
-    color: COLORS.text.secondary,
-    letterSpacing: 3,
-  },
-  name: {
-    fontFamily: FONTS.heading,
-    fontSize: 28,
-    color: COLORS.text.accent,
-    letterSpacing: 2,
-    marginTop: SPACING.xs,
-  },
-  divider: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -206,7 +203,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
   },
