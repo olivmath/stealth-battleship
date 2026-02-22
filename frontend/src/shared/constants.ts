@@ -80,18 +80,6 @@ export function getShipStyle(shipId: string): { color: string; label: string } {
   return SHIP_STYLES[prefix] ?? { color: '#4a5568', label: 'Unknown' };
 }
 
-// --- Ship sinking GIFs ---
-export const SHIP_SINKING_GIFS: Record<string, any> = {
-  patrol: require('../../assets/ships/patrol-boat-fall.gif'),
-  cruiser: require('../../assets/ships/cruiser.gif'),
-  destroyer: require('../../assets/ships/destroyer-fall.gif'),
-};
-
-export function getShipSinkingGif(shipId: string) {
-  const prefix = shipId.replace(/-\d+$/, '');
-  return SHIP_SINKING_GIFS[prefix] ?? null;
-}
-
 // --- Difficulty configuration ---
 
 export interface DifficultyConfig {
