@@ -5,6 +5,9 @@ import morgan from 'morgan';
 import boardValidityRouter from './board-validity/translator.js';
 import shotProofRouter from './shot-proof/translator.js';
 import turnsProofRouter from './turns-proof/translator.js';
+import boardValidityVerifyRouter from './board-validity/verify-translator.js';
+import shotProofVerifyRouter from './shot-proof/verify-translator.js';
+import turnsProofVerifyRouter from './turns-proof/verify-translator.js';
 import { c } from './log.js';
 
 const app = express();
@@ -24,6 +27,11 @@ app.get('/health', (_req, res) => {
 app.use('/api/prove', boardValidityRouter);
 app.use('/api/prove', shotProofRouter);
 app.use('/api/prove', turnsProofRouter);
+
+// Verify routes
+app.use('/api/verify', boardValidityVerifyRouter);
+app.use('/api/verify', shotProofVerifyRouter);
+app.use('/api/verify', turnsProofVerifyRouter);
 
 // 404
 app.use((req, res) => {
