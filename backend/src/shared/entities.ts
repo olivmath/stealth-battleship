@@ -55,6 +55,24 @@ export interface TurnsProofResult {
   proof: number[];
 }
 
+// ─── Verify Inputs ───
+
+export interface BoardValidityVerifyInput extends BoardValidityInput {
+  proof: number[];
+}
+
+export interface ShotProofVerifyInput extends ShotProofInput {
+  proof: number[];
+}
+
+export interface TurnsProofVerifyInput extends TurnsProofInput {
+  proof: number[];
+}
+
+export interface VerifyResult {
+  valid: boolean;
+}
+
 // ─── Validation ───
 
 type ValidationOk<T> = { ok: true; data: T };
@@ -178,4 +196,46 @@ export function validateTurnsProofInput(body: unknown): ValidationResult<TurnsPr
       winner: b.winner as number,
     },
   };
+}
+
+// ─── Verify Validation ───
+
+function validateProofArray(proof: unknown): proof is number[] {
+  return Array.isArray(proof) && proof.length > 0 && proof.every(v => typeof v === 'number');
+}
+
+export function validateBoardValidityVerifyInput(body: unknown): ValidationResult<BoardValidityVerifyInput> {
+  const base = validateBoardValidityInput(body);
+  if (!base.ok) return base;
+
+  const { proof } = body as Record<string, unknown>;
+  if (!validateProofArray(proof)) {
+    return { ok: false, error: 'Invalid input: proof must be a non-empty array of numbers' };
+  }
+
+  return { ok: true, data: { ...base.data, proof: proof as number[] } };
+}
+
+export function validateShotProofVerifyInput(body: unknown): ValidationResult<ShotProofVerifyInput> {
+  const base = validateShotProofInput(body);
+  if (!base.ok) return base;
+
+  const { proof } = body as Record<string, unknown>;
+  if (!validateProofArray(proof)) {
+    return { ok: false, error: 'Invalid input: proof must be a non-empty array of numbers' };
+  }
+
+  return { ok: true, data: { ...base.data, proof: proof as number[] } };
+}
+
+export function validateTurnsProofVerifyInput(body: unknown): ValidationResult<TurnsProofVerifyInput> {
+  const base = validateTurnsProofInput(body);
+  if (!base.ok) return base;
+
+  const { proof } = body as Record<string, unknown>;
+  if (!validateProofArray(proof)) {
+    return { ok: false, error: 'Invalid input: proof must be a non-empty array of numbers' };
+  }
+
+  return { ok: true, data: { ...base.data, proof: proof as number[] } };
 }
