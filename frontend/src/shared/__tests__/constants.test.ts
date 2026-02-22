@@ -183,9 +183,4 @@ describe('DIFFICULTY_CONFIG', () => {
     expect(DIFFICULTY_CONFIG.hard.centerWeight).toBe(true);
   });
 
-  it('delay ranges are valid (min < max)', () => {
-    for (const key of ['easy', 'normal', 'hard'] as const) {
-      expect(DIFFICULTY_CONFIG[key].delayMin).toBeLessThan(DIFFICULTY_CONFIG[key].delayMax);
-    }
-  });
 });

@@ -8,7 +8,7 @@ import { usePlayerStats } from '../src/stats/translator';
 import { useSettings } from '../src/settings/translator';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { getLevelInfo } from '../src/stats/interactor';
-import { BattleViewMode, DifficultyLevel } from '../src/shared/entities';
+import { BattleViewMode } from '../src/shared/entities';
 import { saveLanguage } from '../src/i18n';
 import { setTutorialSeen } from '../src/settings/interactor';
 import { COLORS, FONTS, SPACING } from '../src/shared/theme';
@@ -67,11 +67,6 @@ export default function SettingsScreen() {
     update({ ...settings, battleView: mode });
   };
 
-  const handleDifficulty = (level: DifficultyLevel) => {
-    haptics.light();
-    update({ ...settings, difficulty: level });
-  };
-
   const handleLanguage = (code: string) => {
     haptics.light();
     i18n.changeLanguage(code);
@@ -124,27 +119,6 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('settings.difficulty')}</Text>
-            <ToggleOption
-              label={t('settings.easy')}
-              description={t('settings.easyDesc')}
-              selected={settings.difficulty === 'easy'}
-              onPress={() => handleDifficulty('easy')}
-            />
-            <ToggleOption
-              label={t('settings.normal')}
-              description={t('settings.normalDesc')}
-              selected={settings.difficulty === 'normal'}
-              onPress={() => handleDifficulty('normal')}
-            />
-            <ToggleOption
-              label={t('settings.hard')}
-              description={t('settings.hardDesc')}
-              selected={settings.difficulty === 'hard'}
-              onPress={() => handleDifficulty('hard')}
-            />
-          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('tutorial.title').replace('\n', ' ')}</Text>

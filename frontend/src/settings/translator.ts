@@ -6,7 +6,7 @@ export function useSettings() {
   const [settings, setSettingsState] = useState<GameSettings>({
     gridSize: 10,
     battleView: 'stacked',
-    difficulty: 'normal',
+    difficulty: 'hard',
   });
   const [loading, setLoading] = useState(true);
 

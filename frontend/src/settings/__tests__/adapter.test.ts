@@ -29,7 +29,7 @@ beforeEach(async () => {
 });
 
 describe('Settings', () => {
-  const DEFAULT_SETTINGS = { gridSize: 10, battleView: 'stacked', difficulty: 'normal' };
+  const DEFAULT_SETTINGS = { gridSize: 10, battleView: 'stacked', difficulty: 'hard' };
 
   it('returns default settings when none saved', async () => {
     const settings = await getSettings();
@@ -48,7 +48,7 @@ describe('Settings', () => {
     const settings = await getSettings();
     expect(settings.gridSize).toBe(10);
     expect(settings.battleView).toBe('stacked');
-    expect(settings.difficulty).toBe('normal');
+    expect(settings.difficulty).toBe('hard');
   });
 });
 
