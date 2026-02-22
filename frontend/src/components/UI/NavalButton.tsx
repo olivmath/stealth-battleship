@@ -1,6 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../shared/theme';
+import { Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
   title: string;
@@ -15,6 +18,12 @@ interface Props {
 }
 
 export default function NavalButton({ title, subtitle, onPress, disabled, variant = 'primary', size = 'default', style, accessibilityLabel, accessibilityHint }: Props) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const borderColor = disabled
     ? COLORS.ui.disabledBorder
     : variant === 'danger'
@@ -28,11 +37,12 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
   const bgColor = disabled ? COLORS.ui.disabledBg : COLORS.ui.buttonBg;
 
   return (
-    <TouchableOpacity
-      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, style]}
+    <AnimatedPressable
+      style={[styles.button, size === 'small' && styles.buttonSmall, { borderColor, backgroundColor: bgColor }, animatedStyle, style]}
       onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.97, { damping: 15, stiffness: 300 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 300 }); }}
       disabled={disabled}
-      activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityHint={accessibilityHint}
@@ -51,7 +61,7 @@ export default function NavalButton({ title, subtitle, onPress, disabled, varian
       {subtitle && (
         <Text style={styles.subtitle}>{subtitle}</Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }
 
@@ -59,7 +69,7 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: SPACING.sm + 4,
     paddingHorizontal: SPACING.lg,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
