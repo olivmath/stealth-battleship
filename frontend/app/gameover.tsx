@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { useSharedValue, useAnimatedProps, withTiming, useDerivedValue } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -12,13 +14,41 @@ import RadarSpinner from '../src/components/UI/RadarSpinner';
 import { usePlayerStats } from '../src/stats/translator';
 import { getLevelInfo } from '../src/stats/interactor';
 import { DIFFICULTY_CONFIG } from '../src/shared/constants';
-import { COLORS, FONTS, SPACING } from '../src/shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS, FONT_SIZES } from '../src/shared/theme';
+import NavalText from '../src/components/UI/NavalText';
+import Card from '../src/components/UI/Card';
+import Divider from '../src/components/UI/Divider';
 import KillEfficiencyBar from '../src/components/Stats/KillEfficiencyBar';
 import LevelUpModal from '../src/components/Stats/LevelUpModal';
 import { MOCK_OPPONENT } from '../src/services/pvpMock';
 
+const AnimatedText = Animated.createAnimatedComponent(Text);
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_MAX = Math.floor((SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm) / 2);
+
+function AnimatedCounter({ to, suffix = '', style, delay = 0 }: { to: number; suffix?: string; style: any; delay?: number }) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      progress.value = withTiming(1, { duration: 800 });
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [to]);
+
+  const animatedText = useDerivedValue(() => {
+    const val = Math.round(progress.value * to);
+    return `${val}${suffix}`;
+  });
+
+  const animatedProps = useAnimatedProps(() => ({
+    text: animatedText.value,
+    defaultValue: `0${suffix}`,
+  } as any));
+
+  return <AnimatedText style={style} animatedProps={animatedProps} />;
+}
 
 export default function GameOverScreen() {
   const router = useRouter();
@@ -111,20 +141,22 @@ export default function GameOverScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.result, isVictory ? styles.victory : styles.defeat]}>
+          <NavalText variant="h1" color={isVictory ? COLORS.accent.victory : COLORS.accent.fire} letterSpacing={6} style={{ fontSize: FONT_SIZES.hero }}>
             {isVictory ? t('gameover.victory') : t('gameover.defeat')}
-          </Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-          <View style={[styles.divider, { backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }]} />
+          </NavalText>
+          <NavalText variant="body" color={COLORS.text.secondary} style={{ marginTop: SPACING.sm }}>{subtitle}</NavalText>
+          <Divider width={80} color={isVictory ? COLORS.accent.gold : COLORS.accent.fire} style={{ marginTop: SPACING.md }} />
         </View>
 
         {/* Score */}
         {ms && (
           <View style={styles.scoreContainer}>
-            <Text style={styles.scoreLabel}>{t('gameover.score')}</Text>
-            <Text style={[styles.scoreValue, isVictory ? styles.victory : styles.defeat]}>
-              {ms.score}
-            </Text>
+            <NavalText variant="label" letterSpacing={3}>{t('gameover.score')}</NavalText>
+            <AnimatedCounter
+              to={ms.score}
+              style={[styles.scoreValue, { color: isVictory ? COLORS.accent.victory : COLORS.accent.fire }]}
+              delay={200}
+            />
           </View>
         )}
 
@@ -157,14 +189,14 @@ export default function GameOverScreen() {
 
         {/* Primary Stats */}
         {ms && (
-          <View style={styles.statsContainer}>
+          <Card>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{ms.accuracy}%</Text>
+                <AnimatedCounter to={ms.accuracy} suffix="%" style={styles.statValue} delay={400} />
                 <Text style={styles.statLabel}>{t('gameover.accuracy')}</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{ms.shotsFired}</Text>
+                <AnimatedCounter to={ms.shotsFired} style={styles.statValue} delay={600} />
                 <Text style={styles.statLabel}>{isVictory ? t('gameover.shotsToWin') : t('gameover.shotsFired')}</Text>
               </View>
               <View style={styles.statItem}>
@@ -182,12 +214,12 @@ export default function GameOverScreen() {
                 <Text style={styles.statLabel}>{t('gameover.shipsSurvived')}</Text>
               </View>
             </View>
-          </View>
+          </Card>
         )}
 
         {/* Battle Report (expandable) */}
         {ms && (
-          <View style={styles.reportContainer}>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
             <TouchableOpacity
               style={styles.reportToggle}
               onPress={() => {
@@ -229,7 +261,7 @@ export default function GameOverScreen() {
                 </View>
               </View>
             )}
-          </View>
+          </Card>
         )}
 
         {/* Board Reveal (PvP only) */}
@@ -287,18 +319,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, gap: SPACING.lg },
   header: { alignItems: 'center', marginTop: SPACING.xl },
-  result: { fontFamily: FONTS.heading, fontSize: 42, letterSpacing: 6 },
-  victory: { color: COLORS.accent.victory },
-  defeat: { color: COLORS.accent.fire },
-  subtitle: { fontFamily: FONTS.body, fontSize: 14, color: COLORS.text.secondary, marginTop: SPACING.sm },
-  divider: { width: 80, height: 2, marginTop: SPACING.md, opacity: 0.6 },
   scoreContainer: { alignItems: 'center' },
-  scoreLabel: { fontFamily: FONTS.heading, fontSize: 10, color: COLORS.text.secondary, letterSpacing: 3 },
   scoreValue: { fontFamily: FONTS.heading, fontSize: 48, letterSpacing: 2 },
   xpContainer: {
     borderWidth: 1,
     borderColor: COLORS.accent.gold,
-    borderRadius: 4,
+    borderRadius: RADIUS.default,
     padding: SPACING.md,
     backgroundColor: COLORS.overlay.goldGlow,
   },
@@ -319,7 +345,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent.gold,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 3,
+    borderRadius: RADIUS.sharp,
     overflow: 'hidden',
     letterSpacing: 1,
   },
@@ -369,22 +395,15 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: RADIUS.sharp,
     backgroundColor: COLORS.surface.elevated,
     marginTop: SPACING.xs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: RADIUS.sharp,
     backgroundColor: COLORS.accent.gold,
-  },
-  statsContainer: {
-    borderWidth: 1,
-    borderColor: COLORS.grid.border,
-    borderRadius: 4,
-    padding: SPACING.md,
-    backgroundColor: COLORS.surface.card,
   },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center', gap: SPACING.xs },
@@ -394,13 +413,6 @@ const styles = StyleSheet.create({
   shipDot: { width: 18, height: 18, borderRadius: 2, borderWidth: 1 },
   shipAlive: { backgroundColor: COLORS.overlay.victoryGlow, borderColor: COLORS.status.online },
   shipDead: { backgroundColor: COLORS.overlay.fireHit, borderColor: COLORS.accent.fire },
-  reportContainer: {
-    borderWidth: 1,
-    borderColor: COLORS.grid.border,
-    borderRadius: 4,
-    backgroundColor: COLORS.surface.card,
-    overflow: 'hidden',
-  },
   reportToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -461,10 +473,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 32,
-    borderRadius: 12,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
     backgroundColor: 'rgba(10, 25, 47, 0.95)',
+    ...SHADOWS.lg,
   },
   proofTitle: {
     fontFamily: FONTS.heading,
