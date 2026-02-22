@@ -1,24 +1,24 @@
 use poseidon::poseidon2::Poseidon2;
 
 fn compute_board_hash(
-    ships: [(u8, u8, u8, bool); 3],
+    ships: [(u8, u8, u8, bool); 5],
     nonce: Field,
 ) -> Field {
-    let mut inputs: [Field; 13] = [0; 13];
-    for i in 0..3 {
+    let mut inputs: [Field; 21] = [0; 21];
+    for i in 0..5 {
         let (r, c, s, h) = ships[i];
         inputs[i * 4 + 0] = r as Field;
         inputs[i * 4 + 1] = c as Field;
         inputs[i * 4 + 2] = s as Field;
         inputs[i * 4 + 3] = if h { 1 } else { 0 };
     }
-    inputs[12] = nonce;
-    Poseidon2::hash(inputs, 13)
+    inputs[20] = nonce;
+    Poseidon2::hash(inputs, 21)
 }
 
-fn cell_is_hit(ships: [(u8, u8, u8, bool); 3], row: u8, col: u8) -> bool {
+fn cell_is_hit(ships: [(u8, u8, u8, bool); 5], row: u8, col: u8) -> bool {
     let mut hit = false;
-    for i in 0..3 {
+    for i in 0..5 {
         let (r, c, s, h) = ships[i];
         for j in 0..5_u8 {
             if j < s {
@@ -34,7 +34,7 @@ fn cell_is_hit(ships: [(u8, u8, u8, bool); 3], row: u8, col: u8) -> bool {
 
 fn main(
     // Private inputs
-    ships: [(u8, u8, u8, bool); 3],
+    ships: [(u8, u8, u8, bool); 5],
     nonce: Field,
     // Public inputs
     board_hash: pub Field,
@@ -51,8 +51,14 @@ fn main(
 
 // ---- TESTES ----
 
-fn test_ships() -> [(u8, u8, u8, bool); 3] {
-    [(0, 0, 2, true), (2, 0, 2, true), (4, 0, 3, true)]
+fn test_ships() -> [(u8, u8, u8, bool); 5] {
+    [
+        (0, 0, 5, true),
+        (2, 0, 4, true),
+        (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
+    ]
 }
 
 #[test]

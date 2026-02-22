@@ -2,9 +2,9 @@ use poseidon::poseidon2::Poseidon2;
 
 fn ship_in_bounds(row: u8, col: u8, size: u8, horizontal: bool) -> bool {
     if horizontal {
-        (row < 6) & (col + size <= 6)
+        (row < 10) & (col + size <= 10)
     } else {
-        (col < 6) & (row + size <= 6)
+        (col < 10) & (row + size <= 10)
     }
 }
 
@@ -29,108 +29,119 @@ fn ships_overlap(
     overlap
 }
 
-fn compute_board_hash(ships: [(u8, u8, u8, bool); 3], nonce: Field) -> Field {
-    let mut inputs: [Field; 13] = [0; 13];
-    for i in 0..3 {
+fn compute_board_hash(ships: [(u8, u8, u8, bool); 5], nonce: Field) -> Field {
+    let mut inputs: [Field; 21] = [0; 21];
+    for i in 0..5 {
         let (r, c, s, h) = ships[i];
         inputs[i * 4 + 0] = r as Field;
         inputs[i * 4 + 1] = c as Field;
         inputs[i * 4 + 2] = s as Field;
         inputs[i * 4 + 3] = if h { 1 } else { 0 };
     }
-    inputs[12] = nonce;
-    Poseidon2::hash(inputs, 13)
+    inputs[20] = nonce;
+    Poseidon2::hash(inputs, 21)
 }
 
 fn main(
-    ships: [(u8, u8, u8, bool); 3],
+    ships: [(u8, u8, u8, bool); 5],
     nonce: Field,
     board_hash: pub Field,
-    ship_sizes: pub [u8; 3],
+    ship_sizes: pub [u8; 5],
 ) {
     let computed_hash = compute_board_hash(ships, nonce);
     assert(computed_hash == board_hash, "board hash invalido");
 
-    for i in 0..3 {
+    for i in 0..5 {
         let (_, _, size, _) = ships[i];
         assert(size == ship_sizes[i], "tamanho de navio invalido");
     }
 
-    for i in 0..3 {
+    for i in 0..5 {
         let (row, col, size, horizontal) = ships[i];
         assert(ship_in_bounds(row, col, size, horizontal), "navio fora dos limites");
     }
 
-    let (r0, c0, s0, h0) = ships[0];
-    let (r1, c1, s1, h1) = ships[1];
-    let (r2, c2, s2, h2) = ships[2];
-
-    assert(!ships_overlap(r0, c0, s0, h0, r1, c1, s1, h1), "navios 0 e 1 se sobrepoem");
-    assert(!ships_overlap(r0, c0, s0, h0, r2, c2, s2, h2), "navios 0 e 2 se sobrepoem");
-    assert(!ships_overlap(r1, c1, s1, h1, r2, c2, s2, h2), "navios 1 e 2 se sobrepoem");
+    // Check all pairs for overlap (5 ships = 10 pairs)
+    for i in 0..5 {
+        let (ri, ci, si, hi) = ships[i];
+        for j in (i + 1)..5 {
+            let (rj, cj, sj, hj) = ships[j];
+            assert(!ships_overlap(ri, ci, si, hi, rj, cj, sj, hj), "navios se sobrepoem");
+        }
+    }
 }
 
 #[test]
 fn test_valid_board() {
-    let ships: [(u8, u8, u8, bool); 3] = [
-        (0, 0, 2, true),
-        (2, 0, 2, true),
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 0, 5, true),
+        (2, 0, 4, true),
         (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
     ];
     let nonce: Field = 12345;
     let board_hash = compute_board_hash(ships, nonce);
-    let ship_sizes: [u8; 3] = [2, 2, 3];
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
     main(ships, nonce, board_hash, ship_sizes);
 }
 
 #[test(should_fail)]
 fn test_wrong_hash() {
-    let ships: [(u8, u8, u8, bool); 3] = [
-        (0, 0, 2, true),
-        (2, 0, 2, true),
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 0, 5, true),
+        (2, 0, 4, true),
         (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
     ];
     let nonce: Field = 12345;
     let wrong_hash: Field = 99999;
-    let ship_sizes: [u8; 3] = [2, 2, 3];
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
     main(ships, nonce, wrong_hash, ship_sizes);
 }
 
 #[test(should_fail)]
 fn test_ship_out_of_bounds() {
-    let ships: [(u8, u8, u8, bool); 3] = [
-        (0, 5, 2, true),
-        (2, 0, 2, true),
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 8, 5, true),  // col 8 + size 5 = 13 > 10
+        (2, 0, 4, true),
         (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
     ];
     let nonce: Field = 12345;
     let board_hash = compute_board_hash(ships, nonce);
-    let ship_sizes: [u8; 3] = [2, 2, 3];
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
     main(ships, nonce, board_hash, ship_sizes);
 }
 
 #[test(should_fail)]
 fn test_ships_overlap() {
-    let ships: [(u8, u8, u8, bool); 3] = [
-        (0, 0, 2, true),
-        (0, 1, 2, true),
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 0, 5, true),
+        (0, 1, 4, true),  // overlaps with ship 0
         (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
     ];
     let nonce: Field = 12345;
     let board_hash = compute_board_hash(ships, nonce);
-    let ship_sizes: [u8; 3] = [2, 2, 3];
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
     main(ships, nonce, board_hash, ship_sizes);
 }
 
 #[test(should_fail)]
 fn test_wrong_ship_size() {
-    let ships: [(u8, u8, u8, bool); 3] = [
-        (0, 0, 2, true),
-        (2, 0, 2, true),
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 0, 5, true),
+        (2, 0, 4, true),
         (4, 0, 3, true),
+        (6, 0, 3, true),
+        (8, 0, 2, true),
     ];
     let nonce: Field = 12345;
     let board_hash = compute_board_hash(ships, nonce);
-    let ship_sizes: [u8; 3] = [2, 2, 4];
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 4];  // last should be 2
     main(ships, nonce, board_hash, ship_sizes);
 }
