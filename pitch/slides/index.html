@@ -4,9 +4,47 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Battleship ZK — Pitch Deck</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <style>
-    body { margin: 0; padding: 0; background: #0a1628; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #060a12; }
+
+    @keyframes radarSweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes typeIn {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    @keyframes statusPulse {
+      0%, 100% { box-shadow: 0 0 4px currentColor; }
+      50% { box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+    }
+    @keyframes borderGlow {
+      0%, 100% { border-color: rgba(0, 212, 170, 0.15); }
+      50% { border-color: rgba(0, 212, 170, 0.4); }
+    }
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.03; }
+      50% { opacity: 0.07; }
+    }
   </style>
 </head>
 <body>

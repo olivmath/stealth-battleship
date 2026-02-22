@@ -1,7 +1,6 @@
 {
   "name": "slides",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "start": "npx parcel index.html --open",
     "build": "npx parcel build index.html --dist-dir dist"
@@ -14,5 +13,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "spectacle": "^10.2.3"
+  },
+  "devDependencies": {
+    "process": "^0.11.10"
   }
 }
