@@ -10,6 +10,7 @@ import { Spacer } from '../components/UI/Spacer';
 import { GameBoard, getLabelSize, computeCellSize } from '../components/Board/GameBoard';
 import { TurnIndicator } from '../components/Battle/TurnIndicator';
 import { FleetStatus } from '../components/Battle/FleetStatus';
+import { HealthBar } from '../components/Battle/HealthBar';
 import { BattleStats } from '../components/Battle/BattleStats';
 import { SunkShipModal } from '../components/Battle/SunkShipModal';
 import { OpponentStatus } from '../components/PvP/OpponentStatus';
@@ -44,8 +45,6 @@ export default function Battle() {
   const gridSize = state.settings.gridSize;
   const difficulty = 'hard' as const;
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
-  const isSwipeMode = !isPvP && state.settings.battleView === 'swipe';
-  const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
   const gameoverRoute = isPvP ? '/gameover?mode=pvp' : '/gameover';
 
   // Opponent strategy
@@ -60,17 +59,6 @@ export default function Battle() {
   const mainCellSize = computeCellSize(CONTENT_WIDTH, 'full', gridSize);
   const GRID_TOTAL_WIDTH = mainCellSize * gridSize + FULL_LABEL;
   const MINI_MAX_WIDTH = Math.floor(GRID_TOTAL_WIDTH * 0.75);
-
-  // Auto-switch board in swipe mode
-  useEffect(() => {
-    if (!isSwipeMode) return;
-    if (!state.isPlayerTurn) {
-      setSwipeView('player');
-    } else {
-      const timer = setTimeout(() => setSwipeView('enemy'), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.isPlayerTurn, isSwipeMode]);
 
   const [lastEnemyAttack, setLastEnemyAttack] = useState<Position | null>(null);
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
@@ -239,81 +227,6 @@ export default function Battle() {
     ? state.isPlayerTurn ? t('battle.yourTurn') : `${MOCK_OPPONENT.toUpperCase()}'S TURN`
     : undefined;
 
-  // --- Swipe mode ---
-  if (isSwipeMode) {
-    return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.turnRow}>
-            <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
-            {provingShot && (
-              <div style={styles.provingIndicator}>
-                <RadarSpinner size={14} />
-                <span style={styles.provingText}>{t('battle.proving')}</span>
-              </div>
-            )}
-          </div>
-
-          <div style={styles.swipeTabs}>
-            <button
-              style={{ ...styles.swipeTab, ...(swipeView === 'enemy' ? styles.swipeTabActive : {}) }}
-              onClick={() => setSwipeView('enemy')}
-            >
-              <span style={{ ...styles.swipeTabText, ...(swipeView === 'enemy' ? styles.swipeTabTextActive : {}) }}>
-                {t('battle.enemyWaters')}
-              </span>
-            </button>
-            <button
-              style={{ ...styles.swipeTab, ...(swipeView === 'player' ? styles.swipeTabActive : {}) }}
-              onClick={() => setSwipeView('player')}
-            >
-              <span style={{ ...styles.swipeTabText, ...(swipeView === 'player' ? styles.swipeTabTextActive : {}) }}>
-                {t('battle.yourWaters')}
-              </span>
-            </button>
-          </div>
-
-          {swipeView === 'enemy' ? (
-            <div style={styles.swipeBoard}>
-              <GameBoard
-                board={state.opponentBoard}
-                onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
-                disabled={!state.isPlayerTurn}
-                showShips={false}
-                gridSize={gridSize}
-                isOpponent
-                maxWidth={CONTENT_WIDTH}
-                variant="full"
-              />
-              <FleetStatus ships={state.opponentShips} label={t('battle.enemyFleet')} />
-            </div>
-          ) : (
-            <div style={styles.swipeBoard}>
-              <GameBoard
-                board={state.playerBoard}
-                showShips
-                disabled
-                gridSize={gridSize}
-                maxWidth={CONTENT_WIDTH}
-                variant="full"
-                lastAttackPosition={lastEnemyAttack}
-              />
-              <FleetStatus ships={state.playerShips} label={t('battle.yourFleet')} />
-            </div>
-          )}
-          <NavalButton
-            title={t('battle.surrender')}
-            onPress={handleSurrender}
-            variant="danger"
-            size="small"
-          />
-        </div>
-        <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
-      </GradientContainer>
-    );
-  }
-
-  // --- Stacked mode (default) ---
   return (
     <GradientContainer>
       <div style={styles.container}>
@@ -347,6 +260,12 @@ export default function Battle() {
             )}
           </div>
         )}
+
+        {/* Health Bars */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: CONTENT_WIDTH }}>
+          <HealthBar ships={state.playerShips} label={t('battle.yourFleet')} />
+          <HealthBar ships={state.opponentShips} label={t('battle.enemyFleet')} mirrored />
+        </div>
 
         {/* Grids */}
         {!isMobile ? (
@@ -510,43 +429,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   turnTextEnemy: {
     color: COLORS.accent.fire,
-  },
-  swipeTabs: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  swipeTab: {
-    flex: 1,
-    paddingTop: 8,
-    paddingBottom: 8,
-    border: `1px solid ${COLORS.grid.border}`,
-    borderRadius: RADIUS.default,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'none',
-    cursor: 'pointer',
-  },
-  swipeTabActive: {
-    borderColor: COLORS.accent.gold,
-    backgroundColor: COLORS.overlay.goldSoft,
-  },
-  swipeTabText: {
-    fontFamily: FONTS.heading,
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    letterSpacing: 2,
-  },
-  swipeTabTextActive: {
-    color: COLORS.accent.gold,
-  },
-  swipeBoard: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 16,
   },
   provingIndicator: {
     display: 'flex',

@@ -4,7 +4,7 @@ import type { GameSettings } from './entities';
 const SETTINGS_KEY = '@battleship_settings';
 const TUTORIAL_KEY = '@battleship_tutorial';
 
-const DEFAULT_SETTINGS: GameSettings = { gridSize: 10, battleView: 'stacked', difficulty: 'hard' };
+const DEFAULT_SETTINGS: GameSettings = { gridSize: 10, difficulty: 'hard' };
 
 function safeParse<T>(data: string, fallback: T): T {
   try { return JSON.parse(data) as T; } catch { return fallback; }

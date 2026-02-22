@@ -48,8 +48,6 @@ export default function BattleScreen() {
   const gridSize = state.settings.gridSize;
   const difficulty = 'hard' as const;
   const diffConfig = DIFFICULTY_CONFIG[difficulty];
-  const isSwipeMode = !isPvP && state.settings.battleView === 'swipe';
-  const [swipeView, setSwipeView] = useState<'enemy' | 'player'>('enemy');
   const gameoverRoute = isPvP ? '/gameover?mode=pvp' : '/gameover';
 
   // Opponent strategy: AI or MockPvP
@@ -64,17 +62,6 @@ export default function BattleScreen() {
   const mainCellSize = computeCellSize(CONTENT_WIDTH, 'full', gridSize);
   const GRID_TOTAL_WIDTH = mainCellSize * gridSize + FULL_LABEL;
   const MINI_MAX_WIDTH = Math.floor(GRID_TOTAL_WIDTH * 0.75);
-
-  // Auto-switch to the relevant board when turn changes (swipe mode)
-  useEffect(() => {
-    if (!isSwipeMode) return;
-    if (!state.isPlayerTurn) {
-      setSwipeView('player');
-    } else {
-      const timer = setTimeout(() => setSwipeView('enemy'), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.isPlayerTurn, isSwipeMode]);
 
   // Track last enemy attack for flash animation
   const [lastEnemyAttack, setLastEnemyAttack] = useState<Position | null>(null);
@@ -249,82 +236,6 @@ export default function BattleScreen() {
     ? state.isPlayerTurn ? t('battle.yourTurn') : `${MOCK_OPPONENT.toUpperCase()}'S TURN`
     : undefined;
 
-  // --- Swipe mode (arcade only) ---
-  if (isSwipeMode) {
-    return (
-      <GradientContainer>
-        <View style={styles.container}>
-          <View style={styles.turnRow}>
-            <TurnIndicator isPlayerTurn={state.isPlayerTurn} />
-            {provingShot && (
-              <View style={styles.provingIndicator}>
-                <RadarSpinner size={14} />
-                <Text style={styles.provingText}>{t('battle.proving')}</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.swipeTabs}>
-            <TouchableOpacity
-              style={[styles.swipeTab, swipeView === 'enemy' && styles.swipeTabActive]}
-              onPress={() => setSwipeView('enemy')}
-            >
-              <Text style={[styles.swipeTabText, swipeView === 'enemy' && styles.swipeTabTextActive]}>
-                {t('battle.enemyWaters')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.swipeTab, swipeView === 'player' && styles.swipeTabActive]}
-              onPress={() => setSwipeView('player')}
-            >
-              <Text style={[styles.swipeTabText, swipeView === 'player' && styles.swipeTabTextActive]}>
-                {t('battle.yourWaters')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {swipeView === 'enemy' ? (
-            <View style={styles.swipeBoard}>
-              <GameBoard
-                board={state.opponentBoard}
-                onCellPress={state.isPlayerTurn ? handlePlayerAttack : undefined}
-                disabled={!state.isPlayerTurn}
-                showShips={false}
-                gridSize={gridSize}
-                isOpponent
-                maxWidth={CONTENT_WIDTH}
-                variant="full"
-              />
-              <FleetStatus ships={state.opponentShips} label={t('battle.enemyFleet')} />
-            </View>
-          ) : (
-            <View style={styles.swipeBoard}>
-              <GameBoard
-                board={state.playerBoard}
-                showShips
-                disabled
-                gridSize={gridSize}
-                maxWidth={CONTENT_WIDTH}
-                variant="full"
-                lastAttackPosition={lastEnemyAttack}
-              />
-              <FleetStatus ships={state.playerShips} label={t('battle.yourFleet')} />
-            </View>
-          )}
-          <NavalButton
-            title={t('battle.surrender')}
-            onPress={handleSurrender}
-            variant="danger"
-            size="small"
-            accessibilityHint="Forfeit the current battle"
-          />
-        </View>
-        <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
-      </GradientContainer>
-    );
-  }
-
-  // --- Stacked mode (default for both arcade and pvp) ---
   return (
     <GradientContainer>
       <View style={styles.container}>
@@ -515,37 +426,6 @@ const styles = StyleSheet.create({
   },
   turnTextEnemy: {
     color: COLORS.accent.fire,
-  },
-  // Swipe mode
-  swipeTabs: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  swipeTab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: COLORS.grid.border,
-    borderRadius: RADIUS.default,
-    alignItems: 'center',
-  },
-  swipeTabActive: {
-    borderColor: COLORS.accent.gold,
-    backgroundColor: COLORS.overlay.goldSoft,
-  },
-  swipeTabText: {
-    fontFamily: FONTS.heading,
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    letterSpacing: 2,
-  },
-  swipeTabTextActive: {
-    color: COLORS.accent.gold,
-  },
-  swipeBoard: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 16,
   },
   provingIndicator: {
     flexDirection: 'row',

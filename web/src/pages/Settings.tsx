@@ -7,7 +7,6 @@ import { usePlayerStats } from '../stats/translator';
 import { useSettings } from '../settings/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getLevelInfo } from '../stats/interactor';
-import { BattleViewMode } from '../shared/entities';
 import { saveLanguage } from '../i18n';
 import { setTutorialSeen } from '../settings/interactor';
 import { COLORS, FONTS, SPACING } from '../shared/theme';
@@ -60,11 +59,6 @@ export default function Settings() {
   const haptics = useHaptics();
   const level = getLevelInfo(stats.totalXP);
 
-  const handleBattleView = (mode: BattleViewMode) => {
-    haptics.light();
-    update({ ...settings, battleView: mode });
-  };
-
   const handleLanguage = (code: string) => {
     haptics.light();
     i18n.changeLanguage(code);
@@ -99,22 +93,6 @@ export default function Settings() {
               </div>
               <span style={styles.readOnlyHint}>{t('settings.gridHint')}</span>
             </div>
-          </div>
-
-          <div style={styles.section}>
-            <span style={styles.sectionTitle}>{t('settings.battleView')}</span>
-            <ToggleOption
-              label={t('settings.stacked')}
-              description={t('settings.stackedDesc')}
-              selected={settings.battleView === 'stacked'}
-              onPress={() => handleBattleView('stacked')}
-            />
-            <ToggleOption
-              label={t('settings.swipe')}
-              description={t('settings.swipeDesc')}
-              selected={settings.battleView === 'swipe'}
-              onPress={() => handleBattleView('swipe')}
-            />
           </div>
 
           <div style={styles.section}>

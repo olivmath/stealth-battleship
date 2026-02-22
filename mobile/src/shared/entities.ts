@@ -135,12 +135,10 @@ export interface Move {
 // --- Settings ---
 
 export type GridSizeOption = 10;
-export type BattleViewMode = 'stacked' | 'swipe';
 export type DifficultyLevel = 'easy' | 'normal' | 'hard';
 
 export interface GameSettings {
   gridSize: GridSizeOption;
-  battleView: BattleViewMode;
   difficulty: DifficultyLevel;
 }
 

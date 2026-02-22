@@ -6,7 +6,6 @@ const TUTORIAL_KEY = '@battleship_tutorial';
 
 const DEFAULT_SETTINGS: GameSettings = {
   gridSize: 10,
-  battleView: 'stacked',
   difficulty: 'hard',
 };
 
