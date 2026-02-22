@@ -13,6 +13,7 @@ import { useResponsive } from '../hooks/useResponsive';
 import { getLevelInfo } from '../stats/interactor';
 import { confirm } from '../hooks/useConfirm';
 import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../shared/theme';
+import { Ship3D } from '../components/Ship/Ship3D';
 
 export default function Menu() {
   const { t } = useTranslation();
@@ -96,6 +97,8 @@ export default function Menu() {
           <NavalText variant="h2" style={{ marginTop: SPACING.xs }}>{state.playerName}</NavalText>
           <Divider style={{ marginTop: SPACING.md }} />
         </div>
+
+        <Ship3D />
 
         {/* Stats Row */}
         {stats && (
