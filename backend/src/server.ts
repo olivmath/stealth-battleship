@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import app from './app.js';
-import { loadCircuits } from './circuits/loader.js';
+import { loadCircuits } from './shared/circuits.js';
 import { c } from './log.js';
 
 const PORT = process.env.PORT || 3000;

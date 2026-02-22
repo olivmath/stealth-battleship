@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import proveRouter from './routes/prove.js';
+import boardValidityRouter from './board-validity/translator.js';
 import { c } from './log.js';
 
 const app = express();
@@ -19,7 +19,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Proof routes
-app.use('/api/prove', proveRouter);
+app.use('/api/prove', boardValidityRouter);
 
 // 404
 app.use((req, res) => {

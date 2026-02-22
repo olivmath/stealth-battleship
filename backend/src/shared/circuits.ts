@@ -8,7 +8,7 @@ import { c } from '../log.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TAG = c.magenta('[circuits]');
 
-interface CircuitBundle {
+export interface CircuitBundle {
   noir: Noir;
   backend: UltraHonkBackend;
   name: string;
