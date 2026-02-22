@@ -1,12 +1,9 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, InteractionManager } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
-import RadarSpinner from '../src/components/UI/RadarSpinner';
-
-const ShipModel = lazy(() => import('../src/components/UI/ShipModel'));
 import { useGame } from '../src/game/translator';
 import { usePlayerStats } from '../src/stats/translator';
 import { useSettings } from '../src/settings/translator';
@@ -21,14 +18,6 @@ export default function MenuScreen() {
   const { stats, refresh } = usePlayerStats();
   const { settings, refresh: refreshSettings } = useSettings();
   const haptics = useHaptics();
-  const [modelReady, setModelReady] = useState(false);
-
-  useEffect(() => {
-    const handle = InteractionManager.runAfterInteractions(() => {
-      setModelReady(true);
-    });
-    return () => handle.cancel();
-  }, []);
 
   useEffect(() => {
     refresh();
@@ -90,16 +79,6 @@ export default function MenuScreen() {
             </Text>
           </View>
         )}
-
-        <View pointerEvents="box-none" style={{ height: 200, alignItems: 'center', justifyContent: 'center' }}>
-          {modelReady ? (
-            <Suspense fallback={<RadarSpinner size={40} />}>
-              <ShipModel height={200} />
-            </Suspense>
-          ) : (
-            <RadarSpinner size={40} />
-          )}
-        </View>
 
         {/* Actions */}
         <View style={styles.actions}>
