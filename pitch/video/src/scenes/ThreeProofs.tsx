@@ -86,40 +86,56 @@ const BOARD_MATRIX: number[][] = Array.from({ length: 6 }, (_, r) =>
   )
 );
 
+/* ── SVG bracket for matrix notation (bmatrix style) ── */
+const MatrixBracket: React.FC<{
+  side: "left" | "right";
+  height: number;
+  color?: string;
+  strokeWidth?: number;
+}> = ({ side, height, color = colors.muted, strokeWidth = 2.5 }) => {
+  const w = 14;
+  const pad = 3;
+  const d =
+    side === "left"
+      ? `M ${w - pad} ${pad} L ${pad} ${pad} L ${pad} ${height - pad} L ${w - pad} ${height - pad}`
+      : `M ${pad} ${pad} L ${w - pad} ${pad} L ${w - pad} ${height - pad} L ${pad} ${height - pad}`;
+
+  return (
+    <svg width={w} height={height} style={{ flexShrink: 0 }}>
+      <path d={d} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" />
+    </svg>
+  );
+};
+
 /* ── Componente da matriz numerica ── */
-const MatrixView: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: 2,
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: 18,
-      lineHeight: 1.6,
-      ...style,
-    }}
-  >
-    {BOARD_MATRIX.map((row, r) => (
-      <div key={r} style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-        {r === 0 && <span style={{ color: colors.muted, marginRight: 2 }}>[</span>}
-        {r > 0 && <span style={{ color: colors.muted, marginRight: 2 }}>&nbsp;</span>}
-        {row.map((val, c) => (
-          <span
-            key={c}
-            style={{
-              color: val === 1 ? colors.fireOrange : `${colors.muted}80`,
-              fontWeight: val === 1 ? 700 : 400,
-              textShadow: val === 1 ? `0 0 8px ${colors.fireOrange}60` : "none",
-            }}
-          >
-            {val}
-          </span>
+const MatrixView: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
+  const rowHeight = 18 * 1.6;
+  const gapSize = 2;
+  const matrixHeight = BOARD_MATRIX.length * rowHeight + (BOARD_MATRIX.length - 1) * gapSize;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, ...style }}>
+      <MatrixBracket side="left" height={matrixHeight} />
+      <div style={{
+        display: "flex", flexDirection: "column", gap: gapSize,
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 18, lineHeight: 1.6,
+      }}>
+        {BOARD_MATRIX.map((row, r) => (
+          <div key={r} style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+            {row.map((val, c) => (
+              <span key={c} style={{
+                color: val === 1 ? colors.fireOrange : `${colors.muted}80`,
+                fontWeight: val === 1 ? 700 : 400,
+                textShadow: val === 1 ? `0 0 8px ${colors.fireOrange}60` : "none",
+              }}>{val}</span>
+            ))}
+          </div>
         ))}
-        {r === 5 && <span style={{ color: colors.muted, marginLeft: 2 }}>]</span>}
       </div>
-    ))}
-  </div>
-);
+      <MatrixBracket side="right" height={matrixHeight} />
+    </div>
+  );
+};
 
 /* ── Seta animada entre etapas ── */
 const Arrow: React.FC<{ startFrame: number; style?: React.CSSProperties }> = ({
@@ -316,55 +332,52 @@ const MatrixWithCircle: React.FC<{
 }> = ({ targetRow, targetCol, showCircle, style }) => {
   const frame = useCurrentFrame();
   const circlePulse = showCircle ? 0.7 + Math.sin(frame * 0.2) * 0.3 : 0;
+  const rowHeight = 20 * 1.7;
+  const gapSize = 2;
+  const matrixHeight = BOARD_MATRIX.length * rowHeight + (BOARD_MATRIX.length - 1) * gapSize;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 20,
-        lineHeight: 1.7,
-        ...style,
-      }}
-    >
-      {BOARD_MATRIX.map((row, r) => (
-        <div key={r} style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          {r === 0 && <span style={{ color: colors.muted }}>{'['}</span>}
-          {r > 0 && <span style={{ color: colors.muted }}>&nbsp;</span>}
-          {row.map((val, c) => {
-            const isTarget = r === targetRow && c === targetCol;
-            return (
-              <span
-                key={c}
-                style={{
-                  position: "relative",
-                  color: val === 1 ? colors.fireOrange : `${colors.muted}80`,
-                  fontWeight: val === 1 ? 700 : 400,
-                  width: 18,
-                  textAlign: "center",
-                }}
-              >
-                {val}
-                {isTarget && showCircle && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      inset: -6,
-                      border: `2px solid ${colors.gold}`,
-                      borderRadius: "50%",
-                      opacity: circlePulse,
-                      boxShadow: `0 0 8px ${colors.gold}60`,
-                    }}
-                  />
-                )}
-              </span>
-            );
-          })}
-          {r === 5 && <span style={{ color: colors.muted }}>]</span>}
-        </div>
-      ))}
+    <div style={{ display: "flex", alignItems: "center", gap: 4, ...style }}>
+      <MatrixBracket side="left" height={matrixHeight} />
+      <div style={{
+        display: "flex", flexDirection: "column", gap: gapSize,
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 20, lineHeight: 1.7,
+      }}>
+        {BOARD_MATRIX.map((row, r) => (
+          <div key={r} style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+            {row.map((val, c) => {
+              const isTarget = r === targetRow && c === targetCol;
+              return (
+                <span
+                  key={c}
+                  style={{
+                    position: "relative",
+                    color: val === 1 ? colors.fireOrange : `${colors.muted}80`,
+                    fontWeight: val === 1 ? 700 : 400,
+                    width: 18,
+                    textAlign: "center",
+                  }}
+                >
+                  {val}
+                  {isTarget && showCircle && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        inset: -6,
+                        border: `2px solid ${colors.gold}`,
+                        borderRadius: "50%",
+                        opacity: circlePulse,
+                        boxShadow: `0 0 8px ${colors.gold}60`,
+                      }}
+                    />
+                  )}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <MatrixBracket side="right" height={matrixHeight} />
     </div>
   );
 };

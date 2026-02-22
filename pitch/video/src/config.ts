@@ -97,10 +97,11 @@ const TIMELINE = {
   architecture: {
     at: [110, 130],
     blocks: {
-      deviceLayer: [110, 114],
-      baseLayer: [114, 118],
-      protocol25: [118, 123],
-      txBadge: [123, 128],
+      players: [110, 113],
+      backend: [113, 116],
+      messages: [116, 120],
+      blockchain: [120, 124],
+      protocol25: [124, 128],
       fadeOut: [128, 130],
     },
   },
