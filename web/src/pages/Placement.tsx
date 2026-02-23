@@ -229,6 +229,10 @@ export default function Placement() {
 
     // --- ZK: Generate board_validity proofs for player and AI ---
     console.log('[ZK] === BOARD VALIDITY PROOF START ===');
+    console.log('[ZK] Grid size:', gridSize);
+    console.log('[ZK] Player ships count:', state.playerShips.length);
+    console.log('[ZK] AI ships count:', aiResult.ships.length);
+    const zkStartTime = performance.now();
 
     const playerShipTuples = toShipTuples(state.playerShips);
     const aiShipTuples = toShipTuples(aiResult.ships);
@@ -245,28 +249,37 @@ export default function Placement() {
 
     try {
       setProofStep('Player board proof (1/2)...');
+      console.log('[ZK] Starting player board_validity proof...');
+      const playerProofStart = performance.now();
       const playerResult = await boardValidity({ ships: playerShipTuples, nonce: playerNonce }, (step) => {
+        console.log(`[ZK] Player step: ${step}`);
         setProofStep(`Player: ${step}`);
       });
       if (proofCancelledRef.current) return;
 
       playerZk = { boardHash: playerResult.boardHash, nonce: playerNonce, proof: playerResult.proof };
-      console.log('[ZK] Player proof OK - hash:', playerResult.boardHash, 'size:', playerResult.proof.length);
+      console.log(`[ZK] Player proof OK in ${((performance.now() - playerProofStart) / 1000).toFixed(1)}s - hash: ${playerResult.boardHash}, proof size: ${playerResult.proof.length} bytes`);
 
       setProofStep('AI board proof (2/2)...');
+      console.log('[ZK] Starting AI board_validity proof...');
+      const aiProofStart = performance.now();
       const aiResultZk = await boardValidity({ ships: aiShipTuples, nonce: aiNonce }, (step) => {
+        console.log(`[ZK] AI step: ${step}`);
         setProofStep(`AI: ${step}`);
       });
       if (proofCancelledRef.current) return;
 
       opponentZk = { boardHash: aiResultZk.boardHash, nonce: aiNonce, proof: aiResultZk.proof };
-      console.log('[ZK] AI proof OK - hash:', aiResultZk.boardHash, 'size:', aiResultZk.proof.length);
+      console.log(`[ZK] AI proof OK in ${((performance.now() - aiProofStart) / 1000).toFixed(1)}s - hash: ${aiResultZk.boardHash}, proof size: ${aiResultZk.proof.length} bytes`);
 
-      console.log('[ZK] === BOTH PROOFS GENERATED ===');
+      const totalTime = ((performance.now() - zkStartTime) / 1000).toFixed(1);
+      console.log(`[ZK] === BOTH PROOFS GENERATED in ${totalTime}s ===`);
     } catch (err: any) {
       if (proofCancelledRef.current) return;
-      console.error('[ZK] === PROOF FAILED ===');
+      const failTime = ((performance.now() - zkStartTime) / 1000).toFixed(1);
+      console.error(`[ZK] === PROOF FAILED after ${failTime}s ===`);
       console.error('[ZK] Error:', err.message);
+      console.error('[ZK] Stack:', err.stack);
     }
     console.log('[ZK] === BOARD VALIDITY PROOF END ===');
 
@@ -347,8 +360,6 @@ export default function Placement() {
             </div>
           )}
         </div>
-
-        <Spacer size="sm" />
 
         {/* Grid + Selector */}
         <div style={!isMobile ? styles.desktopGridRow : undefined}>
@@ -448,7 +459,7 @@ export default function Placement() {
               <NavalButton
                 title={t('placement.auto')}
                 onPress={handleAutoPlace}
-                variant="secondary"
+                variant="pvp"
                 size="small"
                 style={styles.actionButton}
               />
@@ -497,12 +508,19 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SCREEN_PADDING,
     position: 'relative',
+    height: '100vh',
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidthDesktop,
+    boxSizing: 'border-box' as const,
+    alignItems: 'center',
   },
   header: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: 2,
+    flexShrink: 0,
   },
   headerPvP: {
     marginTop: SPACING.sm,
@@ -561,12 +579,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   flexSpacer: {
     flex: 1,
-    minHeight: 16,
+    minHeight: 4,
   },
   actionsRow: {
     display: 'flex',
     flexDirection: 'row',
     gap: 8,
+    flexShrink: 0,
+    paddingTop: 4,
+    width: '100%',
   },
   actionButton: {
     flex: 1,

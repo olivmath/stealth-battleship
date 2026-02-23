@@ -84,14 +84,7 @@ export default function Menu() {
 
   return (
     <GradientContainer>
-      <div style={{
-        ...styles.container,
-        ...(!isMobile ? {
-          maxWidth: isDesktop ? LAYOUT.maxContentWidthDesktop : LAYOUT.maxContentWidthTablet,
-          alignSelf: 'center',
-          width: '100%',
-        } : {}),
-      }}>
+      <div style={styles.container}>
         <div style={styles.header}>
           <NavalText variant="label" letterSpacing={3}>{t('menu.welcome')}</NavalText>
           <NavalText variant="h2" style={{ marginTop: SPACING.xs }}>{state.playerName}</NavalText>
@@ -100,17 +93,6 @@ export default function Menu() {
 
         <Ship3D />
 
-        {/* Stats Row */}
-        {stats && (
-          <div style={styles.statsRow}>
-            <span style={styles.rankBadge}>{t('ranks.' + getLevelInfo(stats.totalXP).rank).toUpperCase()}</span>
-            <span style={styles.winRateText}>
-              {stats.wins + stats.losses > 0
-                ? Math.round((stats.wins / (stats.wins + stats.losses)) * 100)
-                : 0}% {t('menu.winRate')}
-            </span>
-          </div>
-        )}
 
         {/* Actions */}
         <div style={styles.actions}>
@@ -219,38 +201,15 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SPACING.lg,
     gap: SPACING.md,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: SPACING.xl,
-  },
-  statsRow: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.md,
-    marginTop: SPACING.sm,
-  },
-  rankBadge: {
-    fontFamily: FONTS.heading,
-    fontSize: 12,
-    color: COLORS.accent.gold,
-    letterSpacing: 2,
-    border: `1px solid ${COLORS.accent.gold}`,
-    borderRadius: RADIUS.default,
-    paddingLeft: SPACING.sm,
-    paddingRight: SPACING.sm,
-    paddingTop: 2,
-    paddingBottom: 2,
-  },
-  winRateText: {
-    fontFamily: FONTS.body,
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    letterSpacing: 1,
+    marginTop: SPACING.md,
   },
   actions: {
     display: 'flex',

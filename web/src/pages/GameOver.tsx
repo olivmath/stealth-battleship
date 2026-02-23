@@ -137,10 +137,7 @@ export default function GameOver() {
   return (
     <GradientContainer>
       <div style={styles.scrollContainer}>
-        <div style={{
-          ...styles.content,
-          ...(!isMobile ? { maxWidth: isDesktop ? 800 : 600, alignSelf: 'center', width: '100%' } : {}),
-        }}>
+        <div style={styles.content}>
           {/* Header */}
           <div style={styles.header}>
             <NavalText variant="h1" color={isVictory ? COLORS.accent.victory : COLORS.accent.fire} letterSpacing={6} style={{ fontSize: FONT_SIZES.hero }}>
@@ -318,8 +315,8 @@ export default function GameOver() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  scrollContainer: { flex: 1, overflowY: 'auto' },
-  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg },
+  scrollContainer: { flex: 1, overflowY: 'auto', width: '100%' },
+  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, maxWidth: 600, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
   header: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xl },
   scoreContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
   scoreValue: { fontFamily: FONTS.heading, fontSize: 48, letterSpacing: 2 },

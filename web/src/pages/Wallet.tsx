@@ -6,7 +6,7 @@ import { GradientContainer } from '../components/UI/GradientContainer';
 import { NavalButton } from '../components/UI/NavalButton';
 import { PinModal } from '../components/UI/PinModal';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 import { getPublicKey, getSecretKey, getBalance } from '../wallet/interactor';
 
 export default function Wallet() {
@@ -153,6 +153,9 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     flex: 1,
     padding: SPACING.lg,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',

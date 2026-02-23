@@ -11,7 +11,7 @@ import { getShipDefinitionsForRank, RANK_PROGRESSION } from '../shared/constants
 import { getLevelInfo } from '../stats/interactor';
 import { setTutorialSeen } from '../settings/interactor';
 import { ShipDefinition } from '../shared/entities';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 interface TutorialSlide {
   id: string;
@@ -330,6 +330,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   slide: {
     display: 'flex',

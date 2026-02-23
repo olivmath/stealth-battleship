@@ -7,7 +7,7 @@ import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useMatchHistory } from '../stats/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { MatchRecord } from '../shared/entities';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: COLORS.status.online,
@@ -215,6 +215,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SPACING.lg,
     gap: SPACING.md,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',

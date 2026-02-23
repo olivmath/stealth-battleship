@@ -8,7 +8,7 @@ import { useGame } from '../game/translator';
 import { usePlayerStats } from '../stats/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getLevelInfo } from '../stats/interactor';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 function LevelBadge({ totalXP }: { totalXP: number }) {
   const { t } = useTranslation();
@@ -179,12 +179,17 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     overflowY: 'auto',
     padding: SPACING.lg,
+    width: '100%',
+    boxSizing: 'border-box' as const,
   },
   scrollContent: {
     display: 'flex',
     flexDirection: 'column',
     gap: SPACING.md,
     paddingBottom: SPACING.xl,
+    maxWidth: LAYOUT.maxContentWidth,
+    width: '100%',
+    margin: '0 auto',
   },
   header: {
     display: 'flex',

@@ -9,7 +9,7 @@ import { useHaptics } from '../hooks/useHaptics';
 import { getLevelInfo } from '../stats/interactor';
 import { saveLanguage } from '../i18n';
 import { setTutorialSeen } from '../settings/interactor';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 function ToggleOption({
   label,
@@ -158,6 +158,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SPACING.lg,
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',

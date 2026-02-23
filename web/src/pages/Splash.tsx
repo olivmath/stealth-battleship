@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { GradientContainer } from '../components/UI/GradientContainer';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { getPlayerName } from '../game/adapter';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 export default function Splash() {
   const { t } = useTranslation();
@@ -64,6 +64,9 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',

@@ -6,7 +6,7 @@ import { NavalButton } from '../components/UI/NavalButton';
 import { useHaptics } from '../hooks/useHaptics';
 import { getMatchHistory } from '../stats/adapter';
 import { MatchRecord } from '../shared/entities';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 import { KillEfficiencyBar } from '../components/Stats/KillEfficiencyBar';
 
 export default function MatchDetail() {
@@ -202,8 +202,8 @@ export default function MatchDetail() {
 const styles: Record<string, React.CSSProperties> = {
   center: { display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' },
   loading: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.text.secondary },
-  scrollContainer: { flex: 1, overflowY: 'auto' },
-  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg },
+  scrollContainer: { flex: 1, overflowY: 'auto', width: '100%' },
+  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, maxWidth: LAYOUT.maxContentWidth, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
   header: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xl },
   result: { fontFamily: FONTS.heading, fontSize: 36, letterSpacing: 6 },
   victory: { color: COLORS.accent.gold },

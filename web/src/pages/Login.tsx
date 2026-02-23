@@ -11,7 +11,7 @@ import { useGame } from '../game/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../game/adapter';
 import { hasWallet, getSecretKey } from '../wallet/interactor';
-import { COLORS, FONTS, SPACING, RADIUS } from '../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../shared/theme';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -133,6 +133,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     justifyContent: 'center',
     padding: SPACING.lg,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',
