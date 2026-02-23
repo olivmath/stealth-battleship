@@ -223,6 +223,17 @@ export function useGameEffects() {
         shipSizes: [5, 4, 3, 3, 2], winner: won ? 0 : 1,
       }).then((result) => {
         console.log(`[ZK] turnsProof OK — ${result.proof.length} bytes, winner=${result.winner}`);
+        try {
+          const records = JSON.parse(localStorage.getItem('@battleship_history') || '[]');
+          const latest = records[records.length - 1];
+          if (latest) {
+            latest.turnsProof = Array.from(result.proof);
+            localStorage.setItem('@battleship_history', JSON.stringify(records));
+            console.log('[ZK] turnsProof saved to match history');
+          }
+        } catch (e) {
+          console.warn('[ZK] Failed to save turnsProof to history:', e);
+        }
       }).catch((err: any) => {
         console.warn('[ZK] turnsProof FAILED:', err.message);
       }).finally(() => { turnsProofPromiseRef = null; });
