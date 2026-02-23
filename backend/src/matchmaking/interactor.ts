@@ -9,17 +9,21 @@ function generateId(): string {
 }
 
 function generateMatchCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  let code: string;
+  do {
+    code = String(Math.floor(100000 + Math.random() * 900000));
+  } while (matchCodeIndex.has(code));
+  return code;
 }
 
 export function findRandomMatch(
   publicKey: string,
   socketId: string,
   gridSize: number
-): { type: 'queued' } | { type: 'matched'; match: MatchRoom } {
+): { type: 'queued' } | { type: 'matched'; match: MatchRoom } | { type: 'already_in_match' } {
   // Check if already in a match
   if (playerToMatch.has(publicKey)) {
-    return { type: 'queued' }; // already busy
+    return { type: 'already_in_match' };
   }
 
   // Check if already in queue — prevent duplicate entries
@@ -28,9 +32,9 @@ export function findRandomMatch(
     return { type: 'queued' };
   }
 
-  // Find compatible player in queue
+  // Find compatible player in queue (skip opponents already in a match)
   const idx = matchQueue.findIndex(
-    (e) => e.gridSize === gridSize && e.publicKey !== publicKey
+    (e) => e.gridSize === gridSize && e.publicKey !== publicKey && !playerToMatch.has(e.publicKey)
   );
 
   if (idx === -1) {
@@ -63,7 +67,16 @@ export function createFriendMatch(
   publicKey: string,
   socketId: string,
   gridSize: number
-): { matchId: string; matchCode: string } {
+): { ok: true; matchId: string; matchCode: string } | { ok: false; error: string } {
+  // Check if already in a match
+  if (playerToMatch.has(publicKey)) {
+    return { ok: false, error: 'Already in a match' };
+  }
+
+  // Remove from random queue if present
+  const queueIdx = matchQueue.findIndex((e) => e.publicKey === publicKey);
+  if (queueIdx !== -1) matchQueue.splice(queueIdx, 1);
+
   const matchId = generateId();
   const matchCode = generateMatchCode();
 
@@ -85,7 +98,7 @@ export function createFriendMatch(
   playerToMatch.set(publicKey, matchId);
   matchCodeIndex.set(matchCode, matchId);
 
-  return { matchId, matchCode };
+  return { ok: true, matchId, matchCode };
 }
 
 export function joinFriendMatch(
@@ -100,6 +113,7 @@ export function joinFriendMatch(
   if (!match) return { ok: false, error: 'Match not found' };
   if (match.status !== 'waiting') return { ok: false, error: 'Match already started' };
   if (match.player1.publicKey === publicKey) return { ok: false, error: 'Cannot join your own match' };
+  if (playerToMatch.has(publicKey)) return { ok: false, error: 'Already in a match' };
 
   match.player2 = { publicKey, socketId };
   match.status = 'placing';
@@ -151,6 +165,7 @@ export function removeMatch(matchId: string): void {
   if (!match) return;
 
   if (match.turnTimer) clearTimeout(match.turnTimer);
+  if (match.defenderTimer) clearTimeout(match.defenderTimer);
   if (match.player1) playerToMatch.delete(match.player1.publicKey);
   if (match.player2) playerToMatch.delete(match.player2.publicKey);
   if (match.matchCode) matchCodeIndex.delete(match.matchCode);
