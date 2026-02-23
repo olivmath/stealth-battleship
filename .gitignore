@@ -45,3 +45,5 @@ yarn-error.*
 .worktrees/
 
 targetbackend/logs/
+backend/logs/
+target

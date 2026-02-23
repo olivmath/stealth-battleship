@@ -14,6 +14,9 @@ import { resetRateLimit } from '../ws/socket.js';
 import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats, persistProofLog } from '../shared/persistence.js';
 import { getCircuit } from '../shared/circuits.js';
 import { getShipSizes } from '../matchmaking/entities.js';
+import { proveTurnsProof } from '../turns-proof/interactor.js';
+import { createTurnsProofAdapter } from '../turns-proof/adapter.js';
+import type { ShipTuple, AttackTuple } from '../shared/entities.js';
 import { openMatchOnChain, closeMatchOnChain } from '../soroban/adapter.js';
 import { getServerPublicKey } from '../payment/stellar-asset.js';
 
@@ -432,25 +435,40 @@ export function registerBattleHandlers(
       debug('[battle]', `Both revealed — generating turns_proof for match ${match.id}`);
       try {
         const t0 = Date.now();
-        const { noir, backend } = getCircuit('turns_proof');
 
-        const turnsInput = {
-          player1_board: match.player1Reveal.ships,
-          player1_nonce: match.player1Reveal.nonce,
-          player1_board_hash: match.player1BoardHash!,
-          player2_board: match.player2Reveal.ships,
-          player2_nonce: match.player2Reveal.nonce,
-          player2_board_hash: match.player2BoardHash!,
-          attacks: match.attacks.map(a => ({
-            row: a.row, col: a.col, result: a.result === 'hit' ? 1 : 0,
-          })),
-          total_turns: match.turnNumber,
-        };
+        // Split attacks by player
+        const attacksP1: AttackTuple[] = [];
+        const attacksP2: AttackTuple[] = [];
+        for (const a of match.attacks) {
+          if (a.attacker === match.player1.publicKey) {
+            attacksP1.push([a.row, a.col]);
+          } else {
+            attacksP2.push([a.row, a.col]);
+          }
+        }
+
+        // Determine winner: 0 = player1, 1 = player2
+        const winnerValue = match.winner === match.player1.publicKey ? 0 : 1;
 
         debug('[battle]', `turns_proof input: totalTurns=${match.turnNumber}, attacks=${match.attacks.length}`);
 
-        const { witness } = await noir.execute(turnsInput);
-        const proof = await backend.generateProof(witness, { keccak: true });
+        const turnsProofAdapter = createTurnsProofAdapter();
+        const turnsResult = await proveTurnsProof({
+          shipsPlayer: match.player1Reveal.ships as ShipTuple[],
+          shipsAi: match.player2Reveal.ships as ShipTuple[],
+          noncePlayer: match.player1Reveal.nonce,
+          nonceAi: match.player2Reveal.nonce,
+          boardHashPlayer: match.player1BoardHash!,
+          boardHashAi: match.player2BoardHash!,
+          attacksPlayer: attacksP1,
+          attacksAi: attacksP2,
+          nAttacksPlayer: attacksP1.length,
+          nAttacksAi: attacksP2.length,
+          shipSizes: match.shipSizes,
+          winner: winnerValue,
+        }, turnsProofAdapter, c.blue('[battle]'));
+
+        const proof = { proof: new Uint8Array(turnsResult.proof) };
         const verifyMs = Date.now() - t0;
 
         void persistProofLog({
