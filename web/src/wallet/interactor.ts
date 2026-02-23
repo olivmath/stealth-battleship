@@ -1,6 +1,6 @@
-// wallet/interactor.ts — use cases: generate, import, decrypt
+// wallet/interactor.ts — use cases: generate, decrypt, balance
 
-import { generateKeypair, keypairFromSecret, isValidSecretKey } from './stellar';
+import { generateKeypair, isValidSecretKey } from './stellar';
 import type { WalletData } from './entities';
 import { encryptSecret, decryptSecret, saveWallet, getWallet } from './adapter';
 
@@ -12,15 +12,6 @@ export async function createWallet(pin: string): Promise<WalletData> {
   await saveWallet(wallet);
   // Fund on testnet (fire-and-forget)
   fundWithFriendbot(publicKey).catch(() => {});
-  return wallet;
-}
-
-export async function importWallet(secretKeyInput: string, pin: string): Promise<WalletData> {
-  const { publicKey } = keypairFromSecret(secretKeyInput.trim());
-
-  const { encrypted, salt, iv } = await encryptSecret(secretKeyInput.trim(), pin);
-  const wallet: WalletData = { publicKey, encryptedSecret: encrypted, salt, iv };
-  await saveWallet(wallet);
   return wallet;
 }
 
