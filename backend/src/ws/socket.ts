@@ -139,11 +139,8 @@ export function createSocketServer(httpServer: HttpServer): Server {
     let cleaned = 0;
 
     for (const [matchId, match] of matches.entries()) {
-      if (match.status === 'waiting' && now - match.createdAt > MATCH_STALE_MS) {
-        removeMatch(matchId);
-        cleaned++;
-      }
-      if (match.status === 'finished' && now - match.createdAt > MATCH_STALE_MS) {
+      const isStale = now - match.createdAt > MATCH_STALE_MS;
+      if (isStale && (match.status === 'waiting' || match.status === 'placing' || match.status === 'finished')) {
         removeMatch(matchId);
         cleaned++;
       }

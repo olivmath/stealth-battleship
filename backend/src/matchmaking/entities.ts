@@ -17,6 +17,7 @@ export interface MatchRoom {
   turnNumber: number;
   attacks: Attack[];
   turnTimer?: ReturnType<typeof setTimeout>;
+  defenderTimer?: ReturnType<typeof setTimeout>;
   winner?: string;          // publicKey of winner
   shipSizes: number[];
   createdAt: number;

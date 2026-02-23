@@ -1,7 +1,7 @@
 // Battle entity types
 
 export const TURN_TIMEOUT_MS = 30_000; // 30 seconds per turn
-export const TURN_TIMEOUT_GRACE_MS = 2_000; // 2s grace after timeout
+export const DEFENDER_RESPONSE_TIMEOUT_MS = 15_000; // 15 seconds for defender to respond
 
 export interface PlacementReadyPayload {
   matchId: string;

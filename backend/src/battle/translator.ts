@@ -7,7 +7,7 @@ import {
 } from './interactor.js';
 import {
   PlacementReadyPayload, AttackPayload, ShotResultPayload, ForfeitPayload,
-  TURN_TIMEOUT_MS,
+  TURN_TIMEOUT_MS, DEFENDER_RESPONSE_TIMEOUT_MS,
 } from './entities.js';
 import { c } from '../log.js';
 
@@ -120,6 +120,25 @@ export function registerBattleHandlers(
       });
     }
 
+    // Start defender response timeout
+    if (match.defenderTimer) clearTimeout(match.defenderTimer);
+    match.defenderTimer = setTimeout(() => {
+      if (match.status !== 'battle') return;
+      // Defender didn't respond — attacker wins
+      endMatch(match, publicKey, 'defender_timeout');
+      io.to(match.player1.socketId).emit('battle:game_over', {
+        winner: publicKey,
+        reason: 'defender_timeout',
+        turnNumber: match.turnNumber,
+      });
+      io.to(match.player2!.socketId).emit('battle:game_over', {
+        winner: publicKey,
+        reason: 'defender_timeout',
+        turnNumber: match.turnNumber,
+      });
+      console.log(c.yellow('[battle]') + ` Match ${match.id} — DEFENDER TIMEOUT`);
+    }, DEFENDER_RESPONSE_TIMEOUT_MS);
+
     console.log(c.blue('[battle]') + ` ${shortKey}... attacks (${data.row},${data.col})`);
   });
 
@@ -142,6 +161,12 @@ export function registerBattleHandlers(
     if (!authResult.valid) {
       socket.emit('battle:error', { message: 'Invalid signature' });
       return;
+    }
+
+    // Clear defender response timer
+    if (match.defenderTimer) {
+      clearTimeout(match.defenderTimer);
+      match.defenderTimer = undefined;
     }
 
     // TODO: Verify shot_proof server-side
@@ -215,35 +240,7 @@ export function registerBattleHandlers(
     console.log(c.yellow('[battle]') + ` ${shortKey}... forfeited match ${match.id}`);
   });
 
-  // ─── Disconnect handling ───
-  socket.on('disconnect', () => {
-    const match = getPlayerMatch(publicKey);
-    if (!match || match.status === 'finished') return;
-
-    // Auto-forfeit on disconnect during battle
-    if (match.status === 'battle') {
-      const winnerKey = publicKey === match.player1.publicKey
-        ? match.player2?.publicKey
-        : match.player1.publicKey;
-
-      if (!winnerKey) return;
-
-      endMatch(match, winnerKey, 'disconnect');
-
-      const opponentId = getOpponentSocketId(match, publicKey);
-      if (opponentId) {
-        io.to(opponentId).emit('battle:opponent_forfeit', {
-          reason: 'disconnect',
-        });
-        io.to(opponentId).emit('battle:game_over', {
-          winner: winnerKey,
-          reason: 'opponent_disconnected',
-        });
-      }
-
-      console.log(c.yellow('[battle]') + ` ${shortKey}... disconnected during battle — auto-forfeit`);
-    }
-  });
+  // Disconnect handling is centralized in ws/socket.ts (grace period logic)
 }
 
 function emitTurnStart(io: Server, match: import('../matchmaking/entities.js').MatchRoom): void {

@@ -106,6 +106,7 @@ export function endMatch(
   reason: string
 ): void {
   if (match.turnTimer) clearTimeout(match.turnTimer);
+  if (match.defenderTimer) clearTimeout(match.defenderTimer);
   match.status = 'finished';
   match.winner = winnerKey;
 }
