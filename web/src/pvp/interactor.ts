@@ -1,6 +1,6 @@
 // PvP interactor — game logic orchestration
 
-import { connect, disconnect, getSocket, getKeys } from './adapter';
+import { connect, disconnect, getSocket, getKeys, waitForConnection } from './adapter';
 import { signAction, SignerKeys } from './signer';
 import type { PvPMatch, PvPPhase, PvPIncomingAttack, PvPResultConfirmed, PvPGameOver } from './entities';
 
@@ -131,7 +131,8 @@ export function initPvP(keys: SignerKeys, cbs: PvPCallbacks): void {
 
 export function findRandomMatch(gridSize: number): void {
   console.debug(TAG, `Emit: match:find_random (${gridSize}x${gridSize})`);
-  getSocket()?.emit('match:find_random', { gridSize });
+  waitForConnection().then(s => s.emit('match:find_random', { gridSize }))
+    .catch(err => { console.error(TAG, 'findRandomMatch failed:', err.message); callbacks?.onError(err.message); });
 }
 
 export function cancelSearch(): void {
@@ -141,12 +142,14 @@ export function cancelSearch(): void {
 
 export function createFriendMatch(gridSize: number): void {
   console.debug(TAG, `Emit: match:create_friend (${gridSize}x${gridSize})`);
-  getSocket()?.emit('match:create_friend', { gridSize });
+  waitForConnection().then(s => s.emit('match:create_friend', { gridSize }))
+    .catch(err => { console.error(TAG, 'createFriendMatch failed:', err.message); callbacks?.onError(err.message); });
 }
 
 export function joinFriendMatch(matchCode: string): void {
   console.debug(TAG, 'Emit: match:join_friend', matchCode);
-  getSocket()?.emit('match:join_friend', { matchCode });
+  waitForConnection().then(s => s.emit('match:join_friend', { matchCode }))
+    .catch(err => { console.error(TAG, 'joinFriendMatch failed:', err.message); callbacks?.onError(err.message); });
 }
 
 export function submitPlacement(matchId: string, boardHash: string, proof: number[]): void {

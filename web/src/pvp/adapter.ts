@@ -8,6 +8,7 @@ const TAG = '[PvP:adapter]';
 
 let socket: Socket | null = null;
 let currentKeys: SignerKeys | null = null;
+let connectPromise: Promise<Socket> | null = null;
 
 export function connect(keys: SignerKeys): Socket {
   if (socket?.connected) {
@@ -31,12 +32,23 @@ export function connect(keys: SignerKeys): Socket {
     reconnectionDelay: 1000,
   });
 
-  socket.on('connect', () => {
-    console.debug(TAG, 'Connected! socketId:', socket?.id);
-  });
+  connectPromise = new Promise<Socket>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.error(TAG, 'Connection timeout (10s)');
+      reject(new Error('Connection timeout'));
+    }, 10_000);
 
-  socket.on('connect_error', (err) => {
-    console.error(TAG, 'Connection error:', err.message);
+    socket!.on('connect', () => {
+      clearTimeout(timeout);
+      console.debug(TAG, 'Connected! socketId:', socket?.id);
+      resolve(socket!);
+    });
+
+    socket!.on('connect_error', (err) => {
+      clearTimeout(timeout);
+      console.error(TAG, 'Connection error:', err.message);
+      reject(err);
+    });
   });
 
   socket.on('disconnect', (reason) => {
@@ -58,6 +70,13 @@ export function connect(keys: SignerKeys): Socket {
   return socket;
 }
 
+/** Wait for socket to be connected before emitting */
+export function waitForConnection(): Promise<Socket> {
+  if (socket?.connected) return Promise.resolve(socket);
+  if (connectPromise) return connectPromise;
+  return Promise.reject(new Error('Socket not initialized'));
+}
+
 export function getSocket(): Socket | null {
   return socket;
 }
@@ -72,6 +91,7 @@ export function disconnect(): void {
     socket.disconnect();
     socket = null;
     currentKeys = null;
+    connectPromise = null;
   }
 }
 
