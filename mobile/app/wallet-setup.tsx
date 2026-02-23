@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
+import PinModal from '../src/components/UI/PinModal';
 import { useHaptics } from '../src/hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../src/shared/theme';
 import { createWallet, importWallet } from '../src/wallet/interactor';
@@ -17,22 +18,31 @@ export default function WalletSetupScreen() {
   const haptics = useHaptics();
 
   const [mode, setMode] = useState<Mode>('choose');
-  const [pin, setPin] = useState('');
-  const [pinConfirm, setPinConfirm] = useState('');
-  const pinConfirmRef = useRef<TextInput>(null);
   const [secretInput, setSecretInput] = useState('');
+  const [secretConfirmed, setSecretConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pinStep, setPinStep] = useState<'enter' | 'confirm'>('enter');
+  const [tempPin, setTempPin] = useState('');
 
-  const pinValid = pin.length >= 4 && pin.length <= 6 && /^\d+$/.test(pin);
-  const pinsMatch = pin === pinConfirm;
+  // Reset after pin mismatch error
+  useEffect(() => {
+    if (pinError) {
+      const timer = setTimeout(() => {
+        setPinError(false);
+        setPinStep('enter');
+        setTempPin('');
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [pinError]);
 
-  const handleCreate = async () => {
-    if (!pinValid || !pinsMatch) return;
+  const handleCreate = async (pinValue: string) => {
     setLoading(true);
     setError('');
     try {
-      await createWallet(pin);
+      await createWallet(pinValue);
       haptics.success();
       router.replace('/menu');
     } catch (e: any) {
@@ -41,18 +51,46 @@ export default function WalletSetupScreen() {
     }
   };
 
-  const handleImport = async () => {
-    if (!pinValid || !pinsMatch || !secretInput.trim()) return;
+  const handleImport = async (pinValue: string) => {
+    if (!secretInput.trim()) return;
     setLoading(true);
     setError('');
     try {
-      await importWallet(secretInput, pin);
+      await importWallet(secretInput, pinValue);
       haptics.success();
       router.replace('/menu');
     } catch (e: any) {
       setError(t('wallet.setup.errorInvalidKey'));
       setLoading(false);
     }
+  };
+
+  const handlePinSubmit = (enteredPin: string) => {
+    if (pinStep === 'enter') {
+      setTempPin(enteredPin);
+      setPinStep('confirm');
+      setPinError(false);
+    } else {
+      if (enteredPin === tempPin) {
+        if (mode === 'create') {
+          handleCreate(enteredPin);
+        } else {
+          handleImport(enteredPin);
+        }
+      } else {
+        setPinError(true);
+      }
+    }
+  };
+
+  const resetFlow = () => {
+    setMode('choose');
+    setTempPin('');
+    setPinStep('enter');
+    setPinError(false);
+    setSecretInput('');
+    setSecretConfirmed(false);
+    setError('');
   };
 
   if (loading) {
@@ -93,12 +131,52 @@ export default function WalletSetupScreen() {
     );
   }
 
+  // Import mode: show secret key input first, then PIN flow
+  if (mode === 'import' && !secretConfirmed) {
+    return (
+      <GradientContainer>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>{t('wallet.setup.importTitle')}</Text>
+            <View style={styles.divider} />
+          </View>
+          <View style={styles.form}>
+            <Text style={styles.label}>{t('wallet.setup.secretKeyLabel')}</Text>
+            <TextInput
+              style={[styles.input, styles.secretInput]}
+              value={secretInput}
+              onChangeText={setSecretInput}
+              placeholder={t('wallet.setup.secretKeyPlaceholder')}
+              placeholderTextColor={COLORS.text.secondary}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              multiline
+            />
+            <NavalButton
+              title={t('wallet.setup.importButton')}
+              onPress={() => setSecretConfirmed(true)}
+              disabled={!secretInput.trim()}
+              style={styles.submitButton}
+            />
+            <NavalButton
+              title={t('wallet.setup.back')}
+              variant="secondary"
+              size="small"
+              onPress={resetFlow}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </GradientContainer>
+    );
+  }
+
+  // Create or Import (after secret key entered): PIN flow via PinModal
   return (
     <GradientContainer>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>
             {mode === 'create' ? t('wallet.setup.createTitle') : t('wallet.setup.importTitle')}
@@ -106,80 +184,18 @@ export default function WalletSetupScreen() {
           <View style={styles.divider} />
         </View>
 
-        <View style={styles.form}>
-          {mode === 'import' && (
-            <>
-              <Text style={styles.label}>{t('wallet.setup.secretKeyLabel')}</Text>
-              <TextInput
-                style={[styles.input, styles.secretInput]}
-                value={secretInput}
-                onChangeText={setSecretInput}
-                placeholder={t('wallet.setup.secretKeyPlaceholder')}
-                placeholderTextColor={COLORS.text.secondary}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                multiline
-              />
-            </>
-          )}
+        <PinModal
+          visible={true}
+          title={pinStep === 'enter'
+            ? t('wallet.setup.pinLabel')
+            : t('wallet.setup.pinConfirmLabel')}
+          error={pinError}
+          onSubmit={handlePinSubmit}
+          onCancel={resetFlow}
+        />
 
-          <Text style={styles.label}>{t('wallet.setup.pinLabel')}</Text>
-          <TextInput
-            style={styles.input}
-            value={pin}
-            onChangeText={(text) => {
-              const digits = text.replace(/\D/g, '');
-              setPin(digits);
-              if (digits.length >= 4) {
-                setTimeout(() => pinConfirmRef.current?.focus(), 50);
-              }
-            }}
-            placeholder={t('wallet.setup.pinPlaceholder')}
-            placeholderTextColor={COLORS.text.secondary}
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={6}
-          />
-
-          <Text style={styles.label}>{t('wallet.setup.pinConfirmLabel')}</Text>
-          <TextInput
-            ref={pinConfirmRef}
-            style={styles.input}
-            value={pinConfirm}
-            onChangeText={(text) => {
-              const digits = text.replace(/\D/g, '');
-              setPinConfirm(digits);
-            }}
-            placeholder={t('wallet.setup.pinConfirmPlaceholder')}
-            placeholderTextColor={COLORS.text.secondary}
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={6}
-            onSubmitEditing={mode === 'create' ? handleCreate : handleImport}
-          />
-
-          {pin.length > 0 && !pinValid && (
-            <Text style={styles.errorText}>{t('wallet.setup.pinInvalid')}</Text>
-          )}
-          {pinConfirm.length > 0 && !pinsMatch && (
-            <Text style={styles.errorText}>{t('wallet.setup.pinMismatch')}</Text>
-          )}
-          {error !== '' && <Text style={styles.errorText}>{error}</Text>}
-
-          <NavalButton
-            title={mode === 'create' ? t('wallet.setup.createButton') : t('wallet.setup.importButton')}
-            onPress={mode === 'create' ? handleCreate : handleImport}
-            disabled={!pinValid || !pinsMatch || (mode === 'import' && !secretInput.trim())}
-            style={styles.submitButton}
-          />
-          <NavalButton
-            title={t('wallet.setup.back')}
-            variant="secondary"
-            size="small"
-            onPress={() => { setMode('choose'); setPin(''); setPinConfirm(''); setSecretInput(''); setError(''); }}
-          />
-        </View>
-      </KeyboardAvoidingView>
+        {error !== '' && <Text style={styles.errorText}>{error}</Text>}
+      </View>
     </GradientContainer>
   );
 }
@@ -261,6 +277,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.text.danger,
     letterSpacing: 1,
+    textAlign: 'center',
+    marginTop: SPACING.md,
   },
   submitButton: {
     marginTop: SPACING.md,
