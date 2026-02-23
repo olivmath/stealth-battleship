@@ -21,6 +21,7 @@ import { Position, PlacedShip } from '../shared/entities';
 import { shotProof, toShipTuples } from '../zk';
 import type { ShipTuples } from '../zk';
 import { DIFFICULTY_CONFIG } from '../shared/constants';
+import { ZKProofLog, ZKLogEntry } from '../components/UI/ZKProofLog';
 import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../shared/theme';
 
 const SCREEN_PADDING = LAYOUT.screenPadding;
@@ -55,6 +56,7 @@ export default function Battle() {
   const GRID_TOTAL_WIDTH = mainCellSize * gridSize + FULL_LABEL;
   const MINI_MAX_WIDTH = Math.floor(GRID_TOTAL_WIDTH * 0.75);
 
+  const [zkLogs, setZkLogs] = useState<ZKLogEntry[]>([]);
   const [lastEnemyAttack, setLastEnemyAttack] = useState<Position | null>(null);
   const [sunkShip, setSunkShip] = useState<PlacedShip | null>(null);
   const [showSunkModal, setShowSunkModal] = useState(false);
@@ -85,10 +87,28 @@ export default function Battle() {
     shotProof({ ships, nonce, boardHash, row, col, isHit }).then((result) => {
       const elapsed = ((performance.now() - shotStart) / 1000).toFixed(1);
       console.log(`[ZK] shotProof ${label} OK in ${elapsed}s - proof: ${result.proof.length} bytes`);
+      setZkLogs(prev => [...prev, {
+        id: `${label}-${Date.now()}`,
+        circuit: 'shot_proof',
+        timeMs: performance.now() - shotStart,
+        sizeBytes: result.proof.length,
+        status: 'ok',
+        timestamp: Date.now(),
+        label,
+      }]);
       return result;
     }).catch((err: any) => {
       const elapsed = ((performance.now() - shotStart) / 1000).toFixed(1);
       console.warn(`[ZK] shotProof ${label} FAILED after ${elapsed}s:`, err.message);
+      setZkLogs(prev => [...prev, {
+        id: `${label}-${Date.now()}`,
+        circuit: 'shot_proof',
+        timeMs: performance.now() - shotStart,
+        sizeBytes: 0,
+        status: 'fail',
+        timestamp: Date.now(),
+        label,
+      }]);
       return null;
     }).finally(() => {
       proofQueueRef.current--;
@@ -474,6 +494,7 @@ export default function Battle() {
       `}</style>
 
       <SunkShipModal visible={showSunkModal} ship={sunkShip} onDismiss={() => setShowSunkModal(false)} />
+      <ZKProofLog entries={zkLogs} />
     </PageShell>
   );
 }
