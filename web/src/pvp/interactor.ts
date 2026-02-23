@@ -16,6 +16,7 @@ export interface PvPCallbacks {
   onTurnStart: (data: { currentTurn: string; turnNumber: number; deadline: number }) => void;
   onGameOver: (data: PvPGameOver) => void;
   onOpponentForfeit: (reason: string) => void;
+  onFinalized?: (data: { turnsProofHash: string; txHash: string }) => void;
   onError: (message: string) => void;
 }
 
@@ -127,6 +128,11 @@ export function initPvP(keys: SignerKeys, cbs: PvPCallbacks): void {
     console.error(TAG, 'Event: battle:error', data);
     cbs.onError(data.message);
   });
+
+  socket.on('battle:finalized', (data: { turnsProofHash: string; txHash: string }) => {
+    console.log(TAG, 'Match finalized:', data);
+    cbs.onFinalized?.(data);
+  });
 }
 
 export function findRandomMatch(gridSize: number): void {
@@ -219,6 +225,20 @@ export function sendShotResult(
     sunkShipName,
     sunkShipSize,
   });
+}
+
+export function sendReveal(matchId: string, ships: any[], nonce: string): void {
+  const keys = getKeys();
+  if (!keys) {
+    console.error(TAG, 'sendReveal: no keys available');
+    return;
+  }
+
+  const data = { matchId, ships, nonce };
+  const { timestamp, signature } = signAction(keys, 'battle:reveal', data);
+  console.debug(TAG, 'Emit: battle:reveal', { matchId: matchId.slice(0, 8) });
+
+  getSocket()?.emit('battle:reveal', { matchId, ships, nonce, timestamp, signature });
 }
 
 export function sendForfeit(matchId: string): void {

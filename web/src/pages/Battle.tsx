@@ -219,20 +219,28 @@ export default function Battle() {
     const sunkShipName = result === 'sunk' ? newShips.find(s => s.id === shipId)?.name : undefined;
     const sunkShipSize = result === 'sunk' ? newShips.find(s => s.id === shipId)?.size : undefined;
 
-    // Send shot result to server with ZK proof
-    const proofResult = result === 'sunk' ? 'hit' : result;
-    if (state.commitment?.playerZk) {
-      const { nonce, boardHash } = state.commitment.playerZk;
-      try {
-        const playerTuples = toShipTuples(state.playerShips);
-        // Generate proof in background, send result immediately
-        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
-        generateShotProof(playerTuples, nonce, boardHash, atk.row, atk.col, result !== 'miss', 'opponent->player');
-      } catch (e) {
-        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
-      }
+    // Send shot result to server with real ZK proof
+    const proofResultLabel = result === 'sunk' ? 'hit' : result;
+    const commitment = state.commitment?.playerZk;
+    if (commitment) {
+      (async () => {
+        try {
+          const proofResult = await shotProof({
+            ships: toShipTuples(state.playerShips),
+            nonce: String(commitment.nonce),
+            boardHash: commitment.boardHash,
+            row: atk.row,
+            col: atk.col,
+            isHit: result !== 'miss',
+          });
+          pvp.respondShotResult(atk.row, atk.col, proofResultLabel as 'hit' | 'miss', Array.from(proofResult.proof), sunkShipName, sunkShipSize);
+        } catch (err) {
+          console.error('shot_proof generation failed:', err);
+          pvp.respondShotResult(atk.row, atk.col, proofResultLabel as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
+        }
+      })();
     } else {
-      pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
+      pvp.respondShotResult(atk.row, atk.col, proofResultLabel as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
     }
   }, [pvp.lastIncomingAttack, isPvP]);
 
@@ -240,6 +248,13 @@ export default function Battle() {
   useEffect(() => {
     if (!isPvP || !pvp.gameOver) return;
     const isWinner = pvp.gameOver.winner === pvp.myPublicKeyHex;
+
+    // Send board reveal to server for turns_proof verification
+    const commitment = state.commitment?.playerZk;
+    if (commitment && pvp.match?.matchId) {
+      pvp.sendReveal(pvp.match.matchId, toShipTuples(state.playerShips), String(commitment.nonce));
+    }
+
     const timer = setTimeout(() => {
       endGame({ won: isWinner, tracking: state.tracking, opponentShips: state.opponentShips, playerShips: state.playerShips, gridSize, difficulty, navigateTo: gameoverRoute, commitment: state.commitment });
     }, 1000);

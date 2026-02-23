@@ -10,6 +10,7 @@ import {
   submitPlacement as doSubmitPlacement,
   sendAttack as doSendAttack,
   sendShotResult as doSendShotResult,
+  sendReveal as doSendReveal,
   sendForfeit as doSendForfeit,
 } from './interactor';
 
@@ -34,6 +35,7 @@ interface PvPContextValue extends PvPState {
   submitPlacement: (boardHash: string, proof: number[]) => void;
   attack: (row: number, col: number) => void;
   respondShotResult: (row: number, col: number, result: 'hit' | 'miss', proof: number[], sunkShipName?: string, sunkShipSize?: number) => void;
+  sendReveal: (matchId: string, ships: any[], nonce: string) => void;
   forfeit: () => void;
   reset: () => void;
 }
@@ -179,6 +181,10 @@ export function PvPProvider({ children }: { children: React.ReactNode }) {
     doSendShotResult(state.match.matchId, row, col, result, proof, sunkShipName, sunkShipSize);
   }, [state.match]);
 
+  const sendReveal = useCallback((matchId: string, ships: any[], nonce: string) => {
+    doSendReveal(matchId, ships, nonce);
+  }, []);
+
   const forfeit = useCallback(() => {
     if (!state.match) return;
     doSendForfeit(state.match.matchId);
@@ -207,6 +213,7 @@ export function PvPProvider({ children }: { children: React.ReactNode }) {
       submitPlacement,
       attack,
       respondShotResult,
+      sendReveal,
       forfeit,
       reset,
     }}>
