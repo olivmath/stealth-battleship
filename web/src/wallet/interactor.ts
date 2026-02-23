@@ -54,6 +54,29 @@ export async function fundWithFriendbot(publicKey: string): Promise<void> {
   }
 }
 
+export async function sendPayment(secretKey: string, destination: string, amountXlm: string): Promise<string> {
+  const { Keypair, TransactionBuilder, Networks, Operation, Asset, Horizon } = await import('@stellar/stellar-sdk');
+  const server = new Horizon.Server('https://horizon-testnet.stellar.org');
+  const kp = Keypair.fromSecret(secretKey);
+  const account = await server.loadAccount(kp.publicKey());
+
+  const tx = new TransactionBuilder(account, {
+    fee: '100',
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(Operation.payment({
+      destination,
+      asset: Asset.native(),
+      amount: amountXlm,
+    }))
+    .setTimeout(30)
+    .build();
+
+  tx.sign(kp);
+  const result = await server.submitTransaction(tx);
+  return (result as any).hash;
+}
+
 export async function getBalance(publicKey: string): Promise<string> {
   try {
     const res = await fetch(`${HORIZON_TESTNET}/accounts/${publicKey}`);

@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import app from './app.js';
 import { loadCircuits } from './shared/circuits.js';
 import { createSocketServer } from './ws/socket.js';
+import { initServerWallet } from './payment/interactor.js';
 import { c } from './log.js';
 
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,14 @@ async function main() {
   await loadCircuits();
   console.log(c.cyan('[server]') + ` Circuits ready ${c.ok('✓')} ${c.time(`(${Date.now() - t0}ms)`)}`);
   console.log('');
+
+  // Initialize Stellar server wallet (optional — server works without it)
+  try {
+    initServerWallet();
+  } catch (err: any) {
+    console.log(c.yellow('[payment]') + ` Wallet not initialized: ${err.message}`);
+    console.log(c.yellow('[payment]') + ' PvP payment gate will be unavailable');
+  }
 
   const httpServer = createServer(app);
   const io = createSocketServer(httpServer);
