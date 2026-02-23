@@ -10,6 +10,7 @@ import {
   TURN_TIMEOUT_MS, DEFENDER_RESPONSE_TIMEOUT_MS,
 } from './entities.js';
 import { c } from '../log.js';
+import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats } from '../shared/persistence.js';
 
 function getOpponentSocketId(
   match: { player1: { publicKey: string; socketId: string }; player2?: { publicKey: string; socketId: string } },
@@ -60,6 +61,14 @@ export function registerBattleHandlers(
     }
 
     if (result.bothReady) {
+      // Persist match to Supabase
+      void persistMatch({
+        id: match.id,
+        gridSize: match.gridSize,
+        player1Pk: match.player1.publicKey,
+        player2Pk: match.player2!.publicKey,
+      });
+
       // Both ready — start battle
       io.to(match.player1.socketId).emit('placement:both_ready', {
         firstTurn: result.firstTurn,
@@ -136,6 +145,13 @@ export function registerBattleHandlers(
         reason: 'defender_timeout',
         turnNumber: match.turnNumber,
       });
+      // Persist defender timeout
+      const loserKey = publicKey === match.player1.publicKey
+        ? match.player2!.publicKey
+        : match.player1.publicKey;
+      void persistMatchEnd(match.id, publicKey, 'defender_timeout', match.turnNumber);
+      void upsertPlayerStats(publicKey, true);
+      void upsertPlayerStats(loserKey, false);
       console.log(c.yellow('[battle]') + ` Match ${match.id} — DEFENDER TIMEOUT`);
     }, DEFENDER_RESPONSE_TIMEOUT_MS);
 
@@ -174,6 +190,12 @@ export function registerBattleHandlers(
 
     recordShotResult(match, publicKey, data.row, data.col, data.result);
 
+    // Persist attack to Supabase (attacker is the opponent of the defender/responder)
+    const attackerPk = publicKey === match.player1.publicKey
+      ? match.player2!.publicKey
+      : match.player1.publicKey;
+    void persistAttack(match.id, attackerPk, data.row, data.col, data.result, match.turnNumber);
+
     // Notify attacker of confirmed result
     const attackerSocketId = getOpponentSocketId(match, publicKey);
     if (attackerSocketId) {
@@ -190,23 +212,23 @@ export function registerBattleHandlers(
     console.log(c.blue('[battle]') + ` ${shortKey}... responds: ${data.result} at (${data.row},${data.col})`);
 
     // Check win condition
-    const attackerKey = publicKey === match.player1.publicKey
-      ? match.player2!.publicKey
-      : match.player1.publicKey;
-
     if (checkWinCondition(match, publicKey)) {
-      endMatch(match, attackerKey, 'all_ships_sunk');
+      endMatch(match, attackerPk, 'all_ships_sunk');
       io.to(match.player1.socketId).emit('battle:game_over', {
-        winner: attackerKey,
+        winner: attackerPk,
         reason: 'all_ships_sunk',
         turnNumber: match.turnNumber,
       });
       io.to(match.player2!.socketId).emit('battle:game_over', {
-        winner: attackerKey,
+        winner: attackerPk,
         reason: 'all_ships_sunk',
         turnNumber: match.turnNumber,
       });
-      console.log(c.boldGreen('[battle]') + ` Match ${match.id} — WINNER: ${attackerKey.slice(0, 8)}...`);
+      // Persist match end and player stats
+      void persistMatchEnd(match.id, attackerPk, 'all_ships_sunk', match.turnNumber);
+      void upsertPlayerStats(attackerPk, true);
+      void upsertPlayerStats(publicKey, false);
+      console.log(c.boldGreen('[battle]') + ` Match ${match.id} — WINNER: ${attackerPk.slice(0, 8)}...`);
       return;
     }
 
@@ -238,6 +260,11 @@ export function registerBattleHandlers(
         reason: 'forfeit',
       });
     }
+
+    // Persist forfeit
+    void persistMatchEnd(match.id, winnerKey, 'forfeit', match.turnNumber);
+    void upsertPlayerStats(winnerKey, true);
+    void upsertPlayerStats(publicKey, false);
 
     console.log(c.yellow('[battle]') + ` ${shortKey}... forfeited match ${match.id}`);
   });
@@ -279,6 +306,11 @@ function emitTurnStart(io: Server, match: import('../matchmaking/entities.js').M
       reason: 'timeout',
       turnNumber: m.turnNumber,
     });
+
+    // Persist timeout
+    void persistMatchEnd(m.id, winnerKey, 'timeout', m.turnNumber);
+    void upsertPlayerStats(winnerKey, true);
+    void upsertPlayerStats(timedOutPlayer, false);
 
     console.log(c.yellow('[battle]') + ` Match ${m.id} — TIMEOUT: ${timedOutPlayer.slice(0, 8)}...`);
   });
