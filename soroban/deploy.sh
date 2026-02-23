@@ -36,15 +36,15 @@ if [ -z "${STELLAR_SERVER_SECRET:-}" ]; then
   exit 1
 fi
 
-ADMIN=$(stellar keys address --secret-key "$STELLAR_SERVER_SECRET" 2>/dev/null || echo "")
+ADMIN=$(stellar keys address server 2>/dev/null || echo "")
 if [ -z "$ADMIN" ]; then
-  echo "Deriving admin from secret key..."
-  ADMIN=$(stellar keys address server 2>/dev/null || echo "")
+  # Derive from secret key using node (searches backend for stellar-sdk)
+  BACKEND_DIR="${SCRIPT_DIR}/../backend"
+  ADMIN=$(cd "$BACKEND_DIR" && node -e "const{Keypair}=require('@stellar/stellar-sdk');console.log(Keypair.fromSecret(process.env.STELLAR_SERVER_SECRET).publicKey())" 2>/dev/null || echo "")
 fi
 
 if [ -z "$ADMIN" ]; then
-  echo "ERROR: Could not derive admin address. Set up 'server' identity:"
-  echo "  stellar keys generate server --secret-key \$STELLAR_SERVER_SECRET --network testnet"
+  echo "ERROR: Could not derive admin address."
   exit 1
 fi
 
@@ -55,7 +55,7 @@ echo ""
 
 CONTRACT_ID=$(stellar contract deploy \
   --wasm "$WASM_PATH" \
-  --source server \
+  --source-account "$STELLAR_SERVER_SECRET" \
   --network testnet \
   -- \
   --admin "$ADMIN" \
