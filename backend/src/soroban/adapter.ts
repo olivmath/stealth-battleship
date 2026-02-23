@@ -39,11 +39,16 @@ function getContractId(): string {
   return contractId;
 }
 
+interface TxResult {
+  txHash: string;
+  returnValue?: xdr.ScVal;
+}
+
 async function buildSignSubmit(
   kp: Keypair,
   method: string,
   args: xdr.ScVal[],
-): Promise<string> {
+): Promise<TxResult> {
   const server = getServer();
   const account = await server.getAccount(kp.publicKey());
   const contract = new Contract(getContractId());
@@ -83,7 +88,11 @@ async function buildSignSubmit(
     throw new Error(`Transaction failed on-chain: ${sendResult.hash}`);
   }
 
-  return sendResult.hash;
+  const returnValue = getResult.status === 'SUCCESS'
+    ? (getResult as rpc.Api.GetSuccessfulTransactionResponse).returnValue
+    : undefined;
+
+  return { txHash: sendResult.hash, returnValue };
 }
 
 function proofToBytes(proof: number[]): Buffer {
@@ -112,7 +121,12 @@ export interface OpenMatchParams {
   pubInputs2: string[];
 }
 
-export async function openMatchOnChain(params: OpenMatchParams): Promise<string> {
+export interface OpenMatchResult {
+  txHash: string;
+  sessionId: number;
+}
+
+export async function openMatchOnChain(params: OpenMatchParams): Promise<OpenMatchResult> {
   const kp = getServerKeypair();
 
   const args = [
@@ -124,9 +138,26 @@ export async function openMatchOnChain(params: OpenMatchParams): Promise<string>
     nativeToScVal(pubInputsToBytes(params.pubInputs2), { type: 'bytes' }),
   ];
 
-  const txHash = await buildSignSubmit(kp, 'open_match', args);
-  console.log(c.cyan('[soroban]') + ` open_match tx: ${txHash}`);
-  return txHash;
+  const { txHash, returnValue } = await buildSignSubmit(kp, 'open_match', args);
+
+  // Parse session_id (u32) from contract return value: Ok(session_id)
+  let sessionId = 0;
+  if (returnValue) {
+    try {
+      // Return is Result<u32, Error> — unwrap the Ok variant
+      const val = returnValue.value();
+      if (typeof val === 'number') {
+        sessionId = val;
+      } else if (returnValue.switch().name === 'scvU32') {
+        sessionId = returnValue.u32();
+      }
+    } catch {
+      debug('[soroban]', 'Could not parse session_id from return value');
+    }
+  }
+
+  console.log(c.cyan('[soroban]') + ` open_match tx: ${txHash}, sessionId: ${sessionId}`);
+  return { txHash, sessionId };
 }
 
 export interface CloseMatchParams {
@@ -146,7 +177,7 @@ export async function closeMatchOnChain(params: CloseMatchParams): Promise<strin
     nativeToScVal(params.player1Won, { type: 'bool' }),
   ];
 
-  const txHash = await buildSignSubmit(kp, 'close_match', args);
+  const { txHash } = await buildSignSubmit(kp, 'close_match', args);
   console.log(c.cyan('[soroban]') + ` close_match tx: ${txHash}`);
   return txHash;
 }

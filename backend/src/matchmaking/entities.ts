@@ -19,6 +19,7 @@ export interface MatchRoom {
   turnTimer?: ReturnType<typeof setTimeout>;
   defenderTimer?: ReturnType<typeof setTimeout>;
   winner?: string;          // publicKey of winner
+  sorobanSessionId?: number; // session_id returned from on-chain open_match
   shipSizes: number[];
   player1Reveal?: { ships: number[][]; nonce: string };
   player2Reveal?: { ships: number[][]; nonce: string };

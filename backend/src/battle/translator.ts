@@ -116,8 +116,9 @@ export function registerBattleHandlers(
           p1Pk: serverAddr, p2Pk: serverAddr, // V1: server address for both (no player wallets yet)
           proof1: match.player1BoardProof!, pubInputs1,
           proof2: match.player2BoardProof!, pubInputs2,
-        }).then((txHash) => {
-          debug('[soroban]', `open_match tx confirmed: ${txHash}`);
+        }).then(({ txHash, sessionId }) => {
+          match.sorobanSessionId = sessionId;
+          debug('[soroban]', `open_match tx confirmed: ${txHash}, sessionId: ${sessionId}`);
         }).catch((err) => {
           console.error(c.yellow('[soroban]') + ` open_match failed: ${err.message}`);
         });
@@ -474,7 +475,7 @@ export function registerBattleHandlers(
             match.winner === match.player1.publicKey ? '1' : '0',
           ];
           void closeMatchOnChain({
-            sessionId: 0, // TODO: store session_id from open_match response
+            sessionId: match.sorobanSessionId ?? 0,
             proof: Array.from(proof.proof),
             pubInputs: turnsPublicInputs,
             player1Won: match.winner === match.player1.publicKey,
