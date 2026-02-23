@@ -7,9 +7,9 @@ const horizon = new Horizon.Server('https://horizon-testnet.stellar.org');
 let serverPublicKey: string | null = null;
 
 export function initServerWallet(): string {
-  const seed = process.env.STELLAR_SERVER_SEED;
-  if (!seed) throw new Error('STELLAR_SERVER_SEED not set');
-  const kp = Keypair.fromSecret(seed);
+  const secret = process.env.STELLAR_SERVER_SECRET;
+  if (!secret) throw new Error('STELLAR_SERVER_SECRET not set');
+  const kp = Keypair.fromSecret(secret);
   serverPublicKey = kp.publicKey();
   console.log(c.cyan('[payment]') + ` Server wallet: ${serverPublicKey}`);
   return serverPublicKey;

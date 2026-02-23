@@ -11,7 +11,7 @@ import { useResponsive } from '../hooks/useResponsive';
 import { getLevelInfo } from '../stats/interactor';
 import { confirm } from '../hooks/useConfirm';
 import { COLORS, FONTS, SPACING } from '../shared/theme';
-import { Ship3D } from '../components/Ship/Ship3D';
+import { ShipModelViewer } from '../components/Ship/ShipModelViewer';
 
 export default function Menu() {
   const { t } = useTranslation();
@@ -22,6 +22,16 @@ export default function Menu() {
   const haptics = useHaptics();
   const { isMobile, isDesktop } = useResponsive();
   const [animStage, setAnimStage] = useState(0);
+
+  // Load player name from storage on refresh
+  useEffect(() => {
+    if (!state.playerName) {
+      import('../game/adapter').then(m => m.getPlayerName()).then(name => {
+        if (name) dispatch({ type: 'SET_PLAYER', name });
+        else navigate('/login', { replace: true });
+      });
+    }
+  }, [state.playerName, dispatch, navigate]);
 
   useEffect(() => {
     refresh();
@@ -86,7 +96,7 @@ export default function Menu() {
       subtitle={t('menu.welcome')}
     >
       <div style={styles.shipContainer}>
-        <Ship3D />
+        <ShipModelViewer />
       </div>
 
       <div style={styles.actions}>
@@ -191,7 +201,7 @@ export default function Menu() {
 
 const styles: Record<string, React.CSSProperties> = {
   shipContainer: {
-    maxHeight: 200,
+    maxHeight: 280,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
