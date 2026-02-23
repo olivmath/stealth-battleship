@@ -24,22 +24,26 @@ https://github.com/olivmath/battleship-zk/raw/main/assets/zkbb.mp4
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/01-login.png" width="200" /><br/><sub>Login</sub></td>
-    <td align="center"><img src="screenshots/02-wallet-setup.png" width="200" /><br/><sub>Wallet Setup</sub></td>
+    <td align="center"><img src="screenshots/01-splash.png" width="200" /><br/><sub>Splash</sub></td>
+    <td align="center"><img src="screenshots/02-login.png" width="200" /><br/><sub>Login</sub></td>
     <td align="center"><img src="screenshots/03-menu.png" width="200" /><br/><sub>Menu</sub></td>
-    <td align="center"><img src="screenshots/04-settings.png" width="200" /><br/><sub>Settings</sub></td>
+    <td align="center"><img src="screenshots/04-tutorial.png" width="200" /><br/><sub>Tutorial</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/05-profile.png" width="200" /><br/><sub>Profile</sub></td>
-    <td align="center"><img src="screenshots/06-match-history.png" width="200" /><br/><sub>Match History</sub></td>
-    <td align="center"><img src="screenshots/07-wallet.png" width="200" /><br/><sub>Wallet</sub></td>
-    <td align="center"><img src="screenshots/08-tutorial.png" width="200" /><br/><sub>Tutorial</sub></td>
+    <td align="center"><img src="screenshots/05-placement.png" width="200" /><br/><sub>Ship Placement</sub></td>
+    <td align="center"><img src="screenshots/06-settings.png" width="200" /><br/><sub>Settings</sub></td>
+    <td align="center"><img src="screenshots/07-profile.png" width="200" /><br/><sub>Profile</sub></td>
+    <td align="center"><img src="screenshots/08-match-history.png" width="200" /><br/><sub>Match History</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/09-pvp-mode.png" width="200" /><br/><sub>PvP Mode</sub></td>
-    <td align="center"><img src="screenshots/10-pvp-lobby.png" width="200" /><br/><sub>PvP Lobby</sub></td>
-    <td align="center"><img src="screenshots/11-pvp-friend.png" width="200" /><br/><sub>PvP Friend</sub></td>
-    <td align="center"><img src="screenshots/12-placement.png" width="200" /><br/><sub>Ship Placement</sub></td>
+    <td align="center"><img src="screenshots/09-match-detail.png" width="200" /><br/><sub>Match Detail</sub></td>
+    <td align="center"><img src="screenshots/10-wallet.png" width="200" /><br/><sub>Wallet</sub></td>
+    <td align="center"><img src="screenshots/11-wallet-setup.png" width="200" /><br/><sub>Wallet Setup</sub></td>
+    <td align="center"><img src="screenshots/12-pvp-mode.png" width="200" /><br/><sub>PvP Mode</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/13-pvp-friend.png" width="200" /><br/><sub>PvP Friend</sub></td>
+    <td align="center"><img src="screenshots/14-pvp-lobby.png" width="200" /><br/><sub>PvP Lobby</sub></td>
   </tr>
 </table>
 

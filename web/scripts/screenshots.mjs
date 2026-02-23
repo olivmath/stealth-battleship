@@ -133,6 +133,7 @@ async function seedLocalStorage(page) {
     localStorage.setItem('@battleship_settings', JSON.stringify(settings));
     localStorage.setItem('@battleship_history', JSON.stringify(history));
     localStorage.setItem('@battleship_tutorial', 'true');
+    localStorage.setItem('@stealth_language', 'en');
   }, {
     player: SEED_PLAYER,
     stats: SEED_STATS,
