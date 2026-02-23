@@ -3,11 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GameProvider } from './game/translator';
 import { PvPProvider } from './pvp/translator';
 import { RadarSpinner } from './components/UI/RadarSpinner';
-import { initZK, ServerZKProvider, WebWasmZKProvider } from './zk';
+import { initZK, WebWasmZKProvider } from './zk';
 import './i18n';
-
-const ZK_MODE = import.meta.env.VITE_ZK_MODE || 'local';
-const ZK_SERVER_URL = import.meta.env.VITE_ZK_SERVER_URL || 'http://localhost:3001';
 
 // Lazy load all pages
 const Splash = lazy(() => import('./pages/Splash'));
@@ -44,18 +41,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const provider = ZK_MODE === 'server'
-      ? new ServerZKProvider(ZK_SERVER_URL)
-      : new WebWasmZKProvider();
-
-    console.log(`[ZK] Initializing ZK provider (mode=${ZK_MODE})...`);
-    initZK(provider).then(() => {
-      console.log('[ZK] Provider ready');
-      setZkReady(true);
-    }).catch((err) => {
-      console.error('[ZK] Provider init failed:', err);
-      setZkReady(true); // proceed anyway, proofs will fail gracefully
-    });
+    const provider = new WebWasmZKProvider();
+    initZK(provider)
+      .then(() => setZkReady(true))
+      .catch((err) => {
+        console.error('ZK init failed:', err);
+        setZkReady(true); // graceful
+      });
   }, []);
 
   if (!fontsReady || !zkReady) {

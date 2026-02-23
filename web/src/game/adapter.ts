@@ -1,13 +1,4 @@
 import { storage } from '../shared/storage';
-import { IGameRepository } from './interactor';
-import { GameState } from '../shared/entities';
-
-export class InMemoryGameRepository implements IGameRepository {
-  private state: GameState | null = null;
-  async saveGameState(state: GameState): Promise<void> { this.state = state; }
-  async getGameState(): Promise<GameState | null> { return this.state; }
-  async resetGame(): Promise<void> { this.state = null; }
-}
 
 const USER_KEY = '@battleship_user';
 

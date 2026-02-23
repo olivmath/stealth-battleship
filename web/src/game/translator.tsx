@@ -6,8 +6,14 @@ import { createEmptyBoard, createInitialAIState } from './engine';
 import { computeMatchStats } from '../stats/interactor';
 import { updateStatsAfterGame, saveMatchToHistory } from '../stats/adapter';
 import { getPlayerName, savePlayerName } from './adapter';
-import { InMemoryGameRepository } from './adapter';
 import { IGameRepository, StartGameUseCase, PlaceShipUseCase, AttackUseCase } from './interactor';
+
+class InMemoryGameRepository implements IGameRepository {
+  private state: GameState | null = null;
+  async saveGameState(state: GameState): Promise<void> { this.state = state; }
+  async getGameState(): Promise<GameState | null> { return this.state; }
+  async resetGame(): Promise<void> { this.state = null; }
+}
 
 function createInitialTracking(): BattleTracking {
   return {
