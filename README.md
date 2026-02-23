@@ -18,7 +18,7 @@ Command your fleet in the ultimate game of deception — where **no one can chea
 
 ## Demo
 
-https://github.com/olivmath/battleship-zk/raw/main/assets/zkbb.mp4
+https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
 
 ## Screenshots
 
@@ -88,5 +88,5 @@ MIT
 
 <p align="center">
   Built for <strong>Stellar Hacks: ZK Gaming 2026</strong><br/>
-  <a href="https://github.com/olivmath/battleship-zk">github.com/olivmath/battleship-zk</a>
+  <a href="https://github.com/olivmath/stealth-battleship">github.com/olivmath/stealth-battleship</a>
 </p>
