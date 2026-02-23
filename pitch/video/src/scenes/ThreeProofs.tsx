@@ -92,16 +92,18 @@ const MatrixBracket: React.FC<{
   height: number;
   color?: string;
   strokeWidth?: number;
-}> = ({ side, height, color = colors.muted, strokeWidth = 2.5 }) => {
-  const w = 14;
-  const pad = 3;
+}> = ({ side, height, color = colors.white, strokeWidth = 3.5 }) => {
+  const w = 22;
+  const pad = 4;
+  const overshoot = 6;
+  const totalH = height + overshoot * 2;
   const d =
     side === "left"
-      ? `M ${w - pad} ${pad} L ${pad} ${pad} L ${pad} ${height - pad} L ${w - pad} ${height - pad}`
-      : `M ${pad} ${pad} L ${w - pad} ${pad} L ${w - pad} ${height - pad} L ${pad} ${height - pad}`;
+      ? `M ${w - pad} ${pad} L ${pad} ${pad} L ${pad} ${totalH - pad} L ${w - pad} ${totalH - pad}`
+      : `M ${pad} ${pad} L ${w - pad} ${pad} L ${w - pad} ${totalH - pad} L ${pad} ${totalH - pad}`;
 
   return (
-    <svg width={w} height={height} style={{ flexShrink: 0 }}>
+    <svg width={w} height={totalH} style={{ flexShrink: 0, marginTop: -overshoot }}>
       <path d={d} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" />
     </svg>
   );
