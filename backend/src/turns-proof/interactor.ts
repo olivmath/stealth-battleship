@@ -59,5 +59,5 @@ export async function proveTurnsProof(
   console.log(`${tag} ${c.bgGreen(`COMPLETE — ${totalMs}ms`)}`);
   console.log('');
 
-  return { proof: Array.from(proofResult.proof) };
+  return { proof: Array.from(proofResult.proof), publicInputs: proofResult.publicInputs };
 }

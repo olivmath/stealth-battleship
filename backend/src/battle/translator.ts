@@ -110,24 +110,24 @@ export function registerBattleHandlers(
         player2Pk: match.player2!.publicKey,
       });
 
-      // Fire-and-forget: submit board proofs on-chain
+      // Fire-and-forget: submit board proofs on-chain (3 txs: verify P1, verify P2, open_match)
       try {
         const serverAddr = getServerPublicKey();
         const shipSizes1 = getShipSizes(match.gridSize);
         const pubInputs1 = [match.player1BoardHash!, ...shipSizes1.map(String)];
         const pubInputs2 = [match.player2BoardHash!, ...shipSizes1.map(String)];
+        console.log(c.cyan('[stellar]') + ` opening match ${c.boldCyan(match.id)} on-chain (3 txs)...`);
         void openMatchOnChain({
-          p1Pk: serverAddr, p2Pk: serverAddr, // V1: server address for both (no player wallets yet)
+          p1Pk: serverAddr, p2Pk: serverAddr,
           proof1: match.player1BoardProof!, pubInputs1,
           proof2: match.player2BoardProof!, pubInputs2,
-        }).then(({ txHash, sessionId }) => {
+        }).then(({ sessionId }) => {
           match.sorobanSessionId = sessionId;
-          console.log(c.cyan('[stellar]') + ` open_match tx confirmed → tx=${c.boldCyan(txHash)} sessionId=${sessionId}`);
         }).catch((err) => {
-          console.error(c.yellow('[soroban]') + ` open_match failed: ${err.message}`);
+          console.error(c.cyan('[stellar]') + ` open_match failed: ${c.err(err.message)}`);
         });
       } catch (err: any) {
-        debug('[soroban]', `open_match skipped: ${err.message}`);
+        debug('[stellar]', `open_match skipped: ${err.message}`);
       }
 
       // Both ready — start battle
@@ -487,24 +487,17 @@ export function registerBattleHandlers(
 
         // Fire-and-forget: submit turns_proof on-chain
         try {
-          const turnsPublicInputs = [
-            match.player1BoardHash!,
-            match.player2BoardHash!,
-            String(match.turnNumber),
-            match.winner === match.player1.publicKey ? '1' : '0',
-          ];
+          console.log(c.cyan('[stellar]') + ` closing match ${c.boldCyan(match.id)} on-chain sessionId=${match.sorobanSessionId ?? 0}...`);
           void closeMatchOnChain({
             sessionId: match.sorobanSessionId ?? 0,
             proof: Array.from(proof.proof),
-            pubInputs: turnsPublicInputs,
+            pubInputs: turnsResult.publicInputs,
             player1Won: match.winner === match.player1.publicKey,
-          }).then((txHash) => {
-            console.log(c.cyan('[stellar]') + ` close_match tx confirmed → tx=${c.boldCyan(txHash)}`);
           }).catch((err) => {
-            console.error(c.yellow('[soroban]') + ` close_match failed: ${err.message}`);
+            console.error(c.cyan('[stellar]') + ` close_match failed: ${c.err(err.message)}`);
           });
         } catch (err: any) {
-          debug('[soroban]', `close_match skipped: ${err.message}`);
+          debug('[stellar]', `close_match skipped: ${err.message}`);
         }
 
         debug('[battle]', `turns_proof generated: proofSize=${proof.proof.length}, elapsed=${verifyMs}ms`);

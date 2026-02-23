@@ -53,6 +53,7 @@ export interface TurnsProofInput {
 
 export interface TurnsProofResult {
   proof: number[];
+  publicInputs: string[];
 }
 
 // ─── Verify Inputs ───

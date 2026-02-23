@@ -87,32 +87,34 @@ impl BattleshipContract {
         log!(&env, "BattleshipContract deployed");
     }
 
-    /// Verify both players' board_validity proofs via the Verifier contract
-    /// and open a match on Game Hub.
-    /// Only callable by admin (backend server).
-    /// Returns the session_id.
+    /// Verify a single player's board_validity proof via the Verifier contract.
+    /// Called once per player (2 separate transactions).
+    /// Admin-only.
+    pub fn verify_board(
+        env: Env,
+        proof: Bytes,
+        pub_inputs: Bytes,
+    ) -> Result<bool, Error> {
+        let admin: Address = env.storage().instance().get(&ADMIN).ok_or(Error::NotAdmin)?;
+        admin.require_auth();
+
+        let verifier_addr: Address = env.storage().instance().get(&VERIFIER).unwrap();
+        let verifier = VerifierClient::new(&env, &verifier_addr);
+        verifier.verify_board(&proof, &pub_inputs);
+
+        Ok(true)
+    }
+
+    /// Open a match (after both board proofs verified in separate txs).
+    /// Registers match state + notifies Game Hub.
+    /// Admin-only. Returns session_id.
     pub fn open_match(
         env: Env,
         p1: Address,
         p2: Address,
-        proof1: Bytes,
-        pub_inputs1: Bytes,
-        proof2: Bytes,
-        pub_inputs2: Bytes,
     ) -> Result<u32, Error> {
-        // Admin auth
         let admin: Address = env.storage().instance().get(&ADMIN).ok_or(Error::NotAdmin)?;
         admin.require_auth();
-
-        // Cross-contract: verify player 1 board proof
-        let verifier_addr: Address = env.storage().instance().get(&VERIFIER).unwrap();
-        let verifier = VerifierClient::new(&env, &verifier_addr);
-
-        // Verify player 1 board proof (panics on verification failure)
-        verifier.verify_board(&proof1, &pub_inputs1);
-
-        // Verify player 2 board proof (panics on verification failure)
-        verifier.verify_board(&proof2, &pub_inputs2);
 
         // Increment session counter
         let session_id: u32 = env
@@ -146,7 +148,7 @@ impl BattleshipContract {
     }
 
     /// Verify turns_proof via the Verifier contract and close a match on Game Hub.
-    /// Only callable by admin (backend server).
+    /// Admin-only.
     pub fn close_match(
         env: Env,
         session_id: u32,
@@ -154,7 +156,6 @@ impl BattleshipContract {
         pub_inputs: Bytes,
         player1_won: bool,
     ) -> Result<(), Error> {
-        // Admin auth
         let admin: Address = env.storage().instance().get(&ADMIN).ok_or(Error::NotAdmin)?;
         admin.require_auth();
 
@@ -169,11 +170,9 @@ impl BattleshipContract {
             return Err(Error::MatchAlreadyClosed);
         }
 
-        // Cross-contract: verify turns proof
+        // Cross-contract: verify turns proof (panics on failure)
         let verifier_addr: Address = env.storage().instance().get(&VERIFIER).unwrap();
         let verifier = VerifierClient::new(&env, &verifier_addr);
-
-        // Verify turns proof (panics on verification failure)
         verifier.verify_turns(&proof, &pub_inputs);
 
         // Mark closed

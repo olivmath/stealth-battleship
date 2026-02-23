@@ -54,7 +54,7 @@ async function buildSignSubmit(
   const contract = new Contract(getContractId());
 
   const tx = new TransactionBuilder(account, {
-    fee: '100000000', // 10 XLM — UltraHonk verification is compute-heavy
+    fee: '2147483647', // max u32 stroops — cross-contract UltraHonk verification is compute-heavy
     networkPassphrase: Networks.TESTNET,
   })
     .addOperation(contract.call(method, ...args))
@@ -62,6 +62,7 @@ async function buildSignSubmit(
     .build();
 
   // Simulate to get resource estimates
+  console.log(c.cyan('[stellar]') + ` simulating ${c.bold(method)}...`);
   const simResult = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationError(simResult)) {
     throw new Error(`Simulation failed: ${(simResult as any).error}`);
@@ -88,6 +89,7 @@ async function buildSignSubmit(
     throw new Error(`Transaction failed on-chain: ${sendResult.hash}`);
   }
 
+  console.log(c.cyan('[stellar]') + ` ${c.bold(method)} confirmed → tx=${c.boldCyan(sendResult.hash)}`);
   const returnValue = getResult.status === 'SUCCESS'
     ? (getResult as rpc.Api.GetSuccessfulTransactionResponse).returnValue
     : undefined;
@@ -129,22 +131,31 @@ export interface OpenMatchResult {
 export async function openMatchOnChain(params: OpenMatchParams): Promise<OpenMatchResult> {
   const kp = getServerKeypair();
 
-  const args = [
-    new Address(params.p1Pk).toScVal(),
-    new Address(params.p2Pk).toScVal(),
+  // TX 1: verify player 1 board proof
+  console.log(c.cyan('[stellar]') + ' verify_board P1...');
+  await buildSignSubmit(kp, 'verify_board', [
     nativeToScVal(proofToBytes(params.proof1), { type: 'bytes' }),
     nativeToScVal(pubInputsToBytes(params.pubInputs1), { type: 'bytes' }),
+  ]);
+
+  // TX 2: verify player 2 board proof
+  console.log(c.cyan('[stellar]') + ' verify_board P2...');
+  await buildSignSubmit(kp, 'verify_board', [
     nativeToScVal(proofToBytes(params.proof2), { type: 'bytes' }),
     nativeToScVal(pubInputsToBytes(params.pubInputs2), { type: 'bytes' }),
-  ];
+  ]);
 
-  const { txHash, returnValue } = await buildSignSubmit(kp, 'open_match', args);
+  // TX 3: open match (no proofs, just registers match + game hub)
+  console.log(c.cyan('[stellar]') + ' open_match...');
+  const { txHash, returnValue } = await buildSignSubmit(kp, 'open_match', [
+    new Address(params.p1Pk).toScVal(),
+    new Address(params.p2Pk).toScVal(),
+  ]);
 
-  // Parse session_id (u32) from contract return value: Ok(session_id)
+  // Parse session_id (u32) from contract return value
   let sessionId = 0;
   if (returnValue) {
     try {
-      // Return is Result<u32, Error> — unwrap the Ok variant
       const val = returnValue.value();
       if (typeof val === 'number') {
         sessionId = val;
@@ -156,7 +167,7 @@ export async function openMatchOnChain(params: OpenMatchParams): Promise<OpenMat
     }
   }
 
-  console.log(c.cyan('[stellar]') + ` open_match confirmed → tx=${c.boldCyan(txHash)} sessionId=${sessionId}`);
+  console.log(c.cyan('[stellar]') + ` open_match complete → sessionId=${sessionId}`);
   return { txHash, sessionId };
 }
 
@@ -178,6 +189,5 @@ export async function closeMatchOnChain(params: CloseMatchParams): Promise<strin
   ];
 
   const { txHash } = await buildSignSubmit(kp, 'close_match', args);
-  console.log(c.cyan('[stellar]') + ` close_match confirmed → tx=${c.boldCyan(txHash)}`);
   return txHash;
 }
