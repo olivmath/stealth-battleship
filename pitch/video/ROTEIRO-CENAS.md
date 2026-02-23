@@ -188,7 +188,7 @@
 - Tagline: **"Fair by math. Fun by design."** aparece com typewriter effect
 - Links abaixo (fade-in):
   ```
-  github.com/olivmath/battleship-zk
+  github.com/olivmath/stealth-battleship
   Stellar Testnet | Noir + UltraHonk
   ```
 - Logo Stellar + Noir + Supabase alinhados na base

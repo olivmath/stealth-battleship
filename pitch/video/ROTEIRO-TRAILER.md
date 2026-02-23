@@ -436,7 +436,7 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
 
 [2:23 — 2:27]  Links fade-in abaixo da tagline:
 
-                    github.com/olivmath/battleship-zk
+                    github.com/olivmath/stealth-battleship
                     Stellar Testnet  |  Noir + UltraHonk
 
                Fonte: Rajdhani, cor: #888.

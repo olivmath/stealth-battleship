@@ -294,7 +294,7 @@ STEALTH BATTLESHIP
 
 "Fair by math. Fun by design."
 
-github.com/olivmath/battleship-zk
+github.com/olivmath/stealth-battleship
 
          [Stellar]  [Noir]  [Supabase]
 

@@ -193,7 +193,7 @@ The ZK proof generation is masked by loading animations — the player sees "Sec
 
 ## Links
 
-- **GitHub:** [battleship-zk](https://github.com/olivmath/battleship-zk)
+- **GitHub:** [battleship-zk](https://github.com/olivmath/stealth-battleship)
 - **Demo Video:** _(to be recorded)_
 - **Stellar Testnet Contract:** _(to be deployed)_
 

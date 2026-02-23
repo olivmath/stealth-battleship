@@ -215,7 +215,7 @@ O cursor pisca duas vezes e para.
 
 Links aparecem em fade:
 
-    github.com/olivmath/battleship-zk
+    github.com/olivmath/stealth-battleship
     Stellar Testnet | Noir + UltraHonk
 
 Logos dos parceiros se alinham na base: Stellar, Noir, Supabase.
