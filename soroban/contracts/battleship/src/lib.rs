@@ -4,6 +4,7 @@ use soroban_sdk::{
     contract, contractclient, contracterror, contractimpl, contracttype, log, symbol_short,
     Address, Bytes, Env, Symbol,
 };
+use ultrahonk_soroban_verifier::UltraHonkVerifier;
 
 // ─── Game Hub interface (cross-contract calls) ───
 
@@ -82,28 +83,28 @@ impl BattleshipVerifier {
         let admin: Address = env.storage().instance().get(&ADMIN).ok_or(Error::NotAdmin)?;
         admin.require_auth();
 
-        // Get board_validity VK
+        // Get board_validity VK and create verifier
         let vk: Bytes = env
             .storage()
             .instance()
             .get(&VK_BOARD)
             .ok_or(Error::VkNotSet)?;
+        let verifier = UltraHonkVerifier::new(&env, &vk)
+            .map_err(|_| Error::VkNotSet)?;
 
         // Verify player 1 board proof
-        let ok1 =
-            ultrahonk_soroban_verifier::verify(&env, vk.clone(), proof1, pub_inputs1);
-        if !ok1 {
-            log!(&env, "Player 1 board proof verification failed");
-            return Err(Error::VerificationFailed);
-        }
+        verifier.verify(&proof1, &pub_inputs1)
+            .map_err(|_| {
+                log!(&env, "Player 1 board proof verification failed");
+                Error::VerificationFailed
+            })?;
 
         // Verify player 2 board proof
-        let ok2 =
-            ultrahonk_soroban_verifier::verify(&env, vk, proof2, pub_inputs2);
-        if !ok2 {
-            log!(&env, "Player 2 board proof verification failed");
-            return Err(Error::VerificationFailed);
-        }
+        verifier.verify(&proof2, &pub_inputs2)
+            .map_err(|_| {
+                log!(&env, "Player 2 board proof verification failed");
+                Error::VerificationFailed
+            })?;
 
         // Increment session counter
         let session_id: u32 = env
@@ -159,19 +160,21 @@ impl BattleshipVerifier {
             return Err(Error::MatchAlreadyClosed);
         }
 
-        // Get turns_proof VK
+        // Get turns_proof VK and create verifier
         let vk: Bytes = env
             .storage()
             .instance()
             .get(&VK_TURNS)
             .ok_or(Error::VkNotSet)?;
+        let verifier = UltraHonkVerifier::new(&env, &vk)
+            .map_err(|_| Error::VkNotSet)?;
 
         // Verify turns proof
-        let ok = ultrahonk_soroban_verifier::verify(&env, vk, proof, pub_inputs);
-        if !ok {
-            log!(&env, "Turns proof verification failed");
-            return Err(Error::VerificationFailed);
-        }
+        verifier.verify(&proof, &pub_inputs)
+            .map_err(|_| {
+                log!(&env, "Turns proof verification failed");
+                Error::VerificationFailed
+            })?;
 
         // Mark closed
         match_state.closed = true;
