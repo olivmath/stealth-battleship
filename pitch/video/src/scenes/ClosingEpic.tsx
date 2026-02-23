@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { CONFIG } from "../config";
-import { colors, fullScreen, fonts, textGlow } from "../styles";
+import { colors, sceneContainer, fonts, textGlow } from "../styles";
 import { RadarSweep } from "../components/effects/RadarSweep";
 import { ScaleIn } from "../components/primitives/ScaleIn";
 import { TypewriterText } from "../components/primitives/TypewriterText";
@@ -19,7 +19,7 @@ export const ClosingEpic: React.FC = () => {
   });
 
   return (
-    <AbsoluteFill style={{ ...fullScreen }}>
+    <AbsoluteFill style={{ ...sceneContainer, justifyContent: "center" }}>
       <RadarSweep gridOpacity={0.04} showSweep={false} />
 
       {/* Footage placeholder */}

@@ -1,13 +1,11 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { CONFIG } from "../config";
-import { colors, fullScreen, fonts, textGlow } from "../styles";
+import { colors, sceneContainer, fonts, textGlow } from "../styles";
 import { TypewriterText } from "../components/primitives/TypewriterText";
 import { OverlayLabel } from "../components/ui/OverlayLabel";
-import { PiPFrame } from "../components/ui/PiPFrame";
-import { FadeIn } from "../components/primitives/FadeIn";
 
-const B = CONFIG.scenes.gameDemo.blocks;
+const B = CONFIG.scenes.demoArcade.blocks;
 
 export const GameDemo: React.FC = () => {
   const frame = useCurrentFrame();
@@ -28,7 +26,7 @@ export const GameDemo: React.FC = () => {
   );
 
   return (
-    <AbsoluteFill style={{ ...fullScreen }}>
+    <AbsoluteFill style={{ ...sceneContainer, justifyContent: "center" }}>
       {/* "Let me show you" intro text */}
       {frame < B.placement.start && (
         <TypewriterText
@@ -120,14 +118,6 @@ export const GameDemo: React.FC = () => {
         duration={B.hitResult.duration}
         accentColor={colors.greenSafe}
       />
-      <OverlayLabel
-        lines={["turns_proof — Soroban TX 2: close()", "Winner settled. Escrow released."]}
-        startFrame={B.gameOver.start}
-        duration={B.gameOver.duration}
-        accentColor={colors.gold}
-      />
-
-      <PiPFrame startFrame={B.placement.start + 15} />
     </AbsoluteFill>
   );
 };

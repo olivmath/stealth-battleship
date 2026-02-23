@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { CONFIG } from "../config";
-import { colors, fullScreen, fonts, textGlow } from "../styles";
+import { colors, sceneContainer, fonts, textGlow, SPACING } from "../styles";
 import { FadeIn } from "../components/primitives/FadeIn";
 import { ScaleIn } from "../components/primitives/ScaleIn";
 
@@ -221,7 +221,7 @@ export const ProblemSplit: React.FC = () => {
   );
 
   return (
-    <AbsoluteFill style={{ ...fullScreen }}>
+    <AbsoluteFill style={{ ...sceneContainer, justifyContent: "center" }}>
       {/* Titulo */}
       <FadeIn startFrame={0} duration={15}>
         <h2

@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { CONFIG } from "../config";
-import { colors, fullScreen, fonts, cardStyle, textGlow } from "../styles";
+import { colors, sceneContainer, fonts, cardStyle, textGlow, SPACING } from "../styles";
 import { FadeIn } from "../components/primitives/FadeIn";
 import { ScaleIn } from "../components/primitives/ScaleIn";
 import { PiPFrame } from "../components/ui/PiPFrame";
@@ -113,9 +113,9 @@ export const Architecture: React.FC = () => {
   const p25Pulse = 0.6 + Math.sin(frame * 0.15) * 0.4;
 
   return (
-    <AbsoluteFill style={{ ...fullScreen, opacity: fadeOut }}>
+    <AbsoluteFill style={{ ...sceneContainer, opacity: fadeOut }}>
       {/* Title */}
-      <div style={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)" }}>
+      <div style={{ position: "absolute", top: SPACING.sceneTop, left: "50%", transform: "translateX(-50%)" }}>
         <FadeIn startFrame={0} duration={15}>
           <h2
             style={{

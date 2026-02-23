@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
 import { CONFIG } from "../config";
-import { colors, fullScreen, fonts, textGlow } from "../styles";
+import { colors, sceneContainer, fonts, textGlow } from "../styles";
 import { RadarSweep } from "../components/effects/RadarSweep";
 import { SonarParticles } from "../components/effects/SonarParticles";
 import { GlitchText } from "../components/primitives/GlitchText";
@@ -28,7 +28,7 @@ export const HookCinematic: React.FC = () => {
   );
 
   return (
-    <AbsoluteFill style={{ ...fullScreen }}>
+    <AbsoluteFill style={{ ...sceneContainer, justifyContent: "center" }}>
       <RadarSweep gridOpacity={0.03} showSweep={false} />
       <SonarParticles count={30} color={`${colors.teal}60`} />
 

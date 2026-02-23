@@ -1,15 +1,13 @@
 import React from "react";
-import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
-import { CONFIG, s } from "../config";
-import { colors, fullScreen, fonts, textGlow, cardStyle } from "../styles";
+import { AbsoluteFill, Sequence, useCurrentFrame, interpolate } from "remotion";
+import { CONFIG } from "../config";
+import { colors, sceneContainer, fonts, textGlow, titleBlock, contentZone, footerZone, sectionLabel, SPACING } from "../styles";
 import { ScaleIn } from "../components/primitives/ScaleIn";
 import { FadeIn } from "../components/primitives/FadeIn";
 import { SlideIn } from "../components/primitives/SlideIn";
 import { TypewriterText } from "../components/primitives/TypewriterText";
 
 import { Badge } from "../components/ui/Badge";
-
-import { PiPFrame } from "../components/ui/PiPFrame";
 
 const B = CONFIG.scenes.threeProofs.blocks;
 
@@ -179,10 +177,10 @@ const BoardValidity: React.FC = () => {
   const A = B.boardValidity.anims;
 
   return (
-    <AbsoluteFill style={{ ...fullScreen, gap: 16 }}>
+    <AbsoluteFill style={sceneContainer}>
       {/* Title */}
       <ScaleIn startFrame={A.title.delay}>
-        <div style={{ textAlign: "center" }}>
+        <div style={titleBlock}>
           <p style={{ fontFamily: fonts.orbitron, fontSize: 24, color: colors.teal, margin: 0 }}>PROOF 1</p>
           <h2 style={{ fontFamily: fonts.orbitron, fontSize: 42, color: colors.gold, margin: 0, ...textGlow(colors.gold, 15) }}>
             Board Validity
@@ -194,19 +192,11 @@ const BoardValidity: React.FC = () => {
       </ScaleIn>
 
       {/* Pipeline: Grid → Matrix → Equation → Hash */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 24,
-          marginTop: 16,
-        }}
-      >
+      <div style={{ ...contentZone, gap: SPACING.pipelineGap }}>
         {/* 1. Grid visual */}
         <FadeIn startFrame={A.grid.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               board
             </p>
             <Grid6x6 ships={SHIP_CELLS} cellSize={36} />
@@ -218,7 +208,7 @@ const BoardValidity: React.FC = () => {
         {/* 2. Matriz numerica */}
         <FadeIn startFrame={A.matrix.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               matrix
             </p>
             <MatrixView />
@@ -230,7 +220,7 @@ const BoardValidity: React.FC = () => {
         {/* 3. Equacao */}
         <FadeIn startFrame={A.equation.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               circuit
             </p>
             <div
@@ -261,7 +251,7 @@ const BoardValidity: React.FC = () => {
         {/* 4. Hash resultado */}
         <FadeIn startFrame={A.hash.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               output
             </p>
             <div
@@ -304,23 +294,22 @@ const BoardValidity: React.FC = () => {
         </FadeIn>
       </div>
 
-      {/* Badges: Private / Public */}
-      <FadeIn startFrame={A.hash.delay + 15} duration={15}>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 12 }}>
-          <Badge label="Private: ship positions" variant="private" />
-          <Badge label="Public: board_hash only" variant="public" />
-        </div>
-      </FadeIn>
+      {/* Badges */}
+      <div style={footerZone}>
+        <FadeIn startFrame={A.hash.delay + 15} duration={15}>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+            <Badge label="Private: ship positions" variant="private" />
+            <Badge label="Public: board_hash only" variant="public" />
+          </div>
+        </FadeIn>
 
-      {/* Bottom badge */}
-      <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
-        <Badge
-          label="Verified on-chain via Soroban UltraHonk"
-          style={{ fontSize: 20, padding: "12px 24px", marginTop: 8 }}
-        />
-      </SlideIn>
-
-      <PiPFrame startFrame={A.title.delay + 20} />
+        <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
+          <Badge
+            label="Verified on-chain via Soroban UltraHonk"
+            style={{ fontSize: 20, padding: "12px 24px" }}
+          />
+        </SlideIn>
+      </div>
     </AbsoluteFill>
   );
 };
@@ -397,10 +386,10 @@ const ShotProof: React.FC = () => {
   const resultColor = isHit ? colors.fireOrange : colors.stellarBlue;
 
   return (
-    <AbsoluteFill style={{ ...fullScreen, gap: 16 }}>
+    <AbsoluteFill style={sceneContainer}>
       {/* Title */}
       <ScaleIn startFrame={A.title.delay}>
-        <div style={{ textAlign: "center" }}>
+        <div style={titleBlock}>
           <p style={{ fontFamily: fonts.orbitron, fontSize: 24, color: colors.teal, margin: 0 }}>PROOF 2</p>
           <h2 style={{ fontFamily: fonts.orbitron, fontSize: 42, color: colors.gold, margin: 0, ...textGlow(colors.gold, 15) }}>
             Shot Proof
@@ -412,15 +401,7 @@ const ShotProof: React.FC = () => {
       </ScaleIn>
 
       {/* Pipeline: Alice → a(i,j) → Matrix[circulado] → result + m */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 28,
-          marginTop: 16,
-        }}
-      >
+      <div style={{ ...contentZone, gap: SPACING.pipelineGap }}>
         {/* 1. Alice (bonequinho) */}
         <FadeIn startFrame={A.alice.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
@@ -451,7 +432,7 @@ const ShotProof: React.FC = () => {
         {/* 2. Coordenada a(i,j) */}
         <FadeIn startFrame={A.coord.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               attack
             </p>
             <div
@@ -482,7 +463,7 @@ const ShotProof: React.FC = () => {
         {/* 3. Matriz com circulo na celula atacada */}
         <FadeIn startFrame={A.matrix.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               board[{shotRow}][{shotCol}]
             </p>
             <MatrixWithCircle
@@ -577,14 +558,14 @@ const ShotProof: React.FC = () => {
       </div>
 
       {/* Bottom badge */}
-      <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
-        <Badge
-          label="Lying is mathematically impossible"
-          style={{ fontSize: 20, padding: "12px 24px", marginTop: 12 }}
-        />
-      </SlideIn>
-
-      <PiPFrame startFrame={A.title.delay + 20} />
+      <div style={footerZone}>
+        <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
+          <Badge
+            label="Lying is mathematically impossible"
+            style={{ fontSize: 20, padding: "12px 24px" }}
+          />
+        </SlideIn>
+      </div>
     </AbsoluteFill>
   );
 };
@@ -678,10 +659,10 @@ const TurnsProof: React.FC = () => {
   const visibleTurns = turnAnims.filter((t) => frame >= t.delay).length;
 
   return (
-    <AbsoluteFill style={{ ...fullScreen, gap: 16 }}>
+    <AbsoluteFill style={sceneContainer}>
       {/* Title */}
       <ScaleIn startFrame={A.title.delay}>
-        <div style={{ textAlign: "center" }}>
+        <div style={titleBlock}>
           <p style={{ fontFamily: fonts.orbitron, fontSize: 24, color: colors.teal, margin: 0 }}>PROOF 3</p>
           <h2 style={{ fontFamily: fonts.orbitron, fontSize: 42, color: colors.gold, margin: 0, ...textGlow(colors.gold, 15) }}>
             Turns Proof
@@ -693,15 +674,7 @@ const TurnsProof: React.FC = () => {
       </ScaleIn>
 
       {/* Pipeline: Players ↔ mensagens | Tabela de turnos → Equacao → Hash */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 32,
-          marginTop: 16,
-        }}
-      >
+      <div style={{ ...contentZone, gap: SPACING.pipelineGap + 4 }}>
         {/* 1. Alice e Bob (bonequinhos empilhados + mensagens) */}
         <FadeIn startFrame={A.turn1.delay} duration={15}>
           <div
@@ -795,7 +768,7 @@ const TurnsProof: React.FC = () => {
         {/* 2. Tabela de turnos (colunas aparecem conforme mensagens) */}
         <FadeIn startFrame={A.turn1.delay + 10} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               turns log
             </p>
             <div
@@ -866,7 +839,7 @@ const TurnsProof: React.FC = () => {
         {/* 3. Equacao */}
         <FadeIn startFrame={A.equation.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               circuit
             </p>
             <div
@@ -898,7 +871,7 @@ const TurnsProof: React.FC = () => {
         {/* 4. Hash resultado */}
         <FadeIn startFrame={A.hash.delay} duration={15}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontFamily: fonts.rajdhani, fontSize: 16, color: colors.muted, margin: "0 0 6px" }}>
+            <p style={sectionLabel}>
               output
             </p>
             <div
@@ -941,14 +914,14 @@ const TurnsProof: React.FC = () => {
       </div>
 
       {/* Bottom badge */}
-      <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
-        <Badge
-          label="The circuit IS the referee"
-          style={{ fontSize: 20, padding: "12px 24px", marginTop: 12 }}
-        />
-      </SlideIn>
-
-      <PiPFrame startFrame={A.title.delay + 20} />
+      <div style={footerZone}>
+        <SlideIn startFrame={A.badge.delay} direction="down" distance={40}>
+          <Badge
+            label="The circuit IS the referee"
+            style={{ fontSize: 20, padding: "12px 24px" }}
+          />
+        </SlideIn>
+      </div>
     </AbsoluteFill>
   );
 };
