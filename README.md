@@ -37,12 +37,6 @@ In digital Battleship, someone always sees both boards. The server knows everyth
   <img src="pitch/stills/problem.png" width="700" />
 </p>
 
-## The Solution: Prove-as-You-Go
-
-No board reveal. No commit-reveal. Every action generates a ZK proof in real-time. **Private inputs never leave your device.**
-
----
-
 ## ZK Circuits (Noir)
 
 Three specialized circuits guard the entire game lifecycle:
