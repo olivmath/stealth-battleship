@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Battleship ZK",
-    "slug": "battleship-zk",
+    "name": "Stealth Battleship",
+    "slug": "stealth-battleship",
     "version": "0.4.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "scheme": "battleship-zk",
+    "scheme": "stealth-battleship",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.battleship-zk"
+      "bundleIdentifier": "com.anonymous.stealth-battleship"
     },
     "android": {
       "adaptiveIcon": {

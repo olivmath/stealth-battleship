@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import type { WalletData } from './entities';
 
-const WALLET_KEY = '@battleship_wallet';
+const WALLET_KEY = '@stealth_wallet';
 
 function safeParse<T>(data: string, fallback: T): T {
   try {

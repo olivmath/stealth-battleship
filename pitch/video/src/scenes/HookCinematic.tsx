@@ -96,7 +96,7 @@ export const HookCinematic: React.FC = () => {
                 ...textGlow(colors.gold, 30),
               }}
             >
-              BATTLESHIP ZK
+              STEALTH BATTLESHIP
             </h1>
           </ScaleIn>
           <FadeIn startFrame={B.logoReveal.start + 15} duration={15}>

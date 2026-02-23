@@ -25,7 +25,7 @@ export class InMemoryGameRepository implements IGameRepository {
 
 // ─── Player Name Persistence ─────────────────────────────────────────
 
-const USER_KEY = '@battleship_user';
+const USER_KEY = '@stealth_user';
 
 function safeParse<T>(data: string, fallback: T): T {
   try {

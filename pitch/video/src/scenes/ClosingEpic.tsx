@@ -51,7 +51,7 @@ export const ClosingEpic: React.FC = () => {
             ...textGlow(colors.gold, 30),
           }}
         >
-          BATTLESHIP ZK
+          STEALTH BATTLESHIP
         </h1>
       </ScaleIn>
 

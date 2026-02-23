@@ -44,7 +44,7 @@ describe('Settings', () => {
   });
 
   it('merges with defaults for partial data', async () => {
-    await AsyncStorage.setItem('@battleship_settings', JSON.stringify({ gridSize: 10 }));
+    await AsyncStorage.setItem('@stealth_settings', JSON.stringify({ gridSize: 10 }));
     const settings = await getSettings();
     expect(settings.gridSize).toBe(10);
     expect(settings.difficulty).toBe('hard');

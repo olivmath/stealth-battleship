@@ -53,13 +53,13 @@ describe('Player Name', () => {
   });
 
   it('returns null for empty name', async () => {
-    await AsyncStorage.setItem('@battleship_user', JSON.stringify({ name: '' }));
+    await AsyncStorage.setItem('@stealth_user', JSON.stringify({ name: '' }));
     const name = await getPlayerName();
     expect(name).toBeNull();
   });
 
   it('handles corrupted data gracefully', async () => {
-    await AsyncStorage.setItem('@battleship_user', 'not-json');
+    await AsyncStorage.setItem('@stealth_user', 'not-json');
     const name = await getPlayerName();
     expect(name).toBeNull();
   });

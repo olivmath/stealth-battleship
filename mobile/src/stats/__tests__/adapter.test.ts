@@ -54,7 +54,7 @@ describe('Player Stats', () => {
   });
 
   it('merges with defaults for partial data', async () => {
-    await AsyncStorage.setItem('@battleship_scores', JSON.stringify({ wins: 10 }));
+    await AsyncStorage.setItem('@stealth_scores', JSON.stringify({ wins: 10 }));
     const stats = await getPlayerStats();
     expect(stats.wins).toBe(10);
     expect(stats.losses).toBe(0);
@@ -62,7 +62,7 @@ describe('Player Stats', () => {
   });
 
   it('handles corrupted data', async () => {
-    await AsyncStorage.setItem('@battleship_scores', '{bad-json}');
+    await AsyncStorage.setItem('@stealth_scores', '{bad-json}');
     const stats = await getPlayerStats();
     expect(stats).toEqual(DEFAULT_STATS);
   });
