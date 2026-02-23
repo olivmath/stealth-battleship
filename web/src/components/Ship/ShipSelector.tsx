@@ -58,25 +58,25 @@ export function ShipSelector({ ships, placedShipIds, selectedShipId, onSelect }:
 }
 
 const containerStyle: React.CSSProperties = {
-  paddingLeft: SPACING.sm,
-  paddingRight: SPACING.sm,
-  paddingTop: SPACING.sm,
-  paddingBottom: SPACING.sm,
+  paddingLeft: SPACING.xs,
+  paddingRight: SPACING.xs,
+  paddingTop: SPACING.xs,
+  paddingBottom: SPACING.xs,
 };
 
 const titleStyle: React.CSSProperties = {
   fontFamily: FONTS.heading,
-  fontSize: 12,
+  fontSize: 11,
   color: COLORS.text.secondary,
   letterSpacing: 2,
-  marginBottom: SPACING.sm,
+  marginBottom: SPACING.xs,
   display: 'block',
 };
 
 const shipListStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: SPACING.xs,
+  gap: 3,
 };
 
 const shipItemStyle: React.CSSProperties = {
@@ -84,8 +84,8 @@ const shipItemStyle: React.CSSProperties = {
   flexDirection: 'row',
   alignItems: 'center',
   alignSelf: 'flex-start',
-  padding: SPACING.sm,
-  minHeight: 44,
+  padding: '4px 8px',
+  minHeight: 32,
   borderRadius: RADIUS.default,
   border: `1px solid ${COLORS.grid.border}`,
   backgroundColor: COLORS.surface.card,
@@ -110,8 +110,8 @@ const shipCellsStyle: React.CSSProperties = {
 };
 
 const shipCellBaseStyle: React.CSSProperties = {
-  width: 16,
-  height: 16,
+  width: 14,
+  height: 14,
   boxSizing: 'border-box',
 };
 
@@ -132,7 +132,7 @@ const placedCellStyle: React.CSSProperties = {
 
 const shipNameStyle: React.CSSProperties = {
   fontFamily: FONTS.body,
-  fontSize: 14,
+  fontSize: 12,
   color: COLORS.text.primary,
 };
 
