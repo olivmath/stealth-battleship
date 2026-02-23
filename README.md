@@ -10,15 +10,63 @@
   <em>Fair by math. Fun by design.</em>
 </p>
 
+<p align="center">
+  Built for <strong>Stellar Hacks: ZK Gaming 2026</strong>
+</p>
+
 ---
 
-Command your fleet in the ultimate game of deception — where **no one can cheat, not even the server**. Stealth Battleship reinvents the classic naval warfare game using Zero-Knowledge proofs powered by Noir circuits. Every ship placement is cryptographically committed, every shot is mathematically proven, and every match result is verified on the Stellar blockchain. No board reveals, no trusted third parties, no way to lie. Just pure strategy, real-time PvP, and provably fair gameplay — all from your phone. Three specialized ZK circuits guard the entire game lifecycle: your board stays private, your hits are honest, and the winner is computed inside the circuit itself. This isn't a game with ZK bolted on — **ZK is the game**.
-
----
-
-## Demo
+## Demo Video
 
 https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
+
+---
+
+## How ZK Powers the Gameplay
+
+Stealth Battleship is a PvP naval warfare game where **Zero-Knowledge proofs replace trust entirely**. No board reveals, no trusted server, no way to cheat.
+
+The ZK mechanic is not an add-on — it **is** the game:
+
+1. **Board commitment** — Each player places ships and generates a `board_validity` proof (Noir + Poseidon2 hash). This proves the board follows the rules (correct ship sizes, no overlaps, within bounds) without revealing ship positions.
+2. **Shot resolution** — On each shot, the defender generates a `shot_proof` proving whether the shot is a hit or miss against their committed board — without exposing it.
+3. **Match finalization** — At game end, a `turns_proof` replays the entire match inside the circuit, computing the winner deterministically. No disputes possible.
+
+> **Players never see each other's boards. The math guarantees fairness.**
+
+---
+
+## On-Chain Integration (Stellar Testnet)
+
+The Soroban smart contract ([`soroban/contracts/battleship`](soroban/contracts/battleship/src/lib.rs)) verifies ZK proofs on-chain using the **UltraHonk** verifier and integrates with the **Game Hub contract**:
+
+| Action | What happens on-chain |
+|--------|----------------------|
+| Match start | `open_match()` verifies both players' `board_validity` proofs, then calls **`start_game()`** on the Game Hub |
+| Match end | `close_match()` verifies the `turns_proof`, then calls **`end_game()`** on the Game Hub with the verified winner |
+
+**Game Hub contract:** `CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG`
+
+This is possible thanks to **Protocol 25 (X-Ray)** which provides native BN254 elliptic-curve operations and Poseidon2 hashing at the protocol level.
+
+---
+
+## ZK Circuits (Noir)
+
+Three specialized circuits in [`circuits/`](circuits/) guard the entire game lifecycle:
+
+| Circuit | Trigger | What it proves | Public inputs |
+|---------|---------|----------------|---------------|
+| `board_validity` | Ship placement | Board is legal + Poseidon2 hash matches commitment | Board hash |
+| `shot_proof` | Receive a shot | Hit/miss result is honest against committed board | Board hash, shot coords, result |
+| `turns_proof` | Game ends | Full game replay inside circuit, winner computed deterministically | Both board hashes, all moves, winner |
+
+- **Framework:** Noir 1.0.0-beta.18 (Aztec)
+- **Proof system:** UltraHonk
+- **Hash function:** Poseidon2 (Stellar-native)
+- **Proof generation:** Client-side via NoirJS + bb.js (WASM)
+
+---
 
 ## Screenshots
 
@@ -47,38 +95,76 @@ https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
   </tr>
 </table>
 
+---
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | ZK Framework | Noir (Aztec) + UltraHonk |
-| Hashing | Poseidon2 |
+| Hashing | Poseidon2 (Stellar-native via Protocol 25) |
 | Proof Generation | NoirJS + bb.js (client-side WASM) |
 | Blockchain | Stellar / Soroban (Protocol 25 X-Ray) |
-| Backend | Express + Socket.io |
+| On-chain Verifier | `ultrahonk_soroban_verifier` crate |
+| Backend | Express + Socket.io (real-time PvP) |
 | Persistence | Supabase |
-| Frontend | React Native / Expo (mobile) + React (web) |
+| Mobile App | React Native / Expo |
 | Languages | TypeScript, Rust, Noir |
+
+---
 
 ## Project Structure
 
 ```
-battleship-zk/
+stealth-battleship/
+├── circuits/        # Noir ZK circuits (board_validity, shot_proof, turns_proof)
+├── soroban/         # Soroban smart contract (on-chain ZK verification + Game Hub)
+├── backend/         # Express + Socket.io server (matchmaking, proof relay)
 ├── mobile/          # React Native / Expo app
 ├── web/             # Web client for PvP
-├── backend/         # Express + Socket.io server
-├── circuits/        # Noir ZK circuits
 ├── pitch/           # Presentation slides + video trailer
 └── docs/            # Architecture & design docs
 ```
 
-## Circuits
+---
 
-| Circuit | Trigger | What it proves |
-|---------|---------|---------------|
-| `board_validity` | Ship placement | Board is legal + Poseidon hash matches |
-| `shot_proof` | Receive a shot | Hit/miss result is honest against committed board |
-| `turns_proof` | Game ends | Full game replayed in circuit, winner computed inside |
+## Architecture Flow
+
+```
+Player A (mobile)                    Backend                     Stellar Testnet
+─────────────────                    ───────                     ───────────────
+Place ships
+Generate board_validity proof ──→ Receive proof ──────────→ open_match()
+                                                            ├─ verify proof (UltraHonk)
+                                                            └─ start_game() on Game Hub
+                                     ↕ Socket.io
+Play turns (shot_proof each) ←──→ Relay & verify
+
+Game ends
+Generate turns_proof ───────────→ Receive proof ──────────→ close_match()
+                                                            ├─ verify proof (UltraHonk)
+                                                            └─ end_game() on Game Hub
+```
+
+---
+
+## How to Run
+
+```bash
+# 1. Compile ZK circuits
+cd circuits && ./compile.sh
+
+# 2. Deploy Soroban contract
+cd soroban && ./deploy.sh
+
+# 3. Start backend
+cd backend && npm install && npm run dev
+
+# 4. Start mobile app
+cd mobile && npx expo start
+```
+
+---
 
 ## License
 
@@ -87,6 +173,5 @@ MIT
 ---
 
 <p align="center">
-  Built for <strong>Stellar Hacks: ZK Gaming 2026</strong><br/>
   <a href="https://github.com/olivmath/stealth-battleship">github.com/olivmath/stealth-battleship</a>
 </p>
