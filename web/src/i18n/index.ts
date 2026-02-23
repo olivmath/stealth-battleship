@@ -30,7 +30,7 @@ i18n.use(initReactI18next).init({
     'pt-BR': { translation: ptBR },
     es: { translation: es },
   },
-  lng: detectDeviceLanguage(),
+  lng: 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
