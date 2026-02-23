@@ -1,12 +1,13 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GameProvider } from './game/translator';
+import { PvPProvider } from './pvp/translator';
 import { RadarSpinner } from './components/UI/RadarSpinner';
 import { initZK, ServerZKProvider, WebWasmZKProvider } from './zk';
 import './i18n';
 
 const ZK_MODE = import.meta.env.VITE_ZK_MODE || 'local';
-const ZK_SERVER_URL = import.meta.env.VITE_ZK_SERVER_URL || 'http://localhost:3000';
+const ZK_SERVER_URL = import.meta.env.VITE_ZK_SERVER_URL || 'http://localhost:3001';
 
 // Lazy load all pages
 const Splash = lazy(() => import('./pages/Splash'));
@@ -68,6 +69,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <GameProvider>
+        <PvPProvider>
         <Suspense fallback={<div style={fallbackStyle}><RadarSpinner size={80} /></div>}>
           <Routes>
             <Route path="/" element={<Splash />} />
@@ -89,6 +91,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </PvPProvider>
       </GameProvider>
     </BrowserRouter>
   );
