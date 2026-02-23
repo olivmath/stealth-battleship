@@ -1,14 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../shared/theme';
+import { COLORS, FONTS, SPACING, RADIUS, BUTTON_VARIANTS } from '../../shared/theme';
 import styles from './NavalButton.module.css';
+
+type Variant = keyof typeof BUTTON_VARIANTS;
 
 interface Props {
   title: string;
   subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'pvp' | 'ghost';
+  variant?: Variant;
   size?: 'default' | 'small' | 'sm';
   style?: React.CSSProperties;
   accessibilityLabel?: string;
@@ -26,19 +28,12 @@ export function NavalButton({
   accessibilityLabel,
   accessibilityHint,
 }: Props) {
-  const variantMap: Record<string, { border: string; bg: string; text: string }> = {
-    primary: { border: COLORS.ui.buttonBorder, bg: COLORS.ui.buttonBg, text: COLORS.text.accent },
-    secondary: { border: COLORS.surface.cardBorder, bg: 'transparent', text: COLORS.text.primary },
-    danger: { border: COLORS.accent.fire, bg: COLORS.ui.buttonBg, text: COLORS.accent.fire },
-    success: { border: COLORS.status.online, bg: COLORS.ui.buttonBg, text: COLORS.status.online },
-    pvp: { border: COLORS.status.pvp, bg: COLORS.ui.buttonBg, text: COLORS.status.pvp },
-    ghost: { border: 'transparent', bg: 'transparent', text: COLORS.text.primary },
-  };
+  const v = BUTTON_VARIANTS[variant] ?? BUTTON_VARIANTS.primary;
+  const isPrimary = variant === 'primary';
 
-  const v = variantMap[variant] ?? variantMap.primary;
   const borderColor = disabled ? COLORS.ui.disabledBorder : v.border;
-  const bgColor = disabled ? COLORS.ui.disabledBg : v.bg;
-  const textColor = disabled ? COLORS.text.secondary : v.text;
+  const bgColor = disabled ? COLORS.ui.disabledBg : (isPrimary ? v.bg : 'transparent');
+  const textColor = disabled ? COLORS.text.secondary : (isPrimary ? v.text : v.text);
 
   const isSmall = size === 'small' || size === 'sm';
 
@@ -48,7 +43,6 @@ export function NavalButton({
       onClick={disabled ? undefined : onPress}
       whileTap={disabled ? undefined : { scale: 0.97 }}
       disabled={disabled}
-      role="button"
       aria-label={accessibilityLabel ?? title}
       aria-disabled={disabled || undefined}
       title={accessibilityHint}
