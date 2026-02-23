@@ -73,8 +73,9 @@ export default function WalletScreen() {
               <QRCode
                 value={publicKey}
                 size={160}
-                backgroundColor="transparent"
-                color={COLORS.text.primary}
+                backgroundColor="#FFFFFF"
+                color="#000000"
+                ecl="H"
               />
             )}
           </View>
@@ -183,8 +184,8 @@ const styles = StyleSheet.create({
   },
   qrContainer: {
     padding: SPACING.md,
-    backgroundColor: COLORS.surface.elevated,
-    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.grid.border,
   },

@@ -7,7 +7,7 @@ import { NavalButton } from '../components/UI/NavalButton';
 import { PinModal } from '../components/UI/PinModal';
 import { useHaptics } from '../hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../shared/theme';
-import { getPublicKey, getSecretKey, getBalance } from '../wallet/interactor';
+import { getPublicKey, getSecretKey, getBalance, getBattleTokenBalance } from '../wallet/interactor';
 
 export default function Wallet() {
   const { t } = useTranslation();
@@ -16,15 +16,24 @@ export default function Wallet() {
 
   const [publicKey, setPublicKey] = useState('');
   const [balance, setBalance] = useState<string | null>(null);
+  const [battleBalance, setBattleBalance] = useState<string | null>(null);
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [showPin, setShowPin] = useState(false);
   const [copied, setCopied] = useState<'address' | 'secret' | null>(null);
+
+  const API_URL = import.meta.env.VITE_ZK_SERVER_URL || 'http://localhost:3001';
 
   useEffect(() => {
     getPublicKey().then(pk => {
       if (pk) {
         setPublicKey(pk);
         getBalance(pk).then(setBalance);
+        // Fetch BATTLE token balance
+        fetch(`${API_URL}/api/payment/address`)
+          .then(r => r.json())
+          .then(({ address }) => getBattleTokenBalance(pk, address))
+          .then(setBattleBalance)
+          .catch(() => setBattleBalance('0'));
       }
     });
   }, []);
@@ -84,8 +93,9 @@ export default function Wallet() {
             <QRCodeSVG
               value={publicKey}
               size={160}
-              bgColor="transparent"
-              fgColor={COLORS.text.primary}
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+              level="H"
             />
           )}
         </div>
@@ -105,6 +115,15 @@ export default function Wallet() {
             {balance !== null ? `${parseFloat(balance).toFixed(2)} XLM` : '\u2014'}
           </span>
           <span style={styles.balanceNetwork}>TESTNET</span>
+        </div>
+
+        {/* BATTLE Token Balance */}
+        <div style={styles.balanceRow}>
+          <span style={styles.balanceLabel}>BATTLE TOKEN</span>
+          <span style={styles.battleValue}>
+            {battleBalance !== null ? `${parseInt(battleBalance)}` : '\u2014'}
+          </span>
+          <span style={styles.battleBadge}>PVP PASS</span>
         </div>
       </div>
 
@@ -158,8 +177,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   qrContainer: {
     padding: SPACING.md,
-    backgroundColor: COLORS.surface.elevated,
-    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
     border: `1px solid ${COLORS.grid.border}`,
   },
   addressRow: {
@@ -217,6 +236,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 24,
     color: COLORS.text.accent,
     letterSpacing: 1,
+  },
+  battleValue: {
+    fontFamily: FONTS.heading,
+    fontSize: 24,
+    color: COLORS.status.pvp,
+    letterSpacing: 1,
+  },
+  battleBadge: {
+    fontFamily: FONTS.heading,
+    fontSize: 9,
+    color: COLORS.status.pvp,
+    letterSpacing: 2,
+    border: `1px solid ${COLORS.status.pvp}`,
+    borderRadius: 4,
+    paddingLeft: SPACING.xs,
+    paddingRight: SPACING.xs,
+    paddingTop: 1,
+    paddingBottom: 1,
+    opacity: 0.7,
   },
   balanceNetwork: {
     fontFamily: FONTS.heading,
