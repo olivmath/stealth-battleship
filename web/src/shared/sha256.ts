@@ -20,7 +20,7 @@ export async function sha256(input: string): Promise<ArrayBuffer> {
     }
   }
 
-  return sha256Fallback(data).buffer;
+  return sha256Fallback(data).buffer as ArrayBuffer;
 }
 
 /**

@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: stealth-battleship-backend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install && npm run build && cp -r ../circuits/compiled dist/circuits
+    startCommand: cd backend && node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        sync: false
+      - key: CIRCUIT_DIR
+        value: ./dist/circuits
+      - key: STELLAR_SERVER_SECRET
+        sync: false
+      - key: SOROBAN_CONTRACT_ID
+        sync: false
+      - key: SOROBAN_RPC_URL
+        value: https://soroban-testnet.stellar.org
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: DEBUG
+        value: "false"
+      - key: LOG_FILE
+        value: "false"
+      - key: SKIP_PAYMENT
+        value: "true"
+      - key: TURN_TIMEOUT_MS
+        value: "120000"
+      - key: DEFENDER_RESPONSE_TIMEOUT_MS
+        value: "120000"
+      - key: ATTACK_COOLDOWN_MS
+        value: "0"

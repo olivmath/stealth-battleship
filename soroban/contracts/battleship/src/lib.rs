@@ -10,8 +10,16 @@ use ultrahonk_soroban_verifier::UltraHonkVerifier;
 
 #[contractclient(name = "GameHubClient")]
 pub trait GameHub {
-    fn start_game(env: Env, session_id: u32, player1: Address, player2: Address);
-    fn end_game(env: Env, session_id: u32, winner: Address);
+    fn start_game(
+        env: Env,
+        game_id: Address,
+        session_id: u32,
+        player1: Address,
+        player2: Address,
+        player1_points: i128,
+        player2_points: i128,
+    );
+    fn end_game(env: Env, session_id: u32, player1_won: bool);
 }
 
 // ─── Storage keys ───
@@ -127,10 +135,11 @@ impl BattleshipVerifier {
             .temporary()
             .extend_ttl(&session_id, 518_400, 518_400);
 
-        // Cross-contract call: game_hub.start_game(session_id, p1, p2)
+        // Cross-contract call: game_hub.start_game(game_id, session_id, p1, p2, points, points)
         let game_hub_addr: Address = env.storage().instance().get(&GAME_HUB).unwrap();
+        let self_addr = env.current_contract_address();
         let client = GameHubClient::new(&env, &game_hub_addr);
-        client.start_game(&session_id, &p1, &p2);
+        client.start_game(&self_addr, &session_id, &p1, &p2, &0i128, &0i128);
 
         log!(&env, "Match opened: session_id={}", session_id);
         Ok(session_id)
@@ -180,21 +189,16 @@ impl BattleshipVerifier {
         match_state.closed = true;
         env.storage().temporary().set(&session_id, &match_state);
 
-        // Cross-contract call: game_hub.end_game(session_id, winner)
-        let winner = if player1_won {
-            match_state.player1.clone()
-        } else {
-            match_state.player2.clone()
-        };
+        // Cross-contract call: game_hub.end_game(session_id, player1_won)
         let game_hub_addr: Address = env.storage().instance().get(&GAME_HUB).unwrap();
         let client = GameHubClient::new(&env, &game_hub_addr);
-        client.end_game(&session_id, &winner);
+        client.end_game(&session_id, &player1_won);
 
         log!(
             &env,
-            "Match closed: session_id={}, winner={}",
+            "Match closed: session_id={}, player1_won={}",
             session_id,
-            winner
+            player1_won
         );
         Ok(())
     }
