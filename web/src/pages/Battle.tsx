@@ -10,8 +10,7 @@ import { Spacer } from '../components/UI/Spacer';
 import { GameBoard, getLabelSize, computeCellSize } from '../components/Board/GameBoard';
 import { TurnIndicator } from '../components/Battle/TurnIndicator';
 import { FleetStatus } from '../components/Battle/FleetStatus';
-import { HealthBar } from '../components/Battle/HealthBar';
-import { BattleStats } from '../components/Battle/BattleStats';
+import { HealthBarDual } from '../components/Battle/HealthBar';
 import { SunkShipModal } from '../components/Battle/SunkShipModal';
 import { OpponentStatus } from '../components/PvP/OpponentStatus';
 import { TurnTimer } from '../components/PvP/TurnTimer';
@@ -85,10 +84,14 @@ export default function Battle() {
   ) => {
     proofQueueRef.current++;
     setProvingShot(true);
+    const shotStart = performance.now();
+    console.log(`[ZK] shotProof ${label} START - row:${row} col:${col} hit:${isHit}`);
     shotProof({ ships, nonce, boardHash, row, col, isHit }).then((result) => {
-      console.log(`[ZK] shotProof ${label} OK - ${result.proof.length} bytes`);
+      const elapsed = ((performance.now() - shotStart) / 1000).toFixed(1);
+      console.log(`[ZK] shotProof ${label} OK in ${elapsed}s - proof: ${result.proof.length} bytes`);
     }).catch((err: any) => {
-      console.warn(`[ZK] shotProof ${label} FAILED:`, err.message);
+      const elapsed = ((performance.now() - shotStart) / 1000).toFixed(1);
+      console.warn(`[ZK] shotProof ${label} FAILED after ${elapsed}s:`, err.message);
     }).finally(() => {
       proofQueueRef.current--;
       if (proofQueueRef.current === 0) setProvingShot(false);
@@ -261,10 +264,14 @@ export default function Battle() {
           </div>
         )}
 
-        {/* Health Bars */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: CONTENT_WIDTH }}>
-          <HealthBar ships={state.playerShips} label={t('battle.yourFleet')} />
-          <HealthBar ships={state.opponentShips} label={t('battle.enemyFleet')} mirrored />
+        {/* Health Bars — dual bar: ENEMY [████←][→████] YOURS */}
+        <div style={{ width: '100%', maxWidth: CONTENT_WIDTH }}>
+          <HealthBarDual
+            playerShips={state.playerShips}
+            opponentShips={state.opponentShips}
+            playerLabel={t('battle.yourFleet')}
+            opponentLabel={t('battle.enemyFleet')}
+          />
         </div>
 
         {/* Grids */}
@@ -281,9 +288,6 @@ export default function Battle() {
                 variant="full"
                 lastAttackPosition={lastEnemyAttack}
               />
-            </div>
-            <div style={styles.sideBySideStats}>
-              <BattleStats tracking={state.tracking} />
             </div>
             <div style={styles.sideBySideGrid}>
               <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
@@ -330,14 +334,13 @@ export default function Battle() {
               <div style={styles.fleetColumn}>
                 <FleetStatus ships={state.playerShips} label={t('battle.yours')} compact />
                 <FleetStatus ships={state.opponentShips} label={t('battle.enemy')} compact />
-                <BattleStats tracking={state.tracking} />
               </div>
             </div>
           </div>
         )}
 
         {/* Surrender */}
-        <div style={{ marginTop: 'auto' }}>
+        <div style={{ marginTop: 'auto', flexShrink: 0, paddingBottom: SPACING.sm }}>
           <NavalButton
             title={t('battle.surrender')}
             onPress={handleSurrender}
@@ -357,13 +360,20 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     flex: 1,
     padding: SCREEN_PADDING,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+    height: '100vh',
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidthDesktop,
+    boxSizing: 'border-box' as const,
+    alignItems: 'center',
   },
   turnRow: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    width: '100%',
   },
   sideBySide: {
     display: 'flex',
@@ -378,11 +388,6 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: SPACING.xs,
-  },
-  sideBySideStats: {
-    display: 'flex',
-    justifyContent: 'center',
-    paddingTop: SPACING.xxl,
   },
   bottomPanel: {
     display: 'flex',
