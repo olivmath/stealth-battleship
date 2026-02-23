@@ -103,6 +103,9 @@ export default function PvpFriend() {
           <span style={styles.label}>{t('pvpFriend.matchCode')}</span>
           <span style={styles.matchCode}>{pvp.matchCode || '...'}</span>
           <span style={styles.shareText}>{t('pvpFriend.shareCode')}</span>
+          {pvp.error && (
+            <span style={{ ...styles.errorText, marginTop: SPACING.md }}>{pvp.error}</span>
+          )}
         </div>
         <div style={styles.waitingSection}>
           <RadarSpinner size={80} />

@@ -69,18 +69,20 @@ export function PvPProvider({ children }: { children: React.ReactNode }) {
         setState(s => ({ ...s, phase }));
       },
       onMatchFound: (data) => {
-        console.debug(TAG, 'Match found →', { matchId: data.matchId.slice(0, 8), opponent: data.opponent?.slice(0, 12), gridSize: data.gridSize });
+        const matchId = data?.matchId || '';
+        const shortId = matchId.slice(0, 8);
+        console.debug(TAG, 'Match found →', { matchId: shortId, opponent: data.opponent?.slice(0, 12), gridSize: data.gridSize });
         setState(s => ({
           ...s,
           match: {
-            matchId: data.matchId,
+            matchId: matchId,
             opponentKey: data.opponent,
             gridSize: data.gridSize,
             phase: 'placing',
             isMyTurn: false,
             turnNumber: 0,
           },
-          matchCode: data.matchCode || null,
+          matchCode: data.matchCode || s.matchCode,
           phase: data.opponent ? 'placing' : s.phase,
         }));
       },
@@ -152,6 +154,7 @@ export function PvPProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createFriendMatch = useCallback((gridSize: number) => {
+    setState(s => ({ ...s, phase: 'searching', error: null }));
     doCreateFriend(gridSize);
   }, []);
 
