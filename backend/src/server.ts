@@ -9,7 +9,8 @@ import { initStellarAsset, setupIssuerFlags } from './payment/stellar-asset.js';
 import { startPaymentStream } from './payment/interactor.js';
 import { c, debug } from './log.js';
 
-const PORT = process.env.PORT || 3000;
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const PORT = new URL(BACKEND_URL).port || '3001';
 
 async function main() {
   console.log('');
@@ -19,12 +20,17 @@ async function main() {
   console.log('');
 
   debug('[server]', `DEBUG mode ${c.boldGreen('ENABLED')}`);
-  debug('[server]', `PORT=${PORT}, CIRCUIT_DIR=${process.env.CIRCUIT_DIR}`);
+  debug('[server]', `BACKEND_URL=${BACKEND_URL}, CIRCUIT_DIR=${process.env.CIRCUIT_DIR}`);
 
   console.log(c.cyan('[server]') + ' Loading circuits...');
   const t0 = Date.now();
-  await loadCircuits();
-  console.log(c.cyan('[server]') + ` Circuits ready ${c.ok('✓')} ${c.time(`(${Date.now() - t0}ms)`)}`);
+  try {
+    await loadCircuits();
+    console.log(c.cyan('[server]') + ` Circuits ready ${c.ok('✓')} ${c.time(`(${Date.now() - t0}ms)`)}`);
+  } catch (err: any) {
+    console.log(c.yellow('[server]') + ` Circuits not loaded: ${err.message}`);
+    console.log(c.yellow('[server]') + ' ZK proof verification will be unavailable');
+  }
   console.log('');
 
   // Initialize Stellar BATTLE asset + SSE payment stream

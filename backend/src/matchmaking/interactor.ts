@@ -22,6 +22,12 @@ export function findRandomMatch(
     return { type: 'queued' }; // already busy
   }
 
+  // Check if already in queue — prevent duplicate entries
+  const alreadyQueued = matchQueue.some((e) => e.publicKey === publicKey);
+  if (alreadyQueued) {
+    return { type: 'queued' };
+  }
+
   // Find compatible player in queue
   const idx = matchQueue.findIndex(
     (e) => e.gridSize === gridSize && e.publicKey !== publicKey
