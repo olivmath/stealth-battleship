@@ -1,4 +1,4 @@
-import { MatchRoom, matches, Attack } from '../matchmaking/entities.js';
+import { MatchRoom, matches, Attack, playerToMatch } from '../matchmaking/entities.js';
 import { removeMatch } from '../matchmaking/interactor.js';
 import { TURN_TIMEOUT_MS } from './entities.js';
 
@@ -109,6 +109,11 @@ export function endMatch(
   if (match.defenderTimer) clearTimeout(match.defenderTimer);
   match.status = 'finished';
   match.winner = winnerKey;
+
+  // Clear playerToMatch so both players can start new matches immediately
+  // Match object stays in `matches` Map until stale cleanup removes it
+  if (match.player1) playerToMatch.delete(match.player1.publicKey);
+  if (match.player2) playerToMatch.delete(match.player2.publicKey);
 }
 
 export function startTurnTimer(
