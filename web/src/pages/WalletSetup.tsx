@@ -5,25 +5,21 @@ import { GradientContainer } from '../components/UI/GradientContainer';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
-import { createWallet, importWallet } from '../wallet/interactor';
-
-type Mode = 'choose' | 'create' | 'import';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+const walletInteractor = () => import('../wallet/interactor');
 
 export default function WalletSetup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const haptics = useHaptics();
 
-  const [mode, setMode] = useState<Mode>('choose');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const pinConfirmRef = useRef<HTMLInputElement>(null);
-  const [secretInput, setSecretInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const pinValid = pin.length >= 4 && pin.length <= 6 && /^\d+$/.test(pin);
+  const pinValid = pin.length === 4 && /^\d{4}$/.test(pin);
   const pinsMatch = pin === pinConfirm;
 
   const handleCreate = async () => {
@@ -31,25 +27,12 @@ export default function WalletSetup() {
     setLoading(true);
     setError('');
     try {
+      const { createWallet } = await walletInteractor();
       await createWallet(pin);
       haptics.success();
       navigate('/menu', { replace: true });
     } catch (e: any) {
       setError(e.message || t('wallet.setup.errorGeneric'));
-      setLoading(false);
-    }
-  };
-
-  const handleImport = async () => {
-    if (!pinValid || !pinsMatch || !secretInput.trim()) return;
-    setLoading(true);
-    setError('');
-    try {
-      await importWallet(secretInput, pin);
-      haptics.success();
-      navigate('/menu', { replace: true });
-    } catch (e: any) {
-      setError(t('wallet.setup.errorInvalidKey'));
       setLoading(false);
     }
   };
@@ -65,63 +48,23 @@ export default function WalletSetup() {
     );
   }
 
-  if (mode === 'choose') {
-    return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <span style={styles.title}>{t('wallet.setup.title')}</span>
-            <span style={styles.subtitle}>{t('wallet.setup.subtitle')}</span>
-            <div style={styles.divider} />
-          </div>
-          <div style={styles.actions}>
-            <NavalButton
-              title={t('wallet.setup.createNew')}
-              subtitle={t('wallet.setup.createNewSub')}
-              onPress={() => { haptics.light(); setMode('create'); }}
-            />
-            <NavalButton
-              title={t('wallet.setup.importExisting')}
-              subtitle={t('wallet.setup.importExistingSub')}
-              variant="secondary"
-              onPress={() => { haptics.light(); setMode('import'); }}
-            />
-          </div>
-        </div>
-      </GradientContainer>
-    );
-  }
-
   return (
     <GradientContainer>
       <div style={styles.container}>
         <div style={styles.header}>
-          <span style={styles.title}>
-            {mode === 'create' ? t('wallet.setup.createTitle') : t('wallet.setup.importTitle')}
-          </span>
+          <span style={styles.title}>{t('wallet.setup.createTitle')}</span>
+          <span style={styles.subtitle}>{t('wallet.setup.subtitle')}</span>
           <div style={styles.divider} />
         </div>
 
         <div style={styles.form}>
-          {mode === 'import' && (
-            <>
-              <span style={styles.label}>{t('wallet.setup.secretKeyLabel')}</span>
-              <textarea
-                style={{ ...styles.input, ...styles.secretInput }}
-                value={secretInput}
-                onChange={(e) => setSecretInput(e.target.value)}
-                placeholder={t('wallet.setup.secretKeyPlaceholder')}
-              />
-            </>
-          )}
-
           <span style={styles.label}>{t('wallet.setup.pinLabel')}</span>
           <input
             style={styles.input}
             value={pin}
             onChange={(e) => {
               const digits = e.target.value.replace(/\D/g, '');
-              setPin(digits);
+              setPin(digits.slice(0, 4));
               if (digits.length >= 4) {
                 setTimeout(() => pinConfirmRef.current?.focus(), 50);
               }
@@ -129,7 +72,7 @@ export default function WalletSetup() {
             placeholder={t('wallet.setup.pinPlaceholder')}
             type="password"
             inputMode="numeric"
-            maxLength={6}
+            maxLength={4}
           />
 
           <span style={styles.label}>{t('wallet.setup.pinConfirmLabel')}</span>
@@ -139,16 +82,14 @@ export default function WalletSetup() {
             value={pinConfirm}
             onChange={(e) => {
               const digits = e.target.value.replace(/\D/g, '');
-              setPinConfirm(digits);
+              setPinConfirm(digits.slice(0, 4));
             }}
             placeholder={t('wallet.setup.pinConfirmPlaceholder')}
             type="password"
             inputMode="numeric"
-            maxLength={6}
+            maxLength={4}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                mode === 'create' ? handleCreate() : handleImport();
-              }
+              if (e.key === 'Enter') handleCreate();
             }}
           />
 
@@ -161,16 +102,16 @@ export default function WalletSetup() {
           {error !== '' && <span style={styles.errorText}>{error}</span>}
 
           <NavalButton
-            title={mode === 'create' ? t('wallet.setup.createButton') : t('wallet.setup.importButton')}
-            onPress={mode === 'create' ? handleCreate : handleImport}
-            disabled={!pinValid || !pinsMatch || (mode === 'import' && !secretInput.trim())}
+            title={t('wallet.setup.createButton')}
+            onPress={handleCreate}
+            disabled={!pinValid || !pinsMatch}
             style={styles.submitButton}
           />
           <NavalButton
             title={t('wallet.setup.back')}
             variant="secondary"
             size="small"
-            onPress={() => { setMode('choose'); setPin(''); setPinConfirm(''); setSecretInput(''); setError(''); }}
+            onPress={() => navigate(-1)}
           />
         </div>
       </div>
@@ -186,6 +127,9 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.md,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   loadingText: {
     fontFamily: FONTS.body,
@@ -199,6 +143,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     justifyContent: 'center',
     padding: SPACING.lg,
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',
@@ -228,15 +175,11 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: SPACING.md,
     opacity: 0.6,
   },
-  actions: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.md,
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
     gap: SPACING.sm,
+    alignItems: 'stretch',
   },
   label: {
     fontFamily: FONTS.heading,
@@ -254,12 +197,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: SPACING.md,
     backgroundColor: COLORS.surface.cardBorder,
     outline: 'none',
-  },
-  secretInput: {
-    fontSize: 13,
-    fontFamily: FONTS.bodyLight,
-    minHeight: 60,
-    resize: 'vertical' as const,
   },
   errorText: {
     fontFamily: FONTS.bodyLight,
