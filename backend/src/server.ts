@@ -7,7 +7,7 @@ import { loadCircuits } from './shared/circuits.js';
 import { createSocketServer } from './ws/socket.js';
 import { initStellarAsset, setupIssuerFlags } from './payment/stellar-asset.js';
 import { startPaymentStream } from './payment/interactor.js';
-import { c } from './log.js';
+import { c, debug } from './log.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,6 +17,9 @@ async function main() {
   console.log(c.bgBlue('   Stealth Battleship — Proof Server    '));
   console.log(c.bgBlue('═══════════════════════════════════════'));
   console.log('');
+
+  debug('[server]', `DEBUG mode ${c.boldGreen('ENABLED')}`);
+  debug('[server]', `PORT=${PORT}, CIRCUIT_DIR=${process.env.CIRCUIT_DIR}`);
 
   console.log(c.cyan('[server]') + ' Loading circuits...');
   const t0 = Date.now();

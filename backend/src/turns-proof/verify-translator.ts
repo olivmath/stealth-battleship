@@ -2,7 +2,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { validateTurnsProofVerifyInput } from '../shared/entities.js';
-import { c } from '../log.js';
+import { c, debug } from '../log.js';
 import { verifyTurnsProof, type TurnsProofVerifyPort } from './verify-interactor.js';
 import { createTurnsProofVerifyAdapter } from './verify-adapter.js';
 
@@ -19,6 +19,8 @@ export function createTurnsProofVerifyRouter(port?: TurnsProofVerifyPort): Route
 
     console.log('');
     console.log(`${TAG} ${c.bgCyan('TURNS PROOF VERIFY REQUEST')}`);
+    debug('[verify]', `#${id} turns-proof body keys: ${Object.keys(req.body).join(', ')}`);
+    debug('[verify]', `#${id} body size: ${JSON.stringify(req.body).length} bytes`);
 
     try {
       console.log(`${TAG} ${c.boldWhite('Step 1:')} Validating input...`);
@@ -26,13 +28,16 @@ export function createTurnsProofVerifyRouter(port?: TurnsProofVerifyPort): Route
 
       if (!validation.ok) {
         console.log(`${TAG} ${c.err('✗')} ${validation.error}`);
+        debug('[verify]', `#${id} validation failed: ${validation.error}`);
         res.status(400).json({ error: validation.error });
         return;
       }
 
       console.log(`${TAG} ${c.ok('✓')} Input valid`);
+      debug('[verify]', `#${id} input validated, calling verifyTurnsProof`);
 
       const result = await verifyTurnsProof(validation.data, adapter, TAG);
+      debug('[verify]', `#${id} result: ${JSON.stringify(result).slice(0, 200)}, elapsed=${Date.now() - t0}ms`);
       res.json(result);
     } catch (err: any) {
       const totalMs = Date.now() - t0;
@@ -41,6 +46,7 @@ export function createTurnsProofVerifyRouter(port?: TurnsProofVerifyPort): Route
       console.error(`${TAG}   ${c.label('Message')}: ${c.err(err.message)}`);
       console.error(`${TAG}   ${c.label('Stack')}:   ${c.dim(err.stack)}`);
       console.error('');
+      debug('[verify]', `#${id} EXCEPTION: ${err.message}`);
       res.status(500).json({
         error: 'Proof verification failed',
         details: err.message,
