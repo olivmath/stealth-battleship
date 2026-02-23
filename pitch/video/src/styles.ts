@@ -24,6 +24,64 @@ export const colors = {
   convexPurple: "#7c3aed",
 };
 
+// ── Spacing tokens for consistent hierarchy ──
+export const SPACING = {
+  sceneTop: 60,
+  titleToContent: 40,
+  contentToFooter: 28,
+  pipelineGap: 28,
+  labelGap: 8,
+  sceneBottom: 100,
+} as const;
+
+// ── Scene layout: title zone → content → footer ──
+export const sceneContainer: CSSProperties = {
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  backgroundColor: colors.navyDark,
+  fontFamily: fonts.rajdhani,
+  paddingTop: SPACING.sceneTop,
+  paddingBottom: SPACING.sceneBottom,
+  boxSizing: "border-box",
+};
+
+export const titleBlock: CSSProperties = {
+  textAlign: "center",
+  marginBottom: SPACING.titleToContent,
+  flexShrink: 0,
+};
+
+export const contentZone: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1,
+  width: "100%",
+  paddingLeft: 60,
+  paddingRight: 60,
+  boxSizing: "border-box",
+};
+
+export const footerZone: CSSProperties = {
+  marginTop: SPACING.contentToFooter,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 12,
+  flexShrink: 0,
+};
+
+export const sectionLabel: CSSProperties = {
+  fontFamily: fonts.rajdhani,
+  fontSize: 16,
+  color: colors.muted,
+  margin: `0 0 ${SPACING.labelGap}px`,
+};
+
+// ── Legacy aliases ──
 export const fullScreen: CSSProperties = {
   width: "100%",
   height: "100%",
