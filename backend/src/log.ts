@@ -1,5 +1,13 @@
 // ANSI color helpers for terminal logs
 
+const IS_DEBUG = () => process.env.DEBUG === 'true';
+
+export function debug(tag: string, ...args: unknown[]): void {
+  if (!IS_DEBUG()) return;
+  const ts = new Date().toISOString().slice(11, 23);
+  console.log(`\x1b[90m[${ts}]\x1b[0m \x1b[35m[DEBUG]\x1b[0m ${tag}`, ...args);
+}
+
 const reset = '\x1b[0m';
 const bold = '\x1b[1m';
 const dim = '\x1b[2m';
