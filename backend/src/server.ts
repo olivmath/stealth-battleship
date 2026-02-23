@@ -12,8 +12,7 @@ import { c, debug, initFileLogger } from './log.js';
 
 initFileLogger();
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-const PORT = new URL(BACKEND_URL).port || '3001';
+const PORT = process.env.PORT || '3001';
 
 async function main() {
   console.log('');
@@ -23,7 +22,7 @@ async function main() {
   console.log('');
 
   debug('[server]', `DEBUG mode ${c.boldGreen('ENABLED')}`);
-  debug('[server]', `BACKEND_URL=${BACKEND_URL}, CIRCUIT_DIR=${process.env.CIRCUIT_DIR}`);
+  debug('[server]', `PORT=${PORT}, CIRCUIT_DIR=${process.env.CIRCUIT_DIR}`);
 
   console.log(c.cyan('[server]') + ' Loading circuits...');
   const t0 = Date.now();

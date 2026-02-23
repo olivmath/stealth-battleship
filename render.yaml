@@ -9,8 +9,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL
-        sync: false
       - key: CIRCUIT_DIR
         value: ./dist/circuits
       - key: STELLAR_SERVER_SECRET
