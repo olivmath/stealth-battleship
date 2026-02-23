@@ -28,6 +28,7 @@ export default function PvpMode() {
   const [paymentError, setPaymentError] = useState('');
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [pinError, setPinError] = useState(false);
+  const [battleBalance, setBattleBalance] = useState<string | null>(null);
 
   useEffect(() => {
     walletInteractor().then(m => m.hasWallet()).then(exists => {
@@ -82,6 +83,7 @@ export default function PvpMode() {
       if (!hasToken) throw new Error('Payment confirmation timed out');
 
       setPaymentState('paid');
+      setBattleBalance('1');
       // Now connect to PvP
       pvp.connectWithSecret(secret);
     } catch (e: any) {
@@ -90,13 +92,36 @@ export default function PvpMode() {
     }
   };
 
-  // Unlock wallet with PIN
+  // Unlock wallet with PIN — then check if player already has BATTLE token
   const handleUnlock = async (pinValue: string) => {
     setConnecting(true);
     try {
-      const { getSecretKey: getSK } = await walletInteractor();
+      const { getSecretKey: getSK, getPublicKey } = await walletInteractor();
       const secret = await getSK(pinValue);
       setSecretKey(secret);
+
+      // Check if player already has a BATTLE token — skip payment if so
+      const publicKey = await getPublicKey();
+      if (publicKey) {
+        const [statusRes, addrRes] = await Promise.all([
+          fetch(`${API_URL}/api/payment/status/${publicKey}`),
+          fetch(`${API_URL}/api/payment/address`),
+        ]);
+        if (statusRes.ok) {
+          const { hasToken } = await statusRes.json();
+          if (hasToken) {
+            setPaymentState('paid');
+            pvp.connectWithSecret(secret);
+          }
+        }
+        // Fetch BATTLE token balance
+        if (addrRes.ok) {
+          const { address } = await addrRes.json();
+          const { getBattleTokenBalance } = await walletInteractor();
+          const bal = await getBattleTokenBalance(publicKey, address);
+          setBattleBalance(bal);
+        }
+      }
       setConnecting(false);
     } catch {
       setPinError(true);
@@ -157,6 +182,11 @@ export default function PvpMode() {
             </>
           ) : (
             <>
+              {battleBalance !== null && (
+                <span style={styles.battleChip}>
+                  {parseInt(battleBalance)} BATTLE
+                </span>
+              )}
               <NavalText variant="bodyLight" style={{ textAlign: 'center', marginBottom: 8 }}>
                 {t('pvpMode.paymentInfo', 'A small fee of 0.001 XLM is required to play PvP matches.')}
               </NavalText>
@@ -213,9 +243,16 @@ export default function PvpMode() {
       title={t('pvpMode.title')}
       subtitle={t('pvpMode.subtitle')}
       headerExtra={
-        <NavalText variant="bodyLight" style={{ fontSize: 10, marginTop: 4 }}>
-          {pvp.myPublicKeyHex?.slice(0, 12)}...
-        </NavalText>
+        <div style={styles.headerInfo}>
+          <NavalText variant="bodyLight" style={{ fontSize: 10 }}>
+            {pvp.myPublicKeyHex?.slice(0, 12)}...
+          </NavalText>
+          {battleBalance !== null && (
+            <span style={styles.battleChip}>
+              {parseInt(battleBalance)} BATTLE
+            </span>
+          )}
+        </div>
       }
       actions={
         <NavalButton
@@ -270,5 +307,24 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONTS.body,
     fontSize: 13,
     color: COLORS.accent.fire,
+  },
+  headerInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  battleChip: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.status.pvp,
+    letterSpacing: 1,
+    border: `1px solid ${COLORS.status.pvp}`,
+    borderRadius: 4,
+    paddingLeft: SPACING.sm,
+    paddingRight: SPACING.sm,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
 };

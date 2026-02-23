@@ -122,3 +122,17 @@ export async function getBalance(publicKey: string): Promise<string> {
     return '0';
   }
 }
+
+export async function getBattleTokenBalance(publicKey: string, issuer: string): Promise<string> {
+  try {
+    const res = await fetch(`${HORIZON_TESTNET}/accounts/${publicKey}`);
+    if (!res.ok) return '0';
+    const data = await res.json();
+    const battle = data.balances?.find(
+      (b: any) => b.asset_code === 'BATTLE' && b.asset_issuer === issuer
+    );
+    return battle?.balance ?? '0';
+  } catch {
+    return '0';
+  }
+}
