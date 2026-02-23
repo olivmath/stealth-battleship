@@ -4,7 +4,7 @@ import { verifyAuth } from '../auth/verifier.js';
 import { AuthPayload } from '../auth/entities.js';
 import { registerMatchmakingHandlers } from '../matchmaking/translator.js';
 import { registerBattleHandlers } from '../battle/translator.js';
-import { matches, matchCodeIndex, playerToMatch } from '../matchmaking/entities.js';
+import { matches, matchCodeIndex, playerToMatch, matchQueue } from '../matchmaking/entities.js';
 import { getPlayerMatch, removeMatch } from '../matchmaking/interactor.js';
 import { endMatch } from '../battle/interactor.js';
 import { c, debug } from '../log.js';
@@ -88,6 +88,13 @@ export function createSocketServer(httpServer: HttpServer): Server {
         }
         socket.emit('pvp:reconnected', { matchId: match.id, phase: match.status });
       }
+
+      // Update socketId in matchQueue if player is queued (#9)
+      const queueEntry = matchQueue.find((e) => e.publicKey === publicKey);
+      if (queueEntry) {
+        queueEntry.socketId = socket.id;
+        debug('[ws]', `Updated socketId in matchQueue for ${shortKey}...`);
+      }
     }
 
     connectedPlayers.set(publicKey, socket.id);
@@ -108,10 +115,10 @@ export function createSocketServer(httpServer: HttpServer): Server {
       console.log(c.yellow('[ws]') + ` Player disconnected: ${c.dim(shortKey)}... (${reason})`);
       console.log(c.yellow('[ws]') + ` Online: ${c.val(String(connectedPlayers.size))}`);
 
-      // Grace period: don't auto-forfeit immediately during battle
+      // Grace period: don't auto-forfeit immediately during battle or placing
       const match = getPlayerMatch(publicKey);
-      if (match && match.status === 'battle') {
-        debug('[ws]', `Player ${shortKey}... in active battle ${match.id}, starting ${GRACE_PERIOD_MS}ms grace period`);
+      if (match && (match.status === 'battle' || match.status === 'placing')) {
+        debug('[ws]', `Player ${shortKey}... in ${match.status} phase ${match.id}, starting ${GRACE_PERIOD_MS}ms grace period`);
         const opponentSocketId = match.player1.publicKey === publicKey
           ? match.player2?.socketId
           : match.player1.socketId;
@@ -122,9 +129,11 @@ export function createSocketServer(httpServer: HttpServer): Server {
 
         disconnectGrace.set(publicKey, setTimeout(() => {
           disconnectGrace.delete(publicKey);
-          // Auto-forfeit after grace period
           const m = getPlayerMatch(publicKey);
-          if (m && m.status === 'battle') {
+          if (!m) return;
+
+          if (m.status === 'battle') {
+            // Auto-forfeit after grace period
             const winnerKey = m.player1.publicKey === publicKey
               ? m.player2!.publicKey
               : m.player1.publicKey;
@@ -132,16 +141,33 @@ export function createSocketServer(httpServer: HttpServer): Server {
             debug('[ws]', `Grace expired for ${shortKey}..., auto-forfeit match ${m.id}`);
             endMatch(m, winnerKey, 'disconnect_timeout');
 
-            const winnerId = m.player1.publicKey === winnerKey
-              ? m.player1.socketId
-              : m.player2!.socketId;
+            // Use current socketId from connectedPlayers (may have changed on reconnect)
+            const winnerId = connectedPlayers.get(winnerKey);
 
+            if (!winnerId) return;
             io.to(winnerId).emit('battle:game_over', {
               winner: winnerKey,
               reason: 'opponent_disconnected',
             });
 
             console.log(c.yellow('[ws]') + ` ${shortKey}... grace period expired — auto-forfeit`);
+          } else if (m.status === 'placing') {
+            // Cancel match during placing phase
+            debug('[ws]', `Grace expired for ${shortKey}... during placing — cancelling match ${m.id}`);
+            const opponentKey = m.player1.publicKey === publicKey
+              ? m.player2?.publicKey
+              : m.player1.publicKey;
+
+            removeMatch(m.id);
+
+            if (opponentKey) {
+              const opId = connectedPlayers.get(opponentKey);
+              if (opId) {
+                io.to(opId).emit('match:error', { message: 'Opponent disconnected' });
+              }
+            }
+
+            console.log(c.yellow('[ws]') + ` ${shortKey}... grace period expired during placing — match cancelled`);
           }
         }, GRACE_PERIOD_MS));
       }
