@@ -248,8 +248,8 @@ Grid com hits faz fade. Footage de navio afundando emerge.
 [1:15 — 1:20]  BADGE grande (destaque final):
 
                ┌───────────────────────────────────────┐
-               │  "The circuit IS the referee."        │
-               │   Settles on-chain → escrow released  │
+               │  "The circuit IS the referee."              │
+               │   Settles on-chain → BATTLE token clawback  │
                └───────────────────────────────────────┘
 
                Footage de navio afundando continua no fundo.
@@ -295,10 +295,10 @@ Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
 
 [1:31 — 1:34]  SCREEN RECORDING: "Deploying to blockchain..."
                OVERLAY LABEL:
-               ┌──────────────────────────────────────┐
-               │ ⛓️  Soroban TX 1: open_match()        │
-               │    Board hash committed on Stellar    │
-               └──────────────────────────────────────┘
+               ┌──────────────────────────────────────────────┐
+               │ ⛓️  Soroban TX 2: board proofs anchored       │
+               │    on Stellar — match started                 │
+               └──────────────────────────────────────────────┘
 
 [1:34 — 1:39]  SCREEN RECORDING: tela de batalha.
                Jogador toca numa celula pra atacar.
@@ -316,10 +316,10 @@ Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
 [1:43 — 1:48]  SCREEN RECORDING: tela de game over — "Victory!"
                XP earned + rank display.
                OVERLAY LABEL:
-               ┌──────────────────────────────────────────┐
-               │ 🏆 turns_proof → Soroban TX 2: close()    │
-               │    Winner settled. Escrow released.       │
-               └──────────────────────────────────────────┘
+               ┌──────────────────────────────────────────────┐
+               │ 🏆 turns_proof → Soroban TX 3: winner settled │
+               │    BATTLE token clawback to winner.           │
+               └──────────────────────────────────────────────┘
 
 [1:48 — 1:50]  Zoom-out do screen recording.
                App UI se miniaturiza no centro, fundo navy retorna.
@@ -328,9 +328,9 @@ Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
 ### NARRACAO (PiP rosto)
 
 > *"Let me show you. Here I'm placing ships on the grid... tap Ready... the board validity proof generates client-side with NoirJS..."*
-> *"Board hash committed on Stellar..."*
+> *"Board proofs anchored on Stellar — match started..."*
 > *"Battle begins — I tap to attack, the opponent's proof confirms the result..."*
-> *"Hit! And when the game ends — turns proof settles everything on-chain. Two transactions total."*
+> *"Hit! And when the game ends — the server generates the turns proof, submits on-chain, and claws back the BATTLE token to the winner. Three blockchain moments total."*
 
 ### TRANSICAO
 App UI se miniaturiza, diagrama de arquitetura emerge ao redor.
@@ -362,12 +362,14 @@ App UI se miniaturiza, diagrama de arquitetura emerge ao redor.
                     proofs │          │ real-time turns
                            ▼          ▼
                ┌──────────────┐  ┌──────────────┐
-               │  ⭐ STELLAR   │  │  💜 CONVEX    │
-               │   Soroban     │  │  off-chain   │
-               │               │  │              │
-               │  TX1: open    │  │  matchmaking │
-               │  TX2: close   │  │  turn coord  │
-               │  escrow       │  │  shot verify │
+               │  ⭐ STELLAR   │  │  💜 BACKEND   │
+               │   Soroban     │  │  Express +   │
+               │               │  │  Socket.io + │
+               │  TX1: payment │  │  Supabase    │
+               │  TX2: start   │  │              │
+               │  TX3: end     │  │  matchmaking │
+               │  BATTLE token │  │  turn coord  │
+               │  clawback     │  │  shot verify │
                └──────────────┘  └──────────────┘
                 Cor: #2845a0       Cor: #7c3aed
 
@@ -387,17 +389,17 @@ App UI se miniaturiza, diagrama de arquitetura emerge ao redor.
 
 [2:03 — 2:08]  BADGE grande no centro (slide-in):
 
-               ┌──────────────────────────────────────────────┐
-               │  "Only 2 on-chain transactions per game"     │
-               │   open_match() ──── gameplay ──── close()    │
-               └──────────────────────────────────────────────┘
+               ┌──────────────────────────────────────────────────────┐
+               │  "3 blockchain moments per PvP match"              │
+               │   Payment (XLM+BATTLE) — Start (proofs) — End (turns_proof+clawback) │
+               └──────────────────────────────────────────────────────┘
 
 [2:08 — 2:10]  Diagrama inteiro faz fade suave.
 ```
 
 ### NARRACAO (PiP rosto)
 
-> *"The architecture is hybrid. On-chain: just two Soroban transactions per game — open and close. Off-chain: Convex handles real-time turns with millisecond latency."*
+> *"The architecture is hybrid. On-chain: three blockchain moments per match — payment, start with board proofs anchored, and end with turns_proof and BATTLE token clawback. Off-chain: Express + Socket.io handles real-time turns with millisecond latency, and Supabase persists match history and rankings."*
 > *"We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use. Efficient. Not emulated."*
 
 ### TRANSICAO
@@ -440,7 +442,7 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
 
 [2:27 — 2:30]  LOGOS de parceiros alinham na base da tela:
 
-                    [Stellar]    [Noir]    [Convex]
+                    [Stellar]    [Noir]    [Supabase]
 
                Texto final (pequeno): "Built for Stellar Hacks 2026"
                MUSICA: ultimo acorde sustenta e faz fade.

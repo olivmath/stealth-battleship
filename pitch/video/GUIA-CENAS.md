@@ -116,7 +116,7 @@ Texto: "Winner computed IN the proof"
 Badge grande no final:
 
     "The circuit IS the referee."
-    "Settles on-chain → escrow released"
+    "Settles on-chain → BATTLE token clawback"
 
 Narracao (PiP):
 "At game end, the entire sequence is replayed inside a circuit. The winner is computed in the proof itself. The circuit is the referee."
@@ -140,7 +140,7 @@ Label: "Ship Placement — drag & drop"
 Label: "board_validity proof generating — NoirJS + bb.js (client-side WASM)"
 
 [1:31 — 1:34] Deploying to blockchain.
-Label: "Soroban TX 1: open_match() — Board hash committed on Stellar"
+Label: "Soroban TX 2: board proofs anchored on Stellar — match started"
 
 [1:34 — 1:39] Tela de batalha. Jogador toca celula pra atacar.
 Label: "Player attacks — opponent proves response"
@@ -149,12 +149,12 @@ Label: "Player attacks — opponent proves response"
 Label: "shot_proof verified — result honest"
 
 [1:43 — 1:48] Game over — "Victory!" com XP e rank.
-Label: "turns_proof → Soroban TX 2: close() — Winner settled. Escrow released."
+Label: "turns_proof → Soroban TX 3: winner settled. BATTLE token clawback."
 
 [1:48 — 1:50] Zoom-out do celular. App se miniaturiza, fundo navy retorna.
 
 Narracao (PiP):
-"Let me show you. Here I'm placing ships... tap Ready... the board validity proof generates client-side... Board hash committed on Stellar... Battle begins — I tap to attack, the opponent's proof confirms the result... Hit! And when the game ends — turns proof settles everything on-chain. Two transactions total."
+"Let me show you. Here I'm placing ships... tap Ready... the board validity proof generates client-side... Board proofs anchored on Stellar... Battle begins — I tap to attack, the opponent's proof confirms the result... Hit! And when the game ends — the server generates the turns proof, submits on-chain, and claws back the BATTLE token to the winner. Three blockchain moments total."
 
 ---
 
@@ -169,14 +169,15 @@ Depois duas setas: "proofs ↓" (teal) e "↓ real-time turns" (laranja).
 Dois blocos na base aparecem simultaneamente:
 
 STELLAR (Soroban) — caixa azul:
-- TX 1: open_match
-- TX 2: close_match
-- Escrow lock/release
+- TX 1: payment (XLM + BATTLE token issuance)
+- TX 2: start (board proofs anchored on-chain)
+- TX 3: end (turns_proof + BATTLE token clawback)
 
-CONVEX (off-chain) — caixa roxa:
-- Matchmaking
-- Turn coordination
+BACKEND: Express + Socket.io + Supabase — caixa roxa:
+- Matchmaking (Socket.io)
+- Turn coordination (real-time)
 - shot_proof verification
+- Supabase: match history, global rank, stats
 - ~ms latency
 
 As linhas conectoras pulsam como pontilhado animado.
@@ -190,13 +191,13 @@ Aos 1:58 o bloco Stellar ganha destaque com borda dourada pulsando:
 
 Badge central desliza:
 
-    "Only 2 on-chain transactions per game"
-    open_match() ———— gameplay ———— close()
+    "3 blockchain moments per PvP match"
+    Payment (XLM + BATTLE token) — Start (board proofs anchored) — End (turns_proof + clawback)
 
 O diagrama todo faz fade suave.
 
 Narracao (PiP):
-"The architecture is hybrid. On-chain: just two Soroban transactions per game — open and close. Off-chain: Convex handles real-time turns with millisecond latency. We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use."
+"The architecture is hybrid. On-chain: three blockchain moments per match — payment, start, and end. Off-chain: Express + Socket.io handles real-time turns with millisecond latency, and Supabase persists match history and rankings. We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use."
 
 ---
 
@@ -217,7 +218,7 @@ Links aparecem em fade:
     github.com/olivmath/battleship-zk
     Stellar Testnet | Noir + UltraHonk
 
-Logos dos parceiros se alinham na base: Stellar, Noir, Convex.
+Logos dos parceiros se alinham na base: Stellar, Noir, Supabase.
 
 Texto final pequeno: "Built for Stellar Hacks 2026"
 

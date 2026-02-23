@@ -109,7 +109,7 @@ Constraints:
   ✓ is_hit == (board[row][col] == 1)
 
 Generated every turn (~1-2s)
-Verified off-chain (Convex) for real-time play
+Verified off-chain (Express + Socket.io) for real-time play
 
 Lying is mathematically impossible.
 ```
@@ -133,7 +133,7 @@ Constraints:
   ✓ Winner computed INSIDE the circuit
 
 Generated at game end
-Settled on-chain → escrow released
+Settled on-chain → BATTLE token clawback to winner
 
 The circuit IS the referee.
 ```
@@ -156,19 +156,22 @@ ARCHITECTURE — Hybrid On-Chain / Off-Chain
            │          │
       proofs    real-time turns
            │          │
-     ┌─────▼──┐  ┌────▼─────┐
-     │STELLAR │  │ CONVEX   │
-     │Soroban │  │off-chain │
-     │        │  │          │
-     │TX1:open│  │matchmake │
-     │TX2:close│ │turns     │
-     │escrow  │  │verify    │
-     └────────┘  └──────────┘
+     ┌─────▼──┐  ┌────▼────────────────────┐
+     │STELLAR │  │ BACKEND                 │
+     │Soroban │  │ Express + Socket.io     │
+     │        │  │ (real-time PvP)         │
+     │TX1:pay │  │ Supabase (persistence)  │
+     │TX2:open│  │ matchmaking             │
+     │TX3:end │  │ shot verification       │
+     └────────┘  └─────────────────────────┘
 
-Only 2 on-chain transactions per game
+3 blockchain moments per game:
+  TX1 Payment: XLM + BATTLE token
+  TX2 Start:   board proofs anchored
+  TX3 End:     turns_proof anchored
 ```
 
-**Design:** Diagrama com blocos coloridos (Stellar=azul, Convex=roxo, Device=escuro).
+**Design:** Diagrama com blocos coloridos (Stellar=azul, Backend=roxo, Device=escuro).
 
 ---
 
@@ -211,7 +214,8 @@ Proof System    UltraHonk
 Hashing         Poseidon2
 Proof Gen       NoirJS + bb.js (client WASM)
 Contracts       Soroban (Rust)
-Backend         Convex (real-time)
+Real-time       Express + Socket.io
+Persistence     Supabase
 Frontend        React Native / Expo
 Languages       TypeScript, Rust, Noir
 ```
@@ -226,17 +230,26 @@ Languages       TypeScript, Rust, Noir
 GAMEPLAY FLOW
 ━━━━━━━━━━━━━
 
-1. Place ships    → drag & drop on 6x6 grid
+ARCADE (local, no backend):
+1. Place ships    → drag & drop on grid
 2. ZK commitment  → "Securing your fleet..." (2-5s)
-3. On-chain       → Soroban open_match() — TX 1
-4. Battle         → tap to attack, ZK proves each response
-5. Game over      → turns_proof → close_match() — TX 2
-6. Settlement     → winner gets XLM, trustlessly
+3. Battle         → tap to attack, fully local ZK
+4. Game over      → turns_proof computed locally
+
+PVP:
+1. Payment        → XLM + BATTLE token — TX 1
+2. BATTLE token   → issued, matchmaking begins
+3. Placement      → board_validity proof verified server-side
+4. On-chain       → board proofs anchored — TX 2
+5. Battle         → shot proofs verified synchronously; invalid = lose
+6. Reveal         → game over, turns_proof generated
+7. On-chain       → turns_proof anchored — TX 3
+8. Settlement     → BATTLE token clawback to winner
 
 [Screenshot / GIF do app aqui]
 ```
 
-**Design:** Timeline vertical com screenshots do app ao lado.
+**Design:** Timeline vertical com duas colunas (Arcade / PvP), screenshots do app ao lado.
 
 ---
 
@@ -247,11 +260,14 @@ PROJECT STATUS
 ━━━━━━━━━━━━━━
 
 ✅ 3+1 Noir circuits (board, shot, turns, hash_helper)
-✅ Full mobile game (AI opponent, animations, haptics)
+✅ Full mobile game (AI + Arcade mode, animations, haptics)
 ✅ Match history + ranking system (6 ranks)
 ✅ i18n (English, Portuguese, Spanish)
 ✅ Settings (grid size, battle view mode)
+✅ PvP screens + payment flow (UI complete)
 🔧 ZK Service (WebView proof generation) — in progress
+🔧 Express + Socket.io backend (PvP real-time) — in progress
+🔧 Supabase integration (persistence) — in progress
 🔧 Soroban contract + Game Hub — in progress
 🔧 Web client for judges — in progress
 ```
@@ -291,7 +307,7 @@ BATTLESHIP ZK
 
 github.com/olivmath/battleship-zk
 
-         [Stellar]  [Noir]  [Convex]
+         [Stellar]  [Noir]  [Supabase]
 
                   olivmath
        Stellar Hacks: ZK Gaming 2026

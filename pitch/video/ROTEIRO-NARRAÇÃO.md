@@ -52,7 +52,7 @@
 
 "Battle begins — I tap a cell to attack... the opponent's device generates a shot_proof to confirm the result... hit!"
 
-"And when the game ends, the turns_proof settles everything on-chain. Two transactions total — open and close."
+"And when the game ends — the server generates the turns_proof, submits it on-chain, and claws back the BATTLE token to the winner. Three blockchain moments total."
 
 ---
 
@@ -60,7 +60,7 @@
 
 > _Tela: Diagrama de arquitetura (on-chain vs off-chain)_
 
-"The architecture is hybrid. On-chain, we have just two Soroban transactions per game — open match and close match. Off-chain, Convex handles real-time turn coordination with millisecond latency."
+"The architecture is hybrid. On-chain, we have three blockchain moments per match — payment with BATTLE token issuance, start with board proofs anchored, and end with the turns_proof settled and BATTLE token clawed back to the winner. Off-chain, Express + Socket.io handles real-time turn coordination with millisecond latency, and Supabase persists match history and global rankings."
 
 "We chose Stellar because Protocol 25 X-Ray gives us **native BN254 curve operations and Poseidon2 hashing** — the exact primitives our Noir circuits use. This means proof verification on-chain is efficient, not emulated."
 

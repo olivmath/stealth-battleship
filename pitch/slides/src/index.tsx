@@ -298,7 +298,7 @@ function Presentation() {
               "board_hash matches committed hash",
               "is_hit == (board[row][col] == 1)",
             ]}
-            footer="Generated every turn (~1-2s) — Verified off-chain (Convex) for real-time play"
+            footer="Generated every turn (~1-2s) — Verified off-chain (Express + Socket.io) for real-time play"
             highlight="Lying is mathematically impossible."
             highlightColor={colors.fireOrange}
           />
@@ -323,7 +323,7 @@ function Presentation() {
               "Every attack result replayed correctly",
               "Winner computed INSIDE the circuit",
             ]}
-            footer="Generated at game end — Settled on-chain → escrow released"
+            footer="Generated at game end — Settled on-chain → BATTLE token clawback to winner"
             highlight="The circuit IS the referee."
             highlightColor={colors.teal}
           />
@@ -345,7 +345,7 @@ function Presentation() {
             color: colors.mutedLight,
             marginBottom: 32,
           }}>
-            Hybrid On-Chain / Off-Chain — Only 2 transactions per game
+            Hybrid On-Chain / Off-Chain — 3 blockchain moments per game
           </div>
 
           {/* Device node */}
@@ -413,13 +413,13 @@ function Presentation() {
               <ArchNode
                 title="STELLAR"
                 subtitle="SOROBAN"
-                items={["TX1: open_match()", "TX2: close_match()", "Escrow + settlement"]}
+                items={["TX1: Payment (XLM + BATTLE)", "TX2: board proofs anchored", "TX3: turns_proof anchored"]}
                 color={colors.teal}
               />
               <ArchNode
-                title="CONVEX"
-                subtitle="OFF-CHAIN"
-                items={["Matchmaking", "Turn relay", "Shot verification"]}
+                title="BACKEND"
+                subtitle="EXPRESS + SOCKET.IO + SUPABASE"
+                items={["Matchmaking", "Shot verification", "Persistence (Supabase)"]}
                 color="#8b5cf6"
               />
             </div>
@@ -509,7 +509,8 @@ function Presentation() {
             <TechRow label="Hashing" value="Poseidon2" accent={colors.gold} />
             <TechRow label="Proof Gen" value="NoirJS + bb.js (client WASM)" />
             <TechRow label="Contracts" value="Soroban (Rust)" accent={colors.gold} />
-            <TechRow label="Backend" value="Convex (real-time)" accent="#8b5cf6" />
+            <TechRow label="Real-time" value="Express + Socket.io" accent="#8b5cf6" />
+            <TechRow label="Persistence" value="Supabase" accent="#8b5cf6" />
             <TechRow label="Frontend" value="React Native / Expo" />
             <TechRow label="Languages" value="TypeScript, Rust, Noir" accent={colors.gold} />
           </div>
@@ -528,16 +529,51 @@ function Presentation() {
           <div style={{ display: "flex", gap: 60 }}>
             {/* Timeline */}
             <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: fonts.mono,
+                fontSize: "12px",
+                color: colors.teal,
+                letterSpacing: "2px",
+                marginBottom: 8,
+              }}>
+                ARCADE — fully local ZK, no backend
+              </div>
               {[
-                { title: "Place ships", detail: "drag & drop on 6x6 grid" },
+                { title: "Place ships", detail: "drag & drop on grid" },
                 { title: "ZK commitment", detail: '"Securing your fleet..." (2-5s)' },
-                { title: "On-chain", detail: "Soroban open_match() — TX 1" },
-                { title: "Battle", detail: "tap to attack, ZK proves each response" },
-                { title: "Game over", detail: "turns_proof → close_match() — TX 2" },
-                { title: "Settlement", detail: "winner gets XLM, trustlessly" },
+                { title: "Battle", detail: "tap to attack, fully local ZK proofs" },
+                { title: "Game over", detail: "turns_proof computed locally" },
               ].map((step, i, arr) => (
                 <FlowStep
-                  key={i}
+                  key={`arcade-${i}`}
+                  step={i + 1}
+                  title={step.title}
+                  detail={step.detail}
+                  isLast={i === arr.length - 1}
+                />
+              ))}
+
+              <div style={{
+                fontFamily: fonts.mono,
+                fontSize: "12px",
+                color: colors.gold,
+                letterSpacing: "2px",
+                marginTop: 20,
+                marginBottom: 8,
+              }}>
+                PVP — real-time, ZK-verified on backend + blockchain
+              </div>
+              {[
+                { title: "Payment", detail: "XLM + BATTLE token — TX 1" },
+                { title: "BATTLE token", detail: "issued → matchmaking begins" },
+                { title: "Placement", detail: "board_validity proof verified server-side" },
+                { title: "On-chain", detail: "board proofs anchored — TX 2" },
+                { title: "Battle", detail: "shot proofs verified synchronously; invalid = lose" },
+                { title: "Reveal", detail: "game over → turns_proof generated" },
+                { title: "Settlement", detail: "turns_proof anchored — TX 3 → BATTLE token clawback" },
+              ].map((step, i, arr) => (
+                <FlowStep
+                  key={`pvp-${i}`}
                   step={i + 1}
                   title={step.title}
                   detail={step.detail}
@@ -589,11 +625,14 @@ function Presentation() {
 
           <div style={{ maxWidth: 700, margin: "0 auto" }}>
             <StatusItem text="3+1 Noir circuits (board, shot, turns, hash_helper)" status="done" />
-            <StatusItem text="Full mobile game (AI opponent, animations, haptics)" status="done" />
+            <StatusItem text="Full mobile game (AI + Arcade mode, animations, haptics)" status="done" />
             <StatusItem text="Match history + ranking system (6 ranks)" status="done" />
             <StatusItem text="i18n (English, Portuguese, Spanish)" status="done" />
             <StatusItem text="Settings (grid size, battle view mode)" status="done" />
+            <StatusItem text="PvP screens + payment flow (UI complete)" status="done" />
             <StatusItem text="ZK Service (WebView proof generation)" status="wip" />
+            <StatusItem text="Express + Socket.io backend (PvP real-time)" status="wip" />
+            <StatusItem text="Supabase integration (persistence)" status="wip" />
             <StatusItem text="Soroban contract + Game Hub" status="wip" />
             <StatusItem text="Web client for judges" status="wip" />
           </div>
@@ -677,7 +716,7 @@ function Presentation() {
 
             {/* Partner logos */}
             <div style={{ display: "flex", gap: 24 }}>
-              {["STELLAR", "NOIR", "CONVEX"].map((name) => (
+              {["STELLAR", "NOIR", "SUPABASE"].map((name) => (
                 <div key={name} style={{
                   fontFamily: fonts.mono,
                   fontSize: "11px",

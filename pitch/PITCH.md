@@ -51,34 +51,33 @@ This is not "a game with ZK mentioned in the README." ZK is the **core mechanic*
 ## Architecture
 
 ```
-PLAYER DEVICE                    STELLAR (Soroban)
+PLAYER DEVICE                    EXPRESS + SOCKET.IO BACKEND
++------------------+             +---------------------------+
+| Noir Circuits    |  WS/HTTPS   | - Matchmaking             |
+| (WASM/WebView)   | <---------> | - Turn coordination       |
+|                  |             | - shot_proof verification |
+| board_validity   |             | - turns_proof generation  |
+| shot_proof       |             | - Supabase persistence    |
+| turns_proof      |             +---------------------------+
++------------------+                        |
+        |                                   |
+        | 3 blockchain moments              |
+        v                                   v
 +------------------+             +----------------------+
-| Noir Circuits    |   TX 1      | battleship_match     |
-| (WASM/WebView)   | ---------> | open_match()          |
-|                  |             | - verify board proofs |
-| board_validity   |             | - lock escrow         |
-| shot_proof       |             +----------------------+
-| turns_proof      |                     |
-+------------------+                     |
-        |                                |
-        | real-time turns                |
-        v                                |
+| STELLAR          |             | SUPABASE             |
+| - XLM payment   |             | - Match history      |
+| - BATTLE token   |             | - Player rankings    |
+| - ZK anchoring   |             | - Game stats         |
 +------------------+             +----------------------+
-| Convex Backend   |   TX 2      | close_match()        |
-| (off-chain)      | ---------> | - verify result       |
-| - matchmaking    |             | - release escrow      |
-| - turn coord     |             +----------------------+
-| - proof verify   |
-+------------------+
 
-On-chain: 2 transactions per game (open + close)
-Off-chain: real-time turns with proof verification
+On-chain: 3 moments per PvP game (payment, board proofs, turns_proof)
+Off-chain: real-time turns with synchronous proof verification
 ```
 
 ### Hybrid Model — Best of Both Worlds
 
-- **On-chain (Soroban):** `open_match` (board proofs + escrow) and `close_match` (winner + settlement). Only 2 txs per game.
-- **Off-chain (Convex):** Matchmaking, turn coordination, real-time `shot_proof` verification. Millisecond latency.
+- **Backend (Express + Socket.io):** Matchmaking, turn coordination, real-time `shot_proof` verification with millisecond latency. Supabase stores match history, rankings, and stats.
+- **On-chain (Stellar):** XLM payment + BATTLE custom asset token issuance (with clawback) at match start, `board_validity` proofs anchored at game open, `turns_proof` anchored at game end.
 
 This gives us **trustless settlement** with **real-time gameplay** — no player waits 15 seconds for a block to know if their shot hit.
 
@@ -92,7 +91,9 @@ We chose Stellar deliberately, not as an afterthought:
 |---|---|
 | **Protocol 25 (X-Ray)** | Native BN254 curve ops + Poseidon2 hash — the exact primitives our Noir circuits use |
 | **Poseidon2 on-chain** | Board hashes are computed with Poseidon, verified natively on Soroban — no expensive emulation |
-| **Low tx cost** | 2 txs per game makes on-chain settlement viable for every match, not just high-stakes |
+| **Low tx cost** | 3 blockchain moments per game makes on-chain anchoring viable for every match, not just high-stakes |
+| **XLM payments** | Entry fee paid in XLM at match start; winner settlement at end |
+| **BATTLE custom asset** | Custom token with clawback issued at match start, burned on resolution — prevents griefing |
 | **Soroban smart contracts** | UltraHonk verifier deployed for board_validity proof verification |
 | **Game Hub contract** | `start_game()` / `end_game()` integration with `CB4VZAT2...` |
 
@@ -109,7 +110,7 @@ Protocol 25 is not just compatible — it's **the reason this design is efficien
 | Hashing | **Poseidon2** — ZK-friendly, native on Stellar P25 |
 | Proof Generation | **NoirJS + bb.js** (client-side WASM) |
 | Smart Contracts | **Soroban** (Rust) — deployed on Stellar Testnet |
-| Backend | **Convex** — real-time subscriptions, edge functions |
+| Backend | **Express + Socket.io** — real-time PvP coordination + **Supabase** — persistence |
 | Frontend | **React Native / Expo** (mobile-first) + web client |
 | Languages | TypeScript, Rust, Noir |
 
@@ -164,13 +165,25 @@ All circuits compile with `nargo`, tested with `nargo test`, and generate ACIR a
 
 ## Game Flow — Player Experience
 
+### Arcade Mode (vs AI — fully local)
 ```
-1. MENU           →  "Find Match" / "Play vs AI"
-2. PLACEMENT      →  Drag & drop 3 ships on 6x6 grid
-3. ZK COMMITMENT  →  "Securing your fleet..." (board_validity proof ~2-5s)
-4. ON-CHAIN       →  "Deploying to blockchain..." (Soroban open_match tx)
-5. BATTLE         →  Turn-based: tap to attack, ZK proves every response
-6. GAME OVER      →  turns_proof generated, settlement tx, winner gets XLM
+1. MENU           →  "Play vs AI"
+2. PLACEMENT      →  Drag & drop ships on grid
+3. ZK COMMITMENT  →  "Securing your fleet..." (board_validity proof, WASM local ~2-5s)
+4. BATTLE         →  Turn-based: tap to attack, ZK proves every response locally
+5. GAME OVER      →  turns_proof generated locally, no backend, no blockchain
+```
+
+### PvP Mode
+```
+1. MENU           →  "Find Match"
+2. PAYMENT        →  XLM entry fee + BATTLE token issuance on Stellar
+3. PLACEMENT      →  Drag & drop ships on grid
+4. ZK COMMITMENT  →  "Securing your fleet..." (board_validity proof ~2-5s, anchored on-chain)
+5. BATTLE         →  Turn-based via Socket.io; server verifies each shot_proof synchronously
+                      Invalid proof = instant loss, no appeals
+6. REVEAL         →  Players reveal ship positions at end (server cross-checks with board hash)
+7. GAME OVER      →  Server generates turns_proof, anchors on Stellar, winner gets XLM
 ```
 
 The ZK proof generation is masked by loading animations — the player sees "Securing your fleet..." while Noir circuits crunch in the background. The game feels smooth; the math is invisible.

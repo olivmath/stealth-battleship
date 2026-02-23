@@ -63,7 +63,7 @@
 - Title: "Turns Proof"
 - Subtitle: "Prove the entire game was fair"
 - Mini-lista: "Full replay | Compute winner in-circuit"
-- Badge: "Settles on-chain"
+- Badge: "Settles on-chain → BATTLE token clawback"
 
 ### Fundo
 - Dark com linhas de código Noir blur no background
@@ -89,7 +89,7 @@
    - Mostrar RadarSpinner
 
 3. **(1:15)** Loading "Deploying to blockchain..."
-   - Label overlay: "Soroban TX 1: open_match()"
+   - Label overlay: "Soroban TX 2: board proofs anchored on Stellar — match started"
    - Mostrar hash da TX aparecendo
 
 4. **(1:18)** Battle screen — tap numa célula
@@ -99,7 +99,7 @@
    - Label overlay: "Proof verified — result is honest"
 
 6. **(1:25)** Game over — "Victory!" + settlement
-   - Label overlay: "turns_proof → Soroban TX 2: close_match()"
+   - Label overlay: "turns_proof → Soroban TX 3: winner settled. BATTLE token clawback."
 
 ### Assets necessários
 - Screen recording do app (iOS simulator ou device)
@@ -129,23 +129,27 @@
         │               │
         ▼               ▼
 ┌──────────────┐  ┌──────────────┐
-│   STELLAR    │  │   CONVEX     │
-│   (Soroban)  │  │  (off-chain) │
+│   STELLAR    │  │   BACKEND    │
+│   (Soroban)  │  │ Express+     │
+│              │  │ Socket.io +  │
+│              │  │ Supabase     │
 │              │  │              │
-│ TX1: open    │  │ matchmaking  │
-│ TX2: close   │  │ turns        │
-│ escrow       │  │ shot verify  │
+│ TX1: payment │  │ matchmaking  │
+│ TX2: start   │  │ turns        │
+│ TX3: end     │  │ shot verify  │
+│ BATTLE token │  │ Supabase:    │
+│ clawback     │  │ history+rank │
 └──────────────┘  └──────────────┘
 ```
 
 - Cada camada aparece com animação slide-up
 - Linhas conectoras animam mostrando data flow
 - Highlight pulsante em "Protocol 25 — BN254 + Poseidon2" no bloco Stellar
-- Badge: "Only 2 on-chain transactions per game"
+- Badge: "3 blockchain moments per PvP match: Payment — Start — End"
 
 ### Detalhes visuais
 - Bloco Stellar: cor azul (#2845a0) com logo Stellar
-- Bloco Convex: cor roxa
+- Bloco Backend (Express + Socket.io + Supabase): cor roxa
 - Bloco Device: cor escura com glow
 - Animação: setas pulsam mostrando fluxo bidirecional
 
@@ -187,7 +191,7 @@
   github.com/olivmath/battleship-zk
   Stellar Testnet | Noir + UltraHonk
   ```
-- Logo Stellar + Noir + Convex alinhados na base
+- Logo Stellar + Noir + Supabase alinhados na base
 - Background: radar sweep animation sutil
 - Texto final: "Built for Stellar Hacks: ZK Gaming 2026"
 
