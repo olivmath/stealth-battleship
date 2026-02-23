@@ -34,9 +34,29 @@ export const SHADOWS = {
   glow: { boxShadow: '0px 0px 12px rgba(245,158,11,0.4)' },
 };
 
-export const LAYOUT = { maxContentWidth: 400, maxContentWidthTablet: 600, maxContentWidthDesktop: 800, screenPadding: 16 } as const;
+export const LAYOUT = { maxContentWidth: 420, maxContentWidthTablet: 600, maxContentWidthDesktop: 800, screenPadding: 16 } as const;
 
 export const FONT_SIZES = { caption: 9, label: 10, sm: 11, body: 13, md: 14, lg: 18, h3: 20, h2: 28, h1: 32, hero: 42, score: 48 } as const;
+
+/** Standardized typography scale — use these instead of ad-hoc font combos */
+export const TYPOGRAPHY = {
+  hero:     { fontFamily: FONTS.heading, fontSize: 32, letterSpacing: 4, fontWeight: 700 },
+  title:    { fontFamily: FONTS.heading, fontSize: 22, letterSpacing: 3, fontWeight: 700 },
+  subtitle: { fontFamily: FONTS.body,    fontSize: 16, letterSpacing: 1, fontWeight: 600 },
+  body:     { fontFamily: FONTS.body,    fontSize: 15, letterSpacing: 0, fontWeight: 600 },
+  caption:  { fontFamily: FONTS.body,    fontSize: 13, letterSpacing: 0.5, fontWeight: 400 },
+  label:    { fontFamily: FONTS.heading, fontSize: 11, letterSpacing: 2, fontWeight: 400 },
+} as const;
+
+/** Button variant tokens — primary/secondary/danger/ghost */
+export const BUTTON_VARIANTS = {
+  primary:   { bg: COLORS.accent.gold, text: COLORS.background.dark, border: COLORS.accent.gold },
+  secondary: { bg: 'transparent', text: COLORS.text.secondary, border: COLORS.grid.border },
+  danger:    { bg: 'transparent', text: COLORS.accent.fire, border: COLORS.accent.fire },
+  ghost:     { bg: 'transparent', text: COLORS.text.secondary, border: 'transparent' },
+  success:   { bg: 'transparent', text: COLORS.status.online, border: COLORS.status.online },
+  pvp:       { bg: 'transparent', text: COLORS.status.pvp, border: COLORS.status.pvp },
+} as const;
 
 export const GRADIENT = {
   background: ['#0a0e1a', '#0c2d48', '#0a0e1a'] as const,

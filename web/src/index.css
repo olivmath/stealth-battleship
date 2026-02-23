@@ -47,6 +47,17 @@ a {
 .fw-600 { font-weight: 600; }
 .fw-700 { font-weight: 700; }
 
+/* Accessibility: focus-visible rings */
+*:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+input:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 0;
+}
+
 /* Safe area */
 .safe-area {
   padding-top: env(safe-area-inset-top);

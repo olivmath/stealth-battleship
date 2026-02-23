@@ -9,6 +9,11 @@
   transition: background-color 0.15s;
 }
 
+.cell:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: -2px;
+}
+
 .cell:hover:not(:disabled) {
   filter: brightness(1.2);
 }
