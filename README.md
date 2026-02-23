@@ -22,38 +22,35 @@ https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
 
 ---
 
-## How ZK Powers the Gameplay
+## The Problem
 
-Stealth Battleship is a PvP naval warfare game where **Zero-Knowledge proofs replace trust entirely**. No board reveals, no trusted server, no way to cheat.
+In digital Battleship, someone always sees both boards. The server knows everything.
 
-The ZK mechanic is not an add-on — it **is** the game:
+<p align="center">
+  <img src="pitch/slides/slide-2-problem.png" width="700" />
+</p>
 
-1. **Board commitment** — Each player places ships and generates a `board_validity` proof (Noir + Poseidon2 hash). This proves the board follows the rules (correct ship sizes, no overlaps, within bounds) without revealing ship positions.
-2. **Shot resolution** — On each shot, the defender generates a `shot_proof` proving whether the shot is a hit or miss against their committed board — without exposing it.
-3. **Match finalization** — At game end, a `turns_proof` replays the entire match inside the circuit, computing the winner deterministically. No disputes possible.
-
-> **Players never see each other's boards. The math guarantees fairness.**
+Traditional approaches all fail: the server can cheat, commit-reveal breaks when the loser disconnects, and on-chain boards leak to mempool front-running.
 
 ---
 
-## On-Chain Integration (Stellar Testnet)
+## The Solution: Prove-as-You-Go
 
-The Soroban smart contract ([`soroban/contracts/battleship`](soroban/contracts/battleship/src/lib.rs)) verifies ZK proofs on-chain using the **UltraHonk** verifier and integrates with the **Game Hub contract**:
+No board reveal. No commit-reveal. Every action generates a ZK proof in real-time. **Private inputs never leave your device.**
 
-| Action | What happens on-chain |
-|--------|----------------------|
-| Match start | `open_match()` verifies both players' `board_validity` proofs, then calls **`start_game()`** on the Game Hub |
-| Match end | `close_match()` verifies the `turns_proof`, then calls **`end_game()`** on the Game Hub with the verified winner |
-
-**Game Hub contract:** `CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG`
-
-This is possible thanks to **Protocol 25 (X-Ray)** which provides native BN254 elliptic-curve operations and Poseidon2 hashing at the protocol level.
+<p align="center">
+  <img src="pitch/slides/slide-3-solution.png" width="700" />
+</p>
 
 ---
 
 ## ZK Circuits (Noir)
 
-Three specialized circuits in [`circuits/`](circuits/) guard the entire game lifecycle:
+Three specialized circuits guard the entire game lifecycle:
+
+<p align="center">
+  <img src="pitch/slides/slide-4-circuit.png" width="700" />
+</p>
 
 | Circuit | Trigger | What it proves | Public inputs |
 |---------|---------|----------------|---------------|
@@ -65,6 +62,67 @@ Three specialized circuits in [`circuits/`](circuits/) guard the entire game lif
 - **Proof system:** UltraHonk
 - **Hash function:** Poseidon2 (Stellar-native)
 - **Proof generation:** Client-side via NoirJS + bb.js (WASM)
+
+> **Players never see each other's boards. The math guarantees fairness.**
+
+---
+
+## Architecture
+
+Hybrid on-chain / off-chain — only 2 Soroban transactions per game.
+
+<p align="center">
+  <img src="pitch/slides/slide-7-arch.png" width="700" />
+</p>
+
+```
+Player Device (client)               Backend                     Stellar Testnet
+──────────────────────               ───────                     ───────────────
+Place ships
+Generate board_validity proof ──→ Receive proof ──────────→ open_match()
+                                                            ├─ verify proof (UltraHonk)
+                                                            └─ start_game() on Game Hub
+                                     ↕ Socket.io
+Play turns (shot_proof each) ←──→ Relay & verify
+
+Game ends
+Generate turns_proof ───────────→ Receive proof ──────────→ close_match()
+                                                            ├─ verify proof (UltraHonk)
+                                                            └─ end_game() on Game Hub
+```
+
+---
+
+## Deployed on Stellar Testnet
+
+All contracts and wallets are live and verifiable on Stellar Testnet:
+
+| Resource | Address | Explorer |
+|----------|---------|----------|
+| **Battleship Verifier Contract** | `CDL6EX734XCDSTOQE5W3FYD5ZKOHQOIBXZOL4NF5FC66CEHRPIQRHMR3` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDL6EX734XCDSTOQE5W3FYD5ZKOHQOIBXZOL4NF5FC66CEHRPIQRHMR3) |
+| **Game Hub Contract** | `CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG) |
+| **Backend Wallet** (124 operations) | `GDANLGAOCSGXHMSO4PM2L43FB27MB7JBDXKSBV5CMCCEFXE3ISDEM4Z2` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/account/GDANLGAOCSGXHMSO4PM2L43FB27MB7JBDXKSBV5CMCCEFXE3ISDEM4Z2) |
+
+**Key transactions:**
+- [Contract WASM Upload](https://stellar.expert/explorer/testnet/tx/5048454883590145) — UltraHonk verifier bytecode
+- [Contract Deploy (`__constructor`)](https://stellar.expert/explorer/testnet/tx/294164c1a5fe5d0dd7ef7684a440743d2afa433e8c48d1007859e90706b2b481) — initialized with admin, Game Hub address, and both verification keys
+
+The Soroban contract ([`soroban/contracts/battleship`](soroban/contracts/battleship/src/lib.rs)) verifies ZK proofs on-chain and integrates with the Game Hub:
+
+| Action | What happens on-chain |
+|--------|----------------------|
+| Match start | `open_match()` verifies both players' `board_validity` proofs, then calls **`start_game()`** on the Game Hub |
+| Match end | `close_match()` verifies the `turns_proof`, then calls **`end_game()`** on the Game Hub with the verified winner |
+
+This is possible thanks to **Protocol 25 (X-Ray)** which provides native BN254 elliptic-curve operations and Poseidon2 hashing at the protocol level.
+
+---
+
+## What's Built
+
+<p align="center">
+  <img src="pitch/slides/slide-11-status.png" width="700" />
+</p>
 
 ---
 
@@ -124,26 +182,6 @@ stealth-battleship/
 ├── web/             # Web client for PvP
 ├── pitch/           # Presentation slides + video trailer
 └── docs/            # Architecture & design docs
-```
-
----
-
-## Architecture Flow
-
-```
-Player A (mobile)                    Backend                     Stellar Testnet
-─────────────────                    ───────                     ───────────────
-Place ships
-Generate board_validity proof ──→ Receive proof ──────────→ open_match()
-                                                            ├─ verify proof (UltraHonk)
-                                                            └─ start_game() on Game Hub
-                                     ↕ Socket.io
-Play turns (shot_proof each) ←──→ Relay & verify
-
-Game ends
-Generate turns_proof ───────────→ Receive proof ──────────→ close_match()
-                                                            ├─ verify proof (UltraHonk)
-                                                            └─ end_game() on Game Hub
 ```
 
 ---
