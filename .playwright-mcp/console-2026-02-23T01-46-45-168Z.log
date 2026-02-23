@@ -1,0 +1,34 @@
+[      86ms] [ERROR] WebSocket connection to 'ws://localhost:5173/?token=9vjgbWe-8X63' failed: Error during WebSocket handshake: Unexpected response code: 400 @ http://localhost:5173/@vite/client:801
+[     339ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://localhost:5173/settings:0
+[     372ms] [ERROR] WebSocket connection to 'ws://localhost:5173/?token=9vjgbWe-8X63' failed: Error during WebSocket handshake: Unexpected response code: 400 @ http://localhost:5173/@vite/client:814
+[     380ms] [ERROR] [vite] failed to connect to websocket.
+your current setup:
+  (browser) localhost:5173/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) localhost:5173/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr . @ http://localhost:5173/@vite/client:829
+[    1035ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:5173/node_modules/.vite/deps/chunk-NKU67ILE.js?v=ae962194:391
+[    1041ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:5173/node_modules/.vite/deps/chunk-NKU67ILE.js?v=ae962194:391
+[    1055ms] TypeError: Cannot read properties of null (reading 'useReducer')
+    at exports.useReducer (http://localhost:5173/node_modules/.vite/deps/chunk-NKU67ILE.js?v=ae962194:953:35)
+    at GameProvider (http://localhost:5173/src/game/translator.tsx:182:29)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:18509:20)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:5654:24)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:7475:21)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:8525:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:997:72)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:12561:98)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:12424:43)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:12408:13)
+[    1055ms] [WARNING] %s
+
+%s
+ An error occurred in the <GameProvider> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=f43feaae:6965
