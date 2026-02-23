@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { GradientContainer } from './GradientContainer';
 import { NavalText } from './NavalText';
 import { Divider } from './Divider';
+import { useResponsive } from '../../hooks/useResponsive';
 import { COLORS, SPACING, LAYOUT } from '../../shared/theme';
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
   subtitle?: string;
   /** Accent color override (e.g. cyan for wallet pages) */
   accentColor?: string;
-  /** Max width: 'default' (420px) | 'wide' (800px) | 'medium' (600px) */
+  /** Max width: 'default' (responsive) | 'wide' (800px) | 'medium' (600px) */
   maxWidth?: 'default' | 'medium' | 'wide';
   /** Main scrollable content */
   children: ReactNode;
@@ -45,6 +46,14 @@ export function PageShell({
   style,
   contentStyle,
 }: Props) {
+  const { breakpoint } = useResponsive();
+
+  // For 'default' maxWidth, adapt to viewport: mobile=420, tablet=600, desktop=800
+  const resolvedMaxWidth = maxWidth === 'default'
+    ? (breakpoint === 'desktop' ? LAYOUT.maxContentWidthDesktop
+      : breakpoint === 'tablet' ? LAYOUT.maxContentWidthTablet
+      : LAYOUT.maxContentWidth)
+    : maxWidthMap[maxWidth];
   return (
     <GradientContainer style={style}>
       <div
@@ -53,7 +62,7 @@ export function PageShell({
           flexDirection: 'column',
           flex: 1,
           width: '100%',
-          maxWidth: maxWidthMap[maxWidth],
+          maxWidth: resolvedMaxWidth,
           boxSizing: 'border-box' as const,
           overflow: 'hidden',
         }}
