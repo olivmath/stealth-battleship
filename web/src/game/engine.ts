@@ -7,7 +7,7 @@ import {
   Orientation, AIState, DifficultyLevel, GameCommitment,
 } from '../shared/entities';
 import { GRID_SIZE, DIFFICULTY_CONFIG } from '../shared/constants';
-import { generateMockAttack } from '../services/pvpMock';
+
 
 // ─── Board Operations ────────────────────────────────────────────────
 
@@ -413,30 +413,6 @@ export class LocalAIStrategy implements OpponentStrategy {
 
   getState(): AIState {
     return this.ai;
-  }
-}
-
-export class MockPvPStrategy implements OpponentStrategy {
-  private firedPositions: string[];
-
-  constructor() {
-    this.firedPositions = [];
-  }
-
-  computeMove(board: Board, _ships: PlacedShip[], gridSize: number): Position {
-    const position = generateMockAttack(board, this.firedPositions, gridSize);
-    this.firedPositions.push(posKey(position));
-    return position;
-  }
-
-  onMoveResult(_position: Position, _result: AttackResult, _shipId?: string, _ships?: PlacedShip[]): void {}
-
-  reset(): void {
-    this.firedPositions = [];
-  }
-
-  getState(): AIState {
-    return createInitialAIState();
   }
 }
 

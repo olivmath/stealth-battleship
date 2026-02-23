@@ -182,6 +182,6 @@ export type GameAction =
   | { type: 'REMOVE_SHIP'; shipId: string }
   | { type: 'START_GAME'; opponentShips: PlacedShip[]; opponentBoard: Board; commitment?: GameCommitment }
   | { type: 'PLAYER_ATTACK'; position: Position; result: AttackResult; shipId?: string }
-  | { type: 'OPPONENT_ATTACK'; position: Position; result: AttackResult; shipId?: string; opponentState: AIState }
+  | { type: 'OPPONENT_ATTACK'; position: Position; result: AttackResult; shipId?: string; opponentState?: AIState }
   | { type: 'END_GAME'; winner: 'player' | 'opponent'; matchStats: MatchStats }
   | { type: 'RESET_GAME' };

@@ -104,7 +104,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const oppStreak = action.result !== 'miss' ? state.tracking.opponentStreak + 1 : 0;
       const oppLongest = Math.max(state.tracking.opponentLongestStreak, oppStreak);
       return {
-        ...state, playerBoard: newBoard, playerShips: newShips, isPlayerTurn: true, opponent: action.opponentState,
+        ...state, playerBoard: newBoard, playerShips: newShips, isPlayerTurn: true, ...(action.opponentState ? { opponent: action.opponentState } : {}),
         tracking: { ...state.tracking, turnNumber: newTurn, opponentShots: [...state.tracking.opponentShots, { turn: newTurn, position: action.position, result: action.result, shipId: action.shipId }], opponentStreak: oppStreak, opponentLongestStreak: oppLongest },
       };
     }
