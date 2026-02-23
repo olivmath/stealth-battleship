@@ -16,6 +16,18 @@
 
 ---
 
+## Hackathon Requirements Checklist
+
+| # | Requirement | Status | Implementation |
+|---|-------------|--------|----------------|
+| 1 | **ZK-Powered Mechanic** | ✅ | 3 Noir circuits (`board_validity`, `shot_proof`, `turns_proof`) using Poseidon2 hashing. ZK is the core mechanic — it hides ship positions, proves hit/miss honestly, and computes the winner inside the circuit. Not bolted on. |
+| 2 | **Deployed Onchain Component** | ✅ | Soroban contract [`CDL6EX...HMR3`](https://stellar.expert/explorer/testnet/contract/CDL6EX734XCDSTOQE5W3FYD5ZKOHQOIBXZOL4NF5FC66CEHRPIQRHMR3) verifies UltraHonk proofs on-chain. Calls `start_game()` and `end_game()` on the [Game Hub `CB4VZA...EMYG`](https://stellar.expert/explorer/testnet/contract/CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG). Backend wallet has [124 operations on testnet](https://stellar.expert/explorer/testnet/account/GDANLGAOCSGXHMSO4PM2L43FB27MB7JBDXKSBV5CMCCEFXE3ISDEM4Z2). |
+| 3 | **Front End** | ✅ | Full mobile app (React Native / Expo) + web client. 14 screens with gameplay, animations, haptics, i18n (EN/PT-BR/ES), ranking system, match history. See [Screenshots](#screenshots) below. |
+| 4 | **Open-source Repo** | ✅ | [github.com/olivmath/stealth-battleship](https://github.com/olivmath/stealth-battleship) — full source code with clear README. |
+| 5 | **Video Demo (2-3 min)** | ✅ | See demo video below. |
+
+---
+
 ## Demo Video
 
 https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
