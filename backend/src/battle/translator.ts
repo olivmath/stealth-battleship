@@ -6,11 +6,13 @@ import {
   advanceTurn, checkWinCondition, endMatch, startTurnTimer,
 } from './interactor.js';
 import {
-  PlacementReadyPayload, AttackPayload, ShotResultPayload, ForfeitPayload,
+  PlacementReadyPayload, AttackPayload, ShotResultPayload, ForfeitPayload, RevealPayload,
   TURN_TIMEOUT_MS, DEFENDER_RESPONSE_TIMEOUT_MS,
 } from './entities.js';
 import { c } from '../log.js';
-import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats } from '../shared/persistence.js';
+import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats, persistProofLog } from '../shared/persistence.js';
+import { getCircuit } from '../shared/circuits.js';
+import { getShipSizes } from '../matchmaking/entities.js';
 
 function getOpponentSocketId(
   match: { player1: { publicKey: string; socketId: string }; player2?: { publicKey: string; socketId: string } },
@@ -29,7 +31,7 @@ export function registerBattleHandlers(
   const shortKey = publicKey.slice(0, 8);
 
   // ─── Placement Ready ───
-  socket.on('placement:ready', (data: PlacementReadyPayload) => {
+  socket.on('placement:ready', async (data: PlacementReadyPayload) => {
     const match = getMatch(data.matchId);
     if (!match || match.status !== 'placing') {
       socket.emit('placement:error', { message: 'Invalid match or phase' });
@@ -49,9 +51,32 @@ export function registerBattleHandlers(
       return;
     }
 
-    // TODO: Verify board_validity proof server-side (requires loading circuit)
-    // For now, accept the proof and hash
-    console.log(c.blue('[battle]') + ` ${shortKey}... placement ready (hash: ${data.boardHash.slice(0, 12)}...)`);
+    // Verify board_validity proof server-side
+    const shipSizes = getShipSizes(match.gridSize);
+    const boardPublicInputs = [data.boardHash, ...shipSizes.map(String)];
+    try {
+      const t0 = Date.now();
+      const { backend } = getCircuit('board_validity');
+      const proofBytes = new Uint8Array(data.proof);
+      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: boardPublicInputs });
+      const verifyMs = Date.now() - t0;
+
+      void persistProofLog({
+        matchId: data.matchId, playerPk: publicKey, circuit: 'board_validity',
+        proofSizeBytes: data.proof.length, verificationTimeMs: verifyMs, valid: isValid,
+      });
+
+      if (!isValid) {
+        socket.emit('placement:error', { message: 'Invalid board proof' });
+        console.log(c.red('[battle]') + ` ${shortKey}... INVALID board_validity proof`);
+        return;
+      }
+      console.log(c.blue('[battle]') + ` ${shortKey}... board_validity ✓ ${c.time(`(${verifyMs}ms)`)}`);
+    } catch (err: any) {
+      socket.emit('placement:error', { message: 'Proof verification failed' });
+      console.error(c.red('[battle]') + ` board_validity error: ${err.message}`);
+      return;
+    }
 
     const result = submitPlacement(match, publicKey, data.boardHash, data.proof);
     const opponentId = getOpponentSocketId(match, publicKey);
@@ -159,7 +184,7 @@ export function registerBattleHandlers(
   });
 
   // ─── Shot Result (from defender) ───
-  socket.on('battle:shot_result', (data: ShotResultPayload) => {
+  socket.on('battle:shot_result', async (data: ShotResultPayload) => {
     const match = getMatch(data.matchId);
     if (!match || match.status !== 'battle') {
       socket.emit('battle:error', { message: 'Invalid match or phase' });
@@ -185,8 +210,48 @@ export function registerBattleHandlers(
       match.defenderTimer = undefined;
     }
 
-    // TODO: Verify shot_proof server-side
-    // For now, trust the proof and record result
+    // Verify shot_proof server-side
+    try {
+      const t0 = Date.now();
+      const { backend } = getCircuit('shot_proof');
+      const proofBytes = new Uint8Array(data.proof);
+      // publicInputs: boardHash of defender, row, col, result (1=hit, 0=miss)
+      const defenderHash = publicKey === match.player1.publicKey
+        ? match.player1BoardHash!
+        : match.player2BoardHash!;
+      const resultBit = data.result === 'hit' ? '1' : '0';
+      const shotPublicInputs = [defenderHash, String(data.row), String(data.col), resultBit];
+      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: shotPublicInputs });
+      const verifyMs = Date.now() - t0;
+
+      void persistProofLog({
+        matchId: data.matchId, playerPk: publicKey, circuit: 'shot_proof',
+        proofSizeBytes: data.proof.length, verificationTimeMs: verifyMs, valid: isValid,
+      });
+
+      if (!isValid) {
+        // Invalid shot proof = cheating → opponent wins instantly
+        const attackerPk = publicKey === match.player1.publicKey
+          ? match.player2!.publicKey : match.player1.publicKey;
+        endMatch(match, attackerPk, 'invalid_proof');
+        io.to(match.player1.socketId).emit('battle:game_over', {
+          winner: attackerPk, reason: 'invalid_proof', turnNumber: match.turnNumber,
+        });
+        io.to(match.player2!.socketId).emit('battle:game_over', {
+          winner: attackerPk, reason: 'invalid_proof', turnNumber: match.turnNumber,
+        });
+        void persistMatchEnd(match.id, attackerPk, 'invalid_proof', match.turnNumber);
+        void upsertPlayerStats(attackerPk, true);
+        void upsertPlayerStats(publicKey, false);
+        console.log(c.red('[battle]') + ` ${shortKey}... INVALID shot_proof — INSTANT LOSS`);
+        return;
+      }
+      console.log(c.blue('[battle]') + ` ${shortKey}... shot_proof ✓ ${c.time(`(${verifyMs}ms)`)}`);
+    } catch (err: any) {
+      socket.emit('battle:error', { message: 'Shot proof verification failed' });
+      console.error(c.red('[battle]') + ` shot_proof error: ${err.message}`);
+      return;
+    }
 
     recordShotResult(match, publicKey, data.row, data.col, data.result);
 
@@ -267,6 +332,83 @@ export function registerBattleHandlers(
     void upsertPlayerStats(publicKey, false);
 
     console.log(c.yellow('[battle]') + ` ${shortKey}... forfeited match ${match.id}`);
+  });
+
+  // ─── Reveal (post-game: players reveal ships+nonce for turns_proof) ───
+  socket.on('battle:reveal', async (data: RevealPayload) => {
+    const match = getMatch(data.matchId);
+    if (!match || match.status !== 'finished') {
+      socket.emit('battle:error', { message: 'Match not finished or not found' });
+      return;
+    }
+
+    const authResult = verifyAction({
+      publicKey,
+      action: 'battle:reveal',
+      data: JSON.stringify({ matchId: data.matchId }),
+      timestamp: data.timestamp,
+      signature: data.signature,
+    });
+    if (!authResult.valid) {
+      socket.emit('battle:error', { message: 'Invalid signature' });
+      return;
+    }
+
+    // Store reveal data
+    if (publicKey === match.player1.publicKey) {
+      match.player1Reveal = { ships: data.ships, nonce: data.nonce };
+    } else {
+      match.player2Reveal = { ships: data.ships, nonce: data.nonce };
+    }
+
+    console.log(c.blue('[battle]') + ` ${shortKey}... revealed ships for ${match.id}`);
+
+    // Both revealed? Generate turns_proof server-side
+    if (match.player1Reveal && match.player2Reveal) {
+      try {
+        const t0 = Date.now();
+        const { noir, backend } = getCircuit('turns_proof');
+
+        const turnsInput = {
+          player1_board: match.player1Reveal.ships,
+          player1_nonce: match.player1Reveal.nonce,
+          player1_board_hash: match.player1BoardHash!,
+          player2_board: match.player2Reveal.ships,
+          player2_nonce: match.player2Reveal.nonce,
+          player2_board_hash: match.player2BoardHash!,
+          attacks: match.attacks.map(a => ({
+            row: a.row, col: a.col, result: a.result === 'hit' ? 1 : 0,
+          })),
+          total_turns: match.turnNumber,
+        };
+
+        const { witness } = await noir.execute(turnsInput);
+        const proof = await backend.generateProof(witness);
+        const verifyMs = Date.now() - t0;
+
+        void persistProofLog({
+          matchId: match.id, playerPk: 'server', circuit: 'turns_proof',
+          proofSizeBytes: proof.proof.length, verificationTimeMs: verifyMs, valid: true,
+        });
+
+        // Notify both players
+        const proofHex = Buffer.from(proof.proof).toString('hex');
+        io.to(match.player1.socketId).emit('battle:turns_proof', {
+          matchId: match.id, proof: proofHex,
+        });
+        io.to(match.player2!.socketId).emit('battle:turns_proof', {
+          matchId: match.id, proof: proofHex,
+        });
+
+        console.log(c.boldGreen('[battle]') + ` turns_proof generated for ${match.id} ${c.time(`(${verifyMs}ms)`)}`);
+      } catch (err: any) {
+        console.error(c.red('[battle]') + ` turns_proof generation error: ${err.message}`);
+        io.to(match.player1.socketId).emit('battle:error', { message: 'turns_proof generation failed' });
+        io.to(match.player2!.socketId).emit('battle:error', { message: 'turns_proof generation failed' });
+      }
+    } else {
+      socket.emit('battle:reveal_accepted');
+    }
   });
 
   // Disconnect handling is centralized in ws/socket.ts (grace period logic)

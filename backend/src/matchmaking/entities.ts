@@ -20,6 +20,8 @@ export interface MatchRoom {
   defenderTimer?: ReturnType<typeof setTimeout>;
   winner?: string;          // publicKey of winner
   shipSizes: number[];
+  player1Reveal?: { ships: number[][]; nonce: string };
+  player2Reveal?: { ships: number[][]; nonce: string };
   createdAt: number;
 }
 

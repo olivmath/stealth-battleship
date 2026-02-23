@@ -34,3 +34,11 @@ export interface ShotResultPayload {
 export interface ForfeitPayload {
   matchId: string;
 }
+
+export interface RevealPayload {
+  matchId: string;
+  ships: number[][];   // flat board array or ship positions
+  nonce: string;        // board commitment nonce
+  timestamp: number;
+  signature: string;
+}
