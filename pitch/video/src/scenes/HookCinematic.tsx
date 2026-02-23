@@ -1,6 +1,6 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
-import { CONFIG } from "../config";
+import { AbsoluteFill, useCurrentFrame, interpolate, OffthreadVideo, staticFile } from "remotion";
+import { CONFIG, FPS } from "../config";
 import { colors, sceneContainer, fonts, textGlow } from "../styles";
 import { RadarSweep } from "../components/effects/RadarSweep";
 import { SonarParticles } from "../components/effects/SonarParticles";
@@ -19,7 +19,7 @@ export const HookCinematic: React.FC = () => {
     extrapolateRight: "clamp",
   });
 
-  // Ocean footage placeholder opacity
+  // Video footage opacity
   const footageOpacity = interpolate(
     frame,
     [B.oceanFootage.start, B.oceanFootage.start + 15, B.logoReveal.start, B.logoReveal.start + 15],
@@ -32,21 +32,24 @@ export const HookCinematic: React.FC = () => {
       <RadarSweep gridOpacity={0.03} showSweep={false} />
       <SonarParticles count={30} color={`${colors.teal}60`} />
 
-      {/* Footage placeholder */}
+      {/* Real video footage from zkbb.mp4 (0-20s) */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor: colors.navyMid,
           opacity: footageOpacity,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        <span style={{ color: colors.muted, fontSize: 24, fontFamily: fonts.rajdhani }}>
-          [ Dark Ocean — Warship Footage ]
-        </span>
+        <OffthreadVideo
+          src={staticFile("zkbb.mp4")}
+          startFrom={0}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
       </div>
 
       {/* Quote 1 */}

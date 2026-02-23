@@ -99,9 +99,9 @@ Tela escurece. Logo permanece 1s, depois faz fade. Split screen emerge.
 
 ### NARRACAO (PiP rosto)
 
-> *"In regular digital Battleship, someone always sees both boards — a server, a smart contract, or an end-game reveal."*
+> *"In regular digital Battleship, someone always has to see both boards — a server, a smart contract, or an end-game reveal. That means you have to trust someone not to cheat."*
 > *(lado esquerdo explode)*
-> *"With ZK proofs — no one ever sees your board."*
+> *"We eliminate that entirely. With ZK proofs, no one ever sees your board — not the server, not the blockchain, anybody."*
 
 ### TRANSICAO
 Tela verde faz slide-left. Fundo navy limpo. Titulo "3 PROOFS" aparece.
@@ -127,7 +127,7 @@ Tela verde faz slide-left. Fundo navy limpo. Titulo "3 PROOFS" aparece.
 [0:37 — 0:40]  FOOTAGE (fundo, 40% opacidade): tripulacao posicionando
                equipamentos num navio de guerra. Preparacao pra batalha.
 
-               SOBRE O FOOTAGE: grid 6x6 aparece no centro.
+               SOBRE O FOOTAGE: grid 10x10 aparece no centro.
                Navios surgem um a um com snap animation (scale + glow).
                - Patrol Boat (2 celulas) — snap
                - Patrol Boat (2 celulas) — snap
@@ -152,7 +152,7 @@ Tela verde faz slide-left. Fundo navy limpo. Titulo "3 PROOFS" aparece.
 
 ### NARRACAO (PiP rosto)
 
-> *"When you place your ships, a ZK proof guarantees your board is valid — correct sizes, no overlaps, within bounds — without revealing where anything is. The board is Poseidon-hashed and committed on-chain."*
+> *"Board validity — when you place your ships, a ZK proof generated on the device ensures that your board is valid — correct ship sizes, no overlaps, within bounds — without revealing where."*
 
 ### TRANSICAO
 Grid miniatura desliza pra esquerda. Crosshair aparece na direita.
@@ -175,7 +175,7 @@ Grid miniatura desliza pra esquerda. Crosshair aparece na direita.
 
                Subtitulo: "Prove every hit/miss is honest"
 
-[0:52 — 0:56]  Grid 6x6 no centro da tela.
+[0:52 — 0:56]  Grid 10x10 no centro da tela.
                CROSSHAIR animado move pra celula [3,4].
                SFX: targeting beep.
                Crosshair trava na celula. Flash.
@@ -203,7 +203,7 @@ Grid miniatura desliza pra esquerda. Crosshair aparece na direita.
 
 ### NARRACAO (PiP rosto)
 
-> *"Every time you receive a shot, a proof confirms whether it's a hit or miss — verified against your committed board hash."*
+> *"Shot proof — whenever you receive a shot, the device responds with a proof generated on itself that confirms whether it was a hit or a miss, verified against the hash of your committed board."*
 > *(explosao)*
 > *"Lying is mathematically impossible."*
 
@@ -257,7 +257,7 @@ Grid com hits faz fade. Footage de navio afundando emerge.
 
 ### NARRACAO (PiP rosto)
 
-> *"At game end, the entire sequence is replayed inside a circuit. The winner is computed in the proof itself. The circuit is the referee."*
+> *"Move proof — at the end of the game, the entire game sequence is reproduced within a circuit to calculate and prove the winner by the backend and saved on chain."*
 
 ### TRANSICAO
 Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
@@ -279,7 +279,7 @@ Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
                SFX: sonar ping.
 
 [1:22 — 1:27]  SCREEN RECORDING: tela de placement do app.
-               Jogador arrasta navios pro grid 6x6.
+               Jogador arrasta navios pro grid 10x10.
                OVERLAY LABEL (canto superior, fundo semi-transparente):
                ┌──────────────────────────────────┐
                │ 📍 Ship Placement — drag & drop  │
@@ -327,10 +327,11 @@ Grids e footage fazem fade to dark. Texto: "Let me show you." Corta pra demo.
 
 ### NARRACAO (PiP rosto)
 
-> *"Let me show you. Here I'm placing ships on the grid... tap Ready... the board validity proof generates client-side with NoirJS..."*
-> *"Board proofs anchored on Stellar — match started..."*
-> *"Battle begins — I tap to attack, the opponent's proof confirms the result..."*
-> *"Hit! And when the game ends — the server generates the turns proof, submits on-chain, and claws back the BATTLE token to the winner. Three blockchain moments total."*
+> *"Let me show you the game in action. Here I'm placing my ships on the 10x10 grid... drag and drop... or auto placed..."*
+> *"When I tap Ready, you can see 'Securing your fleet' — that's the board_validity proof being generated client-side with NoirJS..."*
+> *"Now the board hash is committed on Stellar via Soroban..."*
+> *"Battle begins — I tap a cell to attack... the opponent's device generates a shot_proof to confirm the result... hit!"*
+> *"And when the game ends — the server generates the turns_proof, submits it on-chain, and claws back the BATTLE token to the winner."*
 
 ### TRANSICAO
 App UI se miniaturiza, diagrama de arquitetura emerge ao redor.
@@ -399,8 +400,8 @@ App UI se miniaturiza, diagrama de arquitetura emerge ao redor.
 
 ### NARRACAO (PiP rosto)
 
-> *"The architecture is hybrid. On-chain: three blockchain moments per match — payment, start with board proofs anchored, and end with turns_proof and BATTLE token clawback. Off-chain: Express + Socket.io handles real-time turns with millisecond latency, and Supabase persists match history and rankings."*
-> *"We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use. Efficient. Not emulated."*
+> *"The architecture is hybrid. On-chain, we have three blockchain moments per match — payment and BATTLE token issuance, start with board proofs anchored, and end with the turns_proof settled and BATTLE token clawed back to the winner."*
+> *"We chose Stellar because Protocol 25 X-Ray gives us native BN254 curve operations and Poseidon2 hashing — the exact primitives our Noir circuits use. This means proof verification on-chain is efficient, not emulated."*
 
 ### TRANSICAO
 Diagrama faz fade. Footage de frota ao por-do-sol emerge.
@@ -453,7 +454,8 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
 
 ### NARRACAO (voiceover)
 
-> *"Stealth Battleship. Fair by math. Fun by design."*
+> *"Stealth Battleship proves that zero-knowledge isn't just for DeFi — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have everything we need to make this real."*
+> *"Fair by math. Fun by design."*
 
 *(silencio nos ultimos 5s — so musica e logo)*
 
@@ -540,7 +542,7 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
 - [ ] Glitch text effect
 - [ ] Logo animation com glow
 - [ ] Split screen animado (problema)
-- [ ] Grid 6x6 com ship placement animation
+- [ ] Grid 10x10 com ship placement animation
 - [ ] Hash visualization (Matrix → Poseidon)
 - [ ] Crosshair + HIT effect
 - [ ] Replay animation (dois grids)

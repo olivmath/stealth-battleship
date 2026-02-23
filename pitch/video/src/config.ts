@@ -75,42 +75,38 @@ const TIMELINE = {
     },
   },
 
-  // ▸ CENA 4 — DEMO PVP (two phones) — was scene 5, shifted up
+  // ▸ CENA 4 — DEMO PVP (video footage from zkbb.mp4 20-60s)
   demoPvp: {
-    at: [80, 105],
+    at: [80, 120],
     blocks: {
-      intro: [80, 83],
-      bothPhones: [83, 88],
-      matchmaking: [88, 91],
-      aliceAttacks: [91, 95],
-      bobResponds: [95, 99],
-      proofVerify: [99, 102],
-      zoomOut: [102, 105],
+      intro: [80, 84],
+      demo: [84, 116],
+      fadeOut: [116, 120],
     },
   },
 
-  // ▸ CENA 5 — ARQUITETURA + STELLAR — was scene 6
+  // ▸ CENA 5 — ARQUITETURA + STELLAR
   architecture: {
-    at: [105, 125],
+    at: [120, 140],
     blocks: {
-      players: [105, 108],
-      backend: [108, 111],
-      messages: [111, 115],
-      blockchain: [115, 119],
-      protocol25: [119, 123],
-      fadeOut: [123, 125],
+      players: [120, 123],
+      backend: [123, 126],
+      messages: [126, 130],
+      blockchain: [130, 134],
+      protocol25: [134, 138],
+      fadeOut: [138, 140],
     },
   },
 
   // ▸ CENA 6 — ENCERRAMENTO (slide cover style)
   closingEpic: {
-    at: [125, 145],
+    at: [140, 160],
     blocks: {
-      footage: [125, 130],
-      logoReveal: [130, 133],
-      tagline: [133, 138],
-      links: [138, 141],
-      partnerLogos: [141, 145],
+      footage: [140, 145],
+      logoReveal: [145, 148],
+      tagline: [148, 153],
+      links: [153, 156],
+      partnerLogos: [156, 160],
     },
   },
 } as const;
@@ -154,23 +150,23 @@ export const SUBTITLES: SubtitleEntry[] = [
   { text: "to compute and prove the winner.", from: 71, to: 75 },
   { text: "The circuit IS the referee.", from: 75, to: 80 },
 
-  // Scene 4 — Demo PvP (shifted from 105-130 to 80-105)
-  { text: "Let's see real-time PvP in action.", from: 81, to: 85 },
-  { text: "Two players, two devices, zero trust.", from: 85, to: 89 },
-  { text: "Matchmaking connects both players instantly.", from: 89, to: 93 },
-  { text: "Alice attacks — Bob's device generates the proof.", from: 93, to: 98 },
-  { text: "Proof verified on-chain. No one can cheat.", from: 98, to: 103 },
+  // Scene 4 — Demo PvP (video footage 80-120)
+  { text: "Let's see real-time PvP in action.", from: 81, to: 87 },
+  { text: "Two players, two devices, zero trust.", from: 87, to: 93 },
+  { text: "Matchmaking connects both players instantly.", from: 93, to: 99 },
+  { text: "Alice attacks — Bob's device generates the proof.", from: 99, to: 107 },
+  { text: "Proof verified on-chain. No one can cheat.", from: 107, to: 116 },
 
-  // Scene 5 — Architecture (shifted from 130-150 to 105-125)
-  { text: "The architecture is hybrid: on-chain + off-chain.", from: 106, to: 111 },
-  { text: "Two Soroban transactions per game — open and close.", from: 111, to: 116 },
-  { text: "Protocol 25 gives us native BN254 and Poseidon2.", from: 116, to: 121 },
-  { text: "Proof verification on-chain is efficient, not emulated.", from: 121, to: 125 },
+  // Scene 5 — Architecture (120-140)
+  { text: "The architecture is hybrid: on-chain + off-chain.", from: 121, to: 126 },
+  { text: "Two Soroban transactions per game — open and close.", from: 126, to: 131 },
+  { text: "Protocol 25 gives us native BN254 and Poseidon2.", from: 131, to: 136 },
+  { text: "Proof verification on-chain is efficient, not emulated.", from: 136, to: 140 },
 
-  // Scene 6 — Closing (shifted from 150-170 to 125-145)
-  { text: "ZK isn't a feature — it IS the game.", from: 126, to: 130 },
-  { text: "Fair by math. Fun by design.", from: 131, to: 137 },
-  { text: "Built for Stellar Hacks 2026. Thanks for watching.", from: 138, to: 144 },
+  // Scene 6 — Closing (140-160)
+  { text: "ZK isn't a feature — it IS the game.", from: 141, to: 146 },
+  { text: "Fair by math. Fun by design.", from: 147, to: 153 },
+  { text: "Built for Stellar Hacks 2026. Thanks for watching.", from: 154, to: 159 },
 ];
 
 // ═══════════════════════════════════════════════════════════════

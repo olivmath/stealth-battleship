@@ -46,7 +46,7 @@ Aos 30 segundos o lado direito se expande para tela inteira com a frase centrali
     "Zero Knowledge. Full Privacy."
 
 Narracao (PiP):
-"In regular digital Battleship, someone always sees both boards — a server, a smart contract, or an end-game reveal. With ZK proofs — no one ever sees your board."
+"In regular digital Battleship, someone always has to see both boards — a server, a smart contract, or an end-game reveal. That means you have to trust someone not to cheat. We eliminate that entirely. With ZK proofs, no one ever sees your board — not the server, not the blockchain, anybody."
 
 ---
 
@@ -56,7 +56,7 @@ Texto "PROOF 1 — Board Validity" aparece com efeito de escala. Subtitulo: "Pro
 
 No fundo, imagens suaves de tripulacao preparando equipamentos num navio (40% de opacidade).
 
-No centro aparece um grid 6x6. Os navios surgem um a um com animacao de snap:
+No centro aparece um grid 10x10. Os navios surgem um a um com animacao de snap:
 - Patrol Boat (2 celulas) — snap
 - Patrol Boat (2 celulas) — snap
 - Destroyer (3 celulas) — snap
@@ -70,7 +70,7 @@ Ao lado aparecem dois badges:
 O grid se miniaturiza e um badge desliza de baixo: "Verified on-chain via Soroban UltraHonk". Som de tranca.
 
 Narracao (PiP):
-"When you place your ships, a ZK proof guarantees your board is valid — correct sizes, no overlaps, within bounds — without revealing where anything is. The board is Poseidon-hashed and committed on-chain."
+"Board validity — when you place your ships, a ZK proof generated on the device ensures that your board is valid — correct ship sizes, no overlaps, within bounds — without revealing where."
 
 ---
 
@@ -78,7 +78,7 @@ Narracao (PiP):
 
 Texto "PROOF 2 — Shot Proof" aparece. Subtitulo: "Prove every hit/miss is honest".
 
-Um grid 6x6 aparece no centro. Uma mira animada (crosshair) se move ate a celula [3,4]. Som de targeting. A mira trava e brilha.
+Um grid 10x10 aparece no centro. Uma mira animada (crosshair) se move ate a celula [3,4]. Som de targeting. A mira trava e brilha.
 
 Corte rapido: 2 segundos de explosao naval — torpedo atinge casco, agua explode, camera chacoalha.
 
@@ -97,7 +97,7 @@ Frase final em destaque:
 Badge: "Generated every turn | ~1-2s"
 
 Narracao (PiP):
-"Every time you receive a shot, a proof confirms whether it's a hit or miss — verified against your committed board hash. Lying is mathematically impossible."
+"Shot proof — whenever you receive a shot, the device responds with a proof generated on itself that confirms whether it was a hit or a miss, verified against the hash of your committed board. Lying is mathematically impossible."
 
 ---
 
@@ -119,7 +119,7 @@ Badge grande no final:
     "Settles on-chain → BATTLE token clawback"
 
 Narracao (PiP):
-"At game end, the entire sequence is replayed inside a circuit. The winner is computed in the proof itself. The circuit is the referee."
+"Move proof — at the end of the game, the entire game sequence is reproduced within a circuit to calculate and prove the winner by the backend and saved on chain."
 
 ---
 
@@ -154,7 +154,7 @@ Label: "turns_proof → Soroban TX 3: winner settled. BATTLE token clawback."
 [1:48 — 1:50] Zoom-out do celular. App se miniaturiza, fundo navy retorna.
 
 Narracao (PiP):
-"Let me show you. Here I'm placing ships... tap Ready... the board validity proof generates client-side... Board proofs anchored on Stellar... Battle begins — I tap to attack, the opponent's proof confirms the result... Hit! And when the game ends — the server generates the turns proof, submits on-chain, and claws back the BATTLE token to the winner. Three blockchain moments total."
+"Let me show you the game in action. Here I'm placing my ships on the 10x10 grid... drag and drop... or auto placed. When I tap Ready, you can see 'Securing your fleet' — that's the board_validity proof being generated client-side with NoirJS. Now the board hash is committed on Stellar via Soroban... Battle begins — I tap a cell to attack... the opponent's device generates a shot_proof to confirm the result... hit! And when the game ends — the server generates the turns_proof, submits it on-chain, and claws back the BATTLE token to the winner."
 
 ---
 
@@ -197,7 +197,7 @@ Badge central desliza:
 O diagrama todo faz fade suave.
 
 Narracao (PiP):
-"The architecture is hybrid. On-chain: three blockchain moments per match — payment, start, and end. Off-chain: Express + Socket.io handles real-time turns with millisecond latency, and Supabase persists match history and rankings. We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our Noir circuits use."
+"The architecture is hybrid. On-chain, we have three blockchain moments per match — payment and BATTLE token issuance, start with board proofs anchored, and end with the turns_proof settled and BATTLE token clawed back to the winner. We chose Stellar because Protocol 25 X-Ray gives us native BN254 curve operations and Poseidon2 hashing — the exact primitives our Noir circuits use. This means proof verification on-chain is efficient, not emulated."
 
 ---
 
@@ -225,6 +225,6 @@ Texto final pequeno: "Built for Stellar Hacks 2026"
 A musica sustenta o ultimo acorde e faz fade. Um ping de sonar final. Silencio. Tela preta.
 
 Narracao (voiceover, sem rosto):
-"Stealth Battleship. Fair by math. Fun by design."
+"Stealth Battleship proves that zero-knowledge isn't just for DeFi — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have everything we need to make this real. Fair by math. Fun by design."
 
 Os ultimos 5 segundos sao so musica e logo.

@@ -243,7 +243,7 @@ export const ClosingEpic: React.FC = () => {
               margin: 0,
             }}
           >
-            github.com/olivmath/battleship-zk
+            github.com/olivmath/stealth-battleship
           </p>
         </FadeIn>
 
