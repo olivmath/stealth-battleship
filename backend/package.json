@@ -9,7 +9,7 @@
     "test:e2e": "tsx test/e2e-full-match.ts"
   },
   "dependencies": {
-    "@aztec/bb.js": "^0.72.1",
+    "@aztec/bb.js": "^0.87.0",
     "@noir-lang/noir_js": "1.0.0-beta.2",
     "@stellar/stellar-sdk": "^14.5.0",
     "@supabase/supabase-js": "^2.97.0",
