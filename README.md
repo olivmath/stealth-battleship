@@ -33,6 +33,10 @@
 
 In digital Battleship, someone always sees both boards. The server knows everything. Traditional approaches all fail: the server can cheat, commit-reveal breaks when the loser disconnects, and on-chain boards leak to mempool front-running.
 
+<p align="center">
+  <img src="pitch/stills/problem.png" width="700" />
+</p>
+
 ## The Solution: Prove-as-You-Go
 
 No board reveal. No commit-reveal. Every action generates a ZK proof in real-time. **Private inputs never leave your device.**
@@ -42,6 +46,30 @@ No board reveal. No commit-reveal. Every action generates a ZK proof in real-tim
 ## ZK Circuits (Noir)
 
 Three specialized circuits guard the entire game lifecycle:
+
+### Proof 1 — Board Validity
+
+Proves your board is legal (correct ship sizes, no overlaps, within bounds) without revealing ship positions. The board is Poseidon2-hashed and committed on-chain.
+
+<p align="center">
+  <img src="pitch/stills/board_proof.png" width="700" />
+</p>
+
+### Proof 2 — Shot Proof
+
+Every hit or miss is proven against the committed board hash. Lying is mathematically impossible.
+
+<p align="center">
+  <img src="pitch/stills/shot_proof.png" width="700" />
+</p>
+
+### Proof 3 — Turns Proof
+
+The full game is replayed inside the circuit to compute and prove the winner. The circuit IS the referee.
+
+<p align="center">
+  <img src="pitch/stills/turns_proof.png" width="700" />
+</p>
 
 | Circuit | Trigger | What it proves | Public inputs |
 |---------|---------|----------------|---------------|
@@ -62,21 +90,9 @@ Three specialized circuits guard the entire game lifecycle:
 
 Hybrid on-chain / off-chain — only 2 Soroban transactions per game.
 
-```
-Player Device (client)               Backend                     Stellar Testnet
-──────────────────────               ───────                     ───────────────
-Place ships
-Generate board_validity proof ──→ Receive proof ──────────→ open_match()
-                                                            ├─ verify proof (UltraHonk)
-                                                            └─ start_game() on Game Hub
-                                     ↕ Socket.io
-Play turns (shot_proof each) ←──→ Relay & verify
-
-Game ends
-Generate turns_proof ───────────→ Receive proof ──────────→ close_match()
-                                                            ├─ verify proof (UltraHonk)
-                                                            └─ end_game() on Game Hub
-```
+<p align="center">
+  <img src="pitch/stills/arch.png" width="700" />
+</p>
 
 ---
 

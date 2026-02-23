@@ -269,7 +269,6 @@ export const Architecture: React.FC = () => {
         </FadeIn>
       )}
 
-      <PiPFrame startFrame={B.players.start + 20} />
     </AbsoluteFill>
   );
 };

@@ -51,9 +51,11 @@ export function startPaymentStream(): void {
 }
 
 export async function playerHasBattleToken(playerPk: string): Promise<boolean> {
+  if (process.env.SKIP_PAYMENT === 'true') return true;
   return hasBattleToken(playerPk);
 }
 
 export async function consumeBattleToken(playerPk: string): Promise<string> {
+  if (process.env.SKIP_PAYMENT === 'true') return 'skip_payment';
   return clawbackBattleToken(playerPk);
 }
