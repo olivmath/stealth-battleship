@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { confirm } from '../hooks/useConfirm';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
 import { Cell } from '../components/Board/Cell';
 import { getLabelSize, computeCellSize } from '../components/Board/GameBoard';
@@ -17,13 +17,13 @@ import { useHaptics } from '../hooks/useHaptics';
 import { useSettings } from '../settings/translator';
 import { useResponsive } from '../hooks/useResponsive';
 import { useWebKeyboard } from '../hooks/useWebKeyboard';
+import { usePvP } from '../pvp/translator';
 import { getShipDefinitionsForRank, getShipStyle, getColumnLabels, getRowLabels } from '../shared/constants';
 import { getLevelInfo } from '../stats/interactor';
 import { ShipDefinition, Orientation, Position, GridSizeOption } from '../shared/entities';
 import { calculatePositions, validatePlacement, autoPlaceShips, createEmptyBoard, computeBoardCommitment } from '../game/engine';
 import { boardValidity, toShipTuples } from '../zk';
 import type { ShipTuples } from '../zk';
-import { MOCK_OPPONENT, OPPONENT_READY_DELAY_MIN, OPPONENT_READY_DELAY_MAX } from '../services/pvpMock';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS, LAYOUT } from '../shared/theme';
 
 const SCREEN_PADDING = LAYOUT.screenPadding;
@@ -39,6 +39,7 @@ export default function Placement() {
   const haptics = useHaptics();
   const { settings } = useSettings();
   const { t } = useTranslation();
+  const pvp = usePvP();
   const { width: screenWidth, isMobile } = useResponsive();
   const maxContent = isMobile ? LAYOUT.maxContentWidth : LAYOUT.maxContentWidthTablet;
   const CONTENT_WIDTH = Math.min(screenWidth - SCREEN_PADDING * 2, maxContent);
@@ -58,7 +59,6 @@ export default function Placement() {
 
   // PvP ready state
   const [playerReady, setPlayerReady] = useState(false);
-  const [opponentReady, setOpponentReady] = useState(false);
   const [generatingProof, setGeneratingProof] = useState(false);
   const [proofStep, setProofStep] = useState('');
   const proofCancelledRef = useRef(false);
@@ -66,6 +66,9 @@ export default function Placement() {
 
   const gridRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // PvP: opponent ready comes from socket
+  const opponentReady = isPvP ? pvp.opponentReady : false;
 
   // Arcade: sync settings
   useEffect(() => {
@@ -76,17 +79,17 @@ export default function Placement() {
     }
   }, [settings.gridSize, isPvP]);
 
-  // PvP: navigate when both ready
+  // PvP: navigate when both ready (both_ready event triggers phase='battle')
   useEffect(() => {
     if (!isPvP) return;
-    if (playerReady && opponentReady) {
+    if (pvp.phase === 'battle') {
       haptics.medium();
       const t = setTimeout(() => {
         navigate('/battle?mode=pvp', { replace: true });
       }, 500);
       timersRef.current.push(t);
     }
-  }, [playerReady, opponentReady, isPvP]);
+  }, [pvp.phase, isPvP]);
 
   // Cleanup timers
   useEffect(() => {
@@ -219,88 +222,104 @@ export default function Placement() {
     setGeneratingProof(true);
     proofCancelledRef.current = false;
 
-    const aiResult = autoPlaceShips(createEmptyBoard(gridSize), shipDefs, gridSize);
-    if (!aiResult) {
-      setGeneratingProof(false);
-      return;
-    }
-
-    const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
-
-    // --- ZK: Generate board_validity proofs for player and AI ---
-    console.log('[ZK] === BOARD VALIDITY PROOF START ===');
-    console.log('[ZK] Grid size:', gridSize);
-    console.log('[ZK] Player ships count:', state.playerShips.length);
-    console.log('[ZK] AI ships count:', aiResult.ships.length);
-    const zkStartTime = performance.now();
-
-    const playerShipTuples = toShipTuples(state.playerShips);
-    const aiShipTuples = toShipTuples(aiResult.ships);
-    const playerNonce = String(Math.floor(Math.random() * 1000000));
-    const aiNonce = String(Math.floor(Math.random() * 1000000));
-
-    console.log('[ZK] Player ships:', playerShipTuples);
-    console.log('[ZK] Player nonce:', playerNonce);
-    console.log('[ZK] AI ships:', aiShipTuples);
-    console.log('[ZK] AI nonce:', aiNonce);
-
-    let playerZk: typeof commitment.playerZk;
-    let opponentZk: typeof commitment.opponentZk;
-
-    try {
-      setProofStep('Player board proof (1/2)...');
-      console.log('[ZK] Starting player board_validity proof...');
-      const playerProofStart = performance.now();
-      const playerResult = await boardValidity({ ships: playerShipTuples, nonce: playerNonce }, (step) => {
-        console.log(`[ZK] Player step: ${step}`);
-        setProofStep(`Player: ${step}`);
-      });
-      if (proofCancelledRef.current) return;
-
-      playerZk = { boardHash: playerResult.boardHash, nonce: playerNonce, proof: playerResult.proof };
-      console.log(`[ZK] Player proof OK in ${((performance.now() - playerProofStart) / 1000).toFixed(1)}s - hash: ${playerResult.boardHash}, proof size: ${playerResult.proof.length} bytes`);
-
-      setProofStep('AI board proof (2/2)...');
-      console.log('[ZK] Starting AI board_validity proof...');
-      const aiProofStart = performance.now();
-      const aiResultZk = await boardValidity({ ships: aiShipTuples, nonce: aiNonce }, (step) => {
-        console.log(`[ZK] AI step: ${step}`);
-        setProofStep(`AI: ${step}`);
-      });
-      if (proofCancelledRef.current) return;
-
-      opponentZk = { boardHash: aiResultZk.boardHash, nonce: aiNonce, proof: aiResultZk.proof };
-      console.log(`[ZK] AI proof OK in ${((performance.now() - aiProofStart) / 1000).toFixed(1)}s - hash: ${aiResultZk.boardHash}, proof size: ${aiResultZk.proof.length} bytes`);
-
-      const totalTime = ((performance.now() - zkStartTime) / 1000).toFixed(1);
-      console.log(`[ZK] === BOTH PROOFS GENERATED in ${totalTime}s ===`);
-    } catch (err: any) {
-      if (proofCancelledRef.current) return;
-      const failTime = ((performance.now() - zkStartTime) / 1000).toFixed(1);
-      console.error(`[ZK] === PROOF FAILED after ${failTime}s ===`);
-      console.error('[ZK] Error:', err.message);
-      console.error('[ZK] Stack:', err.stack);
-    }
-    console.log('[ZK] === BOARD VALIDITY PROOF END ===');
-
-    if (proofCancelledRef.current) return;
-
-    setGeneratingProof(false);
-    setProofStep('');
-
-    dispatch({
-      type: 'START_GAME',
-      opponentShips: aiResult.ships,
-      opponentBoard: aiResult.board,
-      commitment: { ...commitment, playerZk, opponentZk },
-    });
-
     if (isPvP) {
-      setPlayerReady(true);
-      const delay = OPPONENT_READY_DELAY_MIN + Math.random() * (OPPONENT_READY_DELAY_MAX - OPPONENT_READY_DELAY_MIN);
-      const t = setTimeout(() => setOpponentReady(true), delay);
-      timersRef.current.push(t);
+      // PvP: generate player board proof only, then submit to server
+      const playerShipTuples = toShipTuples(state.playerShips);
+      const playerNonce = String(Math.floor(Math.random() * 1000000));
+
+      console.log('[ZK] === PVP BOARD VALIDITY PROOF START ===');
+      const zkStartTime = performance.now();
+
+      try {
+        setProofStep('Generating board proof...');
+        const playerResult = await boardValidity({ ships: playerShipTuples, nonce: playerNonce }, (step) => {
+          console.log(`[ZK] Step: ${step}`);
+          setProofStep(step);
+        });
+        if (proofCancelledRef.current) return;
+
+        const elapsed = ((performance.now() - zkStartTime) / 1000).toFixed(1);
+        console.log(`[ZK] Proof OK in ${elapsed}s - hash: ${playerResult.boardHash}, proof: ${playerResult.proof.length} bytes`);
+
+        setGeneratingProof(false);
+        setProofStep('');
+        setPlayerReady(true);
+
+        // Store commitment for later use in battle
+        const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
+        dispatch({
+          type: 'START_GAME',
+          // In PvP we don't have opponent ships yet — use empty placeholders
+          opponentShips: [],
+          opponentBoard: createEmptyBoard(gridSize),
+          commitment: {
+            ...commitment,
+            playerZk: { boardHash: playerResult.boardHash, nonce: playerNonce, proof: playerResult.proof },
+            opponentZk: undefined,
+          },
+        });
+
+        // Submit to server via socket
+        pvp.submitPlacement(playerResult.boardHash, Array.from(playerResult.proof));
+      } catch (err: any) {
+        if (proofCancelledRef.current) return;
+        console.error('[ZK] Proof failed:', err.message);
+        setGeneratingProof(false);
+        setProofStep('');
+      }
     } else {
+      // Arcade: generate both player and AI proofs
+      const aiResult = autoPlaceShips(createEmptyBoard(gridSize), shipDefs, gridSize);
+      if (!aiResult) {
+        setGeneratingProof(false);
+        return;
+      }
+
+      const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
+      const playerShipTuples = toShipTuples(state.playerShips);
+      const aiShipTuples = toShipTuples(aiResult.ships);
+      const playerNonce = String(Math.floor(Math.random() * 1000000));
+      const aiNonce = String(Math.floor(Math.random() * 1000000));
+
+      console.log('[ZK] === BOARD VALIDITY PROOF START ===');
+      const zkStartTime = performance.now();
+
+      let playerZk: typeof commitment.playerZk;
+      let opponentZk: typeof commitment.opponentZk;
+
+      try {
+        setProofStep('Player board proof (1/2)...');
+        const playerResult = await boardValidity({ ships: playerShipTuples, nonce: playerNonce }, (step) => {
+          setProofStep(`Player: ${step}`);
+        });
+        if (proofCancelledRef.current) return;
+        playerZk = { boardHash: playerResult.boardHash, nonce: playerNonce, proof: playerResult.proof };
+
+        setProofStep('AI board proof (2/2)...');
+        const aiResultZk = await boardValidity({ ships: aiShipTuples, nonce: aiNonce }, (step) => {
+          setProofStep(`AI: ${step}`);
+        });
+        if (proofCancelledRef.current) return;
+        opponentZk = { boardHash: aiResultZk.boardHash, nonce: aiNonce, proof: aiResultZk.proof };
+
+        const totalTime = ((performance.now() - zkStartTime) / 1000).toFixed(1);
+        console.log(`[ZK] === BOTH PROOFS GENERATED in ${totalTime}s ===`);
+      } catch (err: any) {
+        if (proofCancelledRef.current) return;
+        console.error('[ZK] Proof failed:', err.message);
+      }
+
+      if (proofCancelledRef.current) return;
+      setGeneratingProof(false);
+      setProofStep('');
+
+      dispatch({
+        type: 'START_GAME',
+        opponentShips: aiResult.ships,
+        opponentBoard: aiResult.board,
+        commitment: { ...commitment, playerZk, opponentZk },
+      });
+
       navigate('/battle', { replace: true });
     }
   };
@@ -313,6 +332,7 @@ export default function Placement() {
       confirmText: isPvP ? t('placement.leave') : t('placement.abandon'),
       onConfirm: () => {
         timersRef.current.forEach(clearTimeout);
+        if (isPvP) pvp.forfeit();
         navigate('/menu', { replace: true });
       },
     });
@@ -331,6 +351,10 @@ export default function Placement() {
 
   const previewSet = new Set(previewPositions.map(p => `${p.row},${p.col}`));
 
+  const opponentName = isPvP && pvp.match?.opponentKey
+    ? pvp.match.opponentKey.slice(0, 8) + '...'
+    : 'Opponent';
+
   const subtitleText = isLocked
     ? (opponentReady ? t('placement.bothReady') : t('placement.waitingOpponent'))
     : selectedShip
@@ -340,12 +364,12 @@ export default function Placement() {
         : t('placement.selectShip');
 
   return (
-    <GradientContainer>
+    <PageShell hideHeader maxWidth="wide" contentStyle={{ padding: 0, overflow: 'hidden', flex: 1 }}>
       <div style={styles.container}>
         {/* PvP: Opponent status */}
         {isPvP && (
           <OpponentStatus
-            name={MOCK_OPPONENT}
+            name={opponentName}
             status={playerReady ? (opponentReady ? 'ready' : 'online') : 'online'}
           />
         )}
@@ -450,7 +474,7 @@ export default function Placement() {
           <NavalButton
             title={t('placement.back')}
             onPress={handleBack}
-            variant="danger"
+            variant="ghost"
             size="small"
             style={styles.actionButton}
           />
@@ -459,7 +483,7 @@ export default function Placement() {
               <NavalButton
                 title={t('placement.auto')}
                 onPress={handleAutoPlace}
-                variant="pvp"
+                variant="secondary"
                 size="small"
                 style={styles.actionButton}
               />
@@ -497,7 +521,7 @@ export default function Placement() {
           </div>
         )}
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
@@ -511,7 +535,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100vh',
     overflow: 'hidden',
     width: '100%',
-    maxWidth: LAYOUT.maxContentWidthDesktop,
     boxSizing: 'border-box' as const,
     alignItems: 'center',
   },

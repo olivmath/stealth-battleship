@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { StatusFeedback } from '../components/UI/StatusFeedback';
 import { NavalButton } from '../components/UI/NavalButton';
 import { useHaptics } from '../hooks/useHaptics';
 import { getMatchHistory } from '../stats/adapter';
@@ -26,11 +27,9 @@ export default function MatchDetail() {
 
   if (!match) {
     return (
-      <GradientContainer>
-        <div style={styles.center}>
-          <span style={styles.loading}>{t('matchDetail.loading')}</span>
-        </div>
-      </GradientContainer>
+      <PageShell hideHeader maxWidth="medium">
+        <StatusFeedback status="loading" message={t('matchDetail.loading')} />
+      </PageShell>
     );
   }
 
@@ -43,166 +42,157 @@ export default function MatchDetail() {
   });
 
   return (
-    <GradientContainer>
-      <div style={styles.scrollContainer}>
-        <div style={styles.content}>
-          {/* Header */}
-          <div style={styles.header}>
-            <span style={{ ...styles.result, ...(isVictory ? styles.victory : styles.defeat) }}>
-              {isVictory ? t('matchDetail.victory') : t('matchDetail.defeat')}
-            </span>
-            <span style={styles.date}>{dateStr}</span>
-            <span style={styles.gridLabel}>
-              {match.gridSize}x{match.gridSize} Grid{match.difficulty ? ` \u2022 ${t(`difficulty.${match.difficulty}`)}` : ''}
-            </span>
-            <div style={{ ...styles.divider, backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }} />
-          </div>
+    <PageShell
+      hideHeader
+      maxWidth="medium"
+      actions={
+        <NavalButton title={t('matchDetail.backToHistory')} onPress={() => { haptics.light(); navigate(-1); }} variant="secondary" />
+      }
+    >
+      <div style={styles.content}>
+        {/* Header */}
+        <div style={styles.header}>
+          <span style={{ ...styles.result, ...(isVictory ? styles.victory : styles.defeat) }}>
+            {isVictory ? t('matchDetail.victory') : t('matchDetail.defeat')}
+          </span>
+          <span style={styles.date}>{dateStr}</span>
+          <span style={styles.gridLabel}>
+            {match.gridSize}x{match.gridSize} Grid{match.difficulty ? ` \u2022 ${t(`difficulty.${match.difficulty}`)}` : ''}
+          </span>
+          <div style={{ ...styles.divider, backgroundColor: isVictory ? COLORS.accent.gold : COLORS.accent.fire }} />
+        </div>
 
-          {/* Score */}
-          <div style={styles.scoreContainer}>
-            <span style={styles.scoreLabel}>{t('matchDetail.score')}</span>
-            <span style={{ ...styles.scoreValue, ...(isVictory ? styles.victory : styles.defeat) }}>
-              {ms.score}
-            </span>
-          </div>
+        {/* Score */}
+        <div style={styles.scoreContainer}>
+          <span style={styles.scoreLabel}>{t('matchDetail.score')}</span>
+          <span style={{ ...styles.scoreValue, ...(isVictory ? styles.victory : styles.defeat) }}>
+            {ms.score}
+          </span>
+        </div>
 
-          {/* Primary Stats */}
-          <div style={styles.statsContainer}>
-            <div style={styles.statsGrid}>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{ms.accuracy}%</span>
-                <span style={styles.statLabel}>{t('matchDetail.accuracy')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{ms.shotsFired}</span>
-                <span style={styles.statLabel}>{t('matchDetail.shotsFired')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{ms.shipsSurvived}/{ms.totalShips}</span>
-                <span style={styles.statLabel}>{t('matchDetail.survived')}</span>
-              </div>
+        {/* Primary Stats */}
+        <div style={styles.statsContainer}>
+          <div style={styles.statsGrid}>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{ms.accuracy}%</span>
+              <span style={styles.statLabel}>{t('matchDetail.accuracy')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{ms.shotsFired}</span>
+              <span style={styles.statLabel}>{t('matchDetail.shotsFired')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{ms.shipsSurvived}/{ms.totalShips}</span>
+              <span style={styles.statLabel}>{t('matchDetail.survived')}</span>
             </div>
           </div>
+        </div>
 
-          {/* Battle Report */}
-          <div style={styles.reportContainer}>
-            <span style={styles.reportTitle}>{t('matchDetail.battleReport')}</span>
+        {/* Battle Report */}
+        <div style={styles.reportContainer}>
+          <span style={styles.reportTitle}>{t('matchDetail.battleReport')}</span>
 
-            {ms.killEfficiency.length > 0 && (
-              <div style={styles.reportSection}>
-                <span style={styles.reportSectionTitle}>{t('matchDetail.killEfficiency')}</span>
-                {ms.killEfficiency.map(item => (
-                  <KillEfficiencyBar key={item.shipId} item={item} showLegend={false} />
-                ))}
-              </div>
-            )}
-
-            <div style={styles.reportRow}>
-              <span style={styles.reportLabel}>{t('matchDetail.longestStreak')}</span>
-              <span style={styles.reportValue}>{ms.longestStreak}</span>
-            </div>
-            <div style={styles.reportRow}>
-              <span style={styles.reportLabel}>{t('matchDetail.firstBlood')}</span>
-              <span style={styles.reportValue}>
-                {ms.firstBloodTurn > 0 ? t('matchDetail.turn', { number: ms.firstBloodTurn }) : t('common.dash')}
-              </span>
-            </div>
-            <div style={styles.reportRow}>
-              <span style={styles.reportLabel}>{t('matchDetail.perfectKills')}</span>
-              <span style={{ ...styles.reportValue, ...(ms.perfectKills > 0 ? styles.perfectText : {}) }}>
-                {ms.perfectKills} / {ms.killEfficiency.length}
-              </span>
-            </div>
-          </div>
-
-          {/* ZK Proofs */}
-          {match.commitment?.playerZk || match.commitment?.opponentZk ? (
-            <div style={styles.zkContainer}>
-              <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
-
-              {match.commitment?.playerZk && (
-                <div style={styles.zkSection}>
-                  <span style={styles.zkSectionLabel}>{t('matchDetail.zkPlayer')}</span>
-
-                  <div style={styles.zkProofCard}>
-                    <div style={styles.zkProofHeader}>
-                      <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
-                      <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
-                    </div>
-                    <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
-
-                    <div style={styles.zkDetailRow}>
-                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
-                      <span style={styles.zkDetailValue}>
-                        {match.commitment.playerZk.boardHash.slice(0, 10)}...{match.commitment.playerZk.boardHash.slice(-6)}
-                      </span>
-                    </div>
-                    <div style={styles.zkDetailRow}>
-                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
-                      <span style={styles.zkDetailValue}>
-                        {t('matchDetail.zkProofBytes', { size: match.commitment.playerZk.proof?.length ?? 0 })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {match.commitment?.opponentZk && (
-                <div style={styles.zkSection}>
-                  <span style={styles.zkSectionLabel}>{t('matchDetail.zkOpponent')}</span>
-
-                  <div style={styles.zkProofCard}>
-                    <div style={styles.zkProofHeader}>
-                      <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
-                      <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
-                    </div>
-                    <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
-
-                    <div style={styles.zkDetailRow}>
-                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
-                      <span style={styles.zkDetailValue}>
-                        {match.commitment.opponentZk.boardHash.slice(0, 10)}...{match.commitment.opponentZk.boardHash.slice(-6)}
-                      </span>
-                    </div>
-                    <div style={styles.zkDetailRow}>
-                      <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
-                      <span style={styles.zkDetailValue}>
-                        {t('matchDetail.zkProofBytes', { size: match.commitment.opponentZk.proof?.length ?? 0 })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div style={styles.zkContainer}>
-              <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
-              <div style={styles.zkNone}>
-                <span style={styles.zkNoneTitle}>{t('matchDetail.zkNone')}</span>
-                <span style={styles.zkNoneDesc}>{t('matchDetail.zkNoneDesc')}</span>
-              </div>
+          {ms.killEfficiency.length > 0 && (
+            <div style={styles.reportSection}>
+              <span style={styles.reportSectionTitle}>{t('matchDetail.killEfficiency')}</span>
+              {ms.killEfficiency.map(item => (
+                <KillEfficiencyBar key={item.shipId} item={item} showLegend={false} />
+              ))}
             </div>
           )}
 
-          {/* Back */}
-          <NavalButton
-            title={t('matchDetail.backToHistory')}
-            onPress={() => {
-              haptics.light();
-              navigate(-1);
-            }}
-            variant="secondary"
-          />
+          <div style={styles.reportRow}>
+            <span style={styles.reportLabel}>{t('matchDetail.longestStreak')}</span>
+            <span style={styles.reportValue}>{ms.longestStreak}</span>
+          </div>
+          <div style={styles.reportRow}>
+            <span style={styles.reportLabel}>{t('matchDetail.firstBlood')}</span>
+            <span style={styles.reportValue}>
+              {ms.firstBloodTurn > 0 ? t('matchDetail.turn', { number: ms.firstBloodTurn }) : t('common.dash')}
+            </span>
+          </div>
+          <div style={styles.reportRow}>
+            <span style={styles.reportLabel}>{t('matchDetail.perfectKills')}</span>
+            <span style={{ ...styles.reportValue, ...(ms.perfectKills > 0 ? styles.perfectText : {}) }}>
+              {ms.perfectKills} / {ms.killEfficiency.length}
+            </span>
+          </div>
         </div>
+
+        {/* ZK Proofs */}
+        {match.commitment?.playerZk || match.commitment?.opponentZk ? (
+          <div style={styles.zkContainer}>
+            <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
+
+            {match.commitment?.playerZk && (
+              <div style={styles.zkSection}>
+                <span style={styles.zkSectionLabel}>{t('matchDetail.zkPlayer')}</span>
+
+                <div style={styles.zkProofCard}>
+                  <div style={styles.zkProofHeader}>
+                    <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
+                    <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
+                  </div>
+                  <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
+
+                  <div style={styles.zkDetailRow}>
+                    <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
+                    <span style={styles.zkDetailValue}>
+                      {match.commitment.playerZk.boardHash.slice(0, 10)}...{match.commitment.playerZk.boardHash.slice(-6)}
+                    </span>
+                  </div>
+                  <div style={styles.zkDetailRow}>
+                    <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
+                    <span style={styles.zkDetailValue}>
+                      {t('matchDetail.zkProofBytes', { size: match.commitment.playerZk.proof?.length ?? 0 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {match.commitment?.opponentZk && (
+              <div style={styles.zkSection}>
+                <span style={styles.zkSectionLabel}>{t('matchDetail.zkOpponent')}</span>
+
+                <div style={styles.zkProofCard}>
+                  <div style={styles.zkProofHeader}>
+                    <span style={styles.zkProofName}>{t('matchDetail.zkBoardValidity')}</span>
+                    <span style={styles.zkStatusBadge}>{t('matchDetail.zkVerified')}</span>
+                  </div>
+                  <span style={styles.zkProofDesc}>{t('matchDetail.zkBoardValidityDesc')}</span>
+
+                  <div style={styles.zkDetailRow}>
+                    <span style={styles.zkDetailLabel}>{t('matchDetail.zkBoardHash')}</span>
+                    <span style={styles.zkDetailValue}>
+                      {match.commitment.opponentZk.boardHash.slice(0, 10)}...{match.commitment.opponentZk.boardHash.slice(-6)}
+                    </span>
+                  </div>
+                  <div style={styles.zkDetailRow}>
+                    <span style={styles.zkDetailLabel}>{t('matchDetail.zkProofSize')}</span>
+                    <span style={styles.zkDetailValue}>
+                      {t('matchDetail.zkProofBytes', { size: match.commitment.opponentZk.proof?.length ?? 0 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={styles.zkContainer}>
+            <span style={styles.zkTitle}>{t('matchDetail.zkProofs')}</span>
+            <div style={styles.zkNone}>
+              <span style={styles.zkNoneTitle}>{t('matchDetail.zkNone')}</span>
+              <span style={styles.zkNoneDesc}>{t('matchDetail.zkNoneDesc')}</span>
+            </div>
+          </div>
+        )}
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  center: { display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loading: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.text.secondary },
-  scrollContainer: { flex: 1, overflowY: 'auto', width: '100%' },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, maxWidth: LAYOUT.maxContentWidth, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
   header: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xl },
   result: { fontFamily: FONTS.heading, fontSize: 36, letterSpacing: 6 },
@@ -249,7 +239,7 @@ const styles: Record<string, React.CSSProperties> = {
   reportValue: { fontFamily: FONTS.heading, fontSize: 14, color: COLORS.text.primary },
   perfectText: { color: COLORS.accent.gold },
   zkContainer: {
-    border: '1px solid ' + COLORS.status.pvp + '33',
+    border: `1px solid rgba(34, 211, 238, 0.2)`,
     borderRadius: 4,
     padding: SPACING.md,
     backgroundColor: 'rgba(34, 211, 238, 0.03)',

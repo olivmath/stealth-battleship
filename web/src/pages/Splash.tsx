@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { getPlayerName } from '../game/adapter';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 export default function Splash() {
   const { t } = useTranslation();
@@ -37,37 +37,24 @@ export default function Splash() {
   }, [splashDelay, navigate]);
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={{ ...styles.header, opacity: titleOpacity, transition: 'opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1)' }}>
-          <span style={styles.title}>{t('splash.title')}</span>
-          <div style={styles.divider} />
-        </div>
-
-        <div style={{ ...styles.center, opacity: subtitleOpacity, transition: 'opacity 0.6s cubic-bezier(0.33, 1, 0.68, 1)' }}>
-          <span style={styles.subtitle}>{t('splash.subtitle')}</span>
-          <div style={styles.spinnerWrap}>
-            <RadarSpinner size={50} />
-          </div>
-          <span style={styles.loading}>{t('splash.loading')}</span>
-        </div>
+    <PageShell hideHeader contentStyle={{ justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ ...styles.header, opacity: titleOpacity, transition: 'opacity 0.8s cubic-bezier(0.33, 1, 0.68, 1)' }}>
+        <span style={styles.title}>{t('splash.title')}</span>
+        <div style={styles.divider} />
       </div>
-    </GradientContainer>
+
+      <div style={{ ...styles.center, opacity: subtitleOpacity, transition: 'opacity 0.6s cubic-bezier(0.33, 1, 0.68, 1)' }}>
+        <span style={styles.subtitle}>{t('splash.subtitle')}</span>
+        <div style={styles.spinnerWrap}>
+          <RadarSpinner size={50} />
+        </div>
+        <span style={styles.loading}>{t('splash.loading')}</span>
+      </div>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
   header: {
     display: 'flex',
     flexDirection: 'column',

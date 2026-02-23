@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { StatusFeedback } from '../components/UI/StatusFeedback';
 import { NavalButton } from '../components/UI/NavalButton';
-import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useMatchHistory } from '../stats/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { MatchRecord } from '../shared/entities';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: COLORS.status.online,
@@ -163,106 +163,48 @@ export default function MatchHistory() {
   const { t } = useTranslation();
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('matchHistory.title')}</span>
-          <div style={styles.divider} />
-        </div>
-
-        {loading ? (
-          <div style={styles.empty}>
-            <RadarSpinner size={40} />
-          </div>
-        ) : history.length === 0 ? (
-          <div style={styles.empty}>
-            <span style={styles.emptyText}>{t('matchHistory.empty')}</span>
-            <span style={styles.emptySubtext}>{t('matchHistory.emptyDesc')}</span>
-          </div>
-        ) : (
-          <div style={styles.list}>
-            {history.map(item => (
-              <MatchHistoryItem
-                key={item.id}
-                match={item}
-                onPress={() => {
-                  haptics.light();
-                  navigate(`/match-detail?id=${item.id}`);
-                }}
-              />
-            ))}
-          </div>
-        )}
-
+    <PageShell
+      title={t('matchHistory.title')}
+      actions={
         <NavalButton
           title={t('matchHistory.backToBase')}
-          onPress={() => {
-            haptics.light();
-            navigate(-1);
-          }}
+          onPress={() => { haptics.light(); navigate(-1); }}
           variant="secondary"
-          style={{ marginTop: 'auto' }}
         />
-      </div>
-    </GradientContainer>
+      }
+    >
+      {loading ? (
+        <StatusFeedback status="loading" message={t('matchHistory.loading', 'Loading...')} />
+      ) : history.length === 0 ? (
+        <StatusFeedback
+          status="empty"
+          message={t('matchHistory.empty')}
+          detail={t('matchHistory.emptyDesc')}
+        />
+      ) : (
+        <div style={styles.list}>
+          {history.map(item => (
+            <MatchHistoryItem
+              key={item.id}
+              match={item}
+              onPress={() => {
+                haptics.light();
+                navigate(`/match-detail?id=${item.id}`);
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    gap: SPACING.md,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 24,
-    color: COLORS.text.accent,
-    letterSpacing: 4,
-  },
-  divider: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   list: {
     flex: 1,
     overflowY: 'auto',
     border: `1px solid ${COLORS.grid.border}`,
     borderRadius: 4,
     backgroundColor: COLORS.surface.card,
-  },
-  empty: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  emptyText: {
-    fontFamily: FONTS.heading,
-    fontSize: 16,
-    color: COLORS.text.secondary,
-    letterSpacing: 2,
-  },
-  emptySubtext: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 13,
-    color: COLORS.text.secondary,
-    opacity: 0.6,
   },
 };

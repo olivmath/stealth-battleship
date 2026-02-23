@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { ProgressBar } from '../components/UI/ProgressBar';
 import { NavalButton } from '../components/UI/NavalButton';
 import { NavalText } from '../components/UI/NavalText';
 import { Card } from '../components/UI/Card';
@@ -17,7 +18,7 @@ import { usePlayerStats } from '../stats/translator';
 import { useResponsive } from '../hooks/useResponsive';
 import { getLevelInfo } from '../stats/interactor';
 import { DIFFICULTY_CONFIG } from '../shared/constants';
-import { MOCK_OPPONENT } from '../services/pvpMock';
+import { usePvP } from '../pvp/translator';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS, FONT_SIZES } from '../shared/theme';
 
 // Simple animated counter for web
@@ -56,6 +57,7 @@ export default function GameOver() {
   const isPvP = mode === 'pvp';
   const { state, dispatch } = useGame();
   const haptics = useHaptics();
+  const pvp = usePvP();
   const { stats, refresh } = usePlayerStats();
   const [showReport, setShowReport] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -131,13 +133,16 @@ export default function GameOver() {
   };
 
   const subtitle = isPvP
-    ? isVictory ? t('gameover.pvpVictoryMsg', { opponent: MOCK_OPPONENT }) : t('gameover.pvpDefeatMsg', { opponent: MOCK_OPPONENT })
+    ? isVictory ? t('gameover.pvpVictoryMsg', { opponent: pvp.match?.opponentKey?.slice(0, 8) || 'Opponent' }) : t('gameover.pvpDefeatMsg', { opponent: pvp.match?.opponentKey?.slice(0, 8) || 'Opponent' })
     : isVictory ? t('gameover.victoryMsg') : t('gameover.defeatMsg');
 
   return (
-    <GradientContainer>
-      <div style={styles.scrollContainer}>
-        <div style={styles.content}>
+    <PageShell
+      hideHeader
+      maxWidth="medium"
+      contentStyle={{ padding: 0 }}
+    >
+      <div style={styles.content}>
           {/* Header */}
           <div style={styles.header}>
             <NavalText variant="h1" color={isVictory ? COLORS.accent.victory : COLORS.accent.fire} letterSpacing={6} style={{ fontSize: FONT_SIZES.hero }}>
@@ -181,9 +186,7 @@ export default function GameOver() {
               <span style={styles.levelRank}>{t('ranks.' + currentLevel.rank).toUpperCase()}</span>
               <span style={styles.levelXP}>{currentLevel.currentXP} / {currentLevel.xpForNextRank}</span>
             </div>
-            <div style={styles.progressBg}>
-              <div style={{ ...styles.progressFill, width: `${Math.round(currentLevel.progress * 100)}%` }} />
-            </div>
+            <ProgressBar progress={currentLevel.progress} />
           </div>
 
           {/* Primary Stats */}
@@ -298,7 +301,6 @@ export default function GameOver() {
             <NavalButton title={isPvP ? t('gameover.rematch') : t('gameover.playAgain')} onPress={handlePlayAgain} />
             <NavalButton title={t('gameover.returnToBase')} onPress={handleMenu} variant="secondary" />
           </div>
-        </div>
       </div>
       <LevelUpModal visible={showLevelUp} levelInfo={currentLevel} previousLevelInfo={prevLevel ?? undefined} onDismiss={() => setShowLevelUp(false)} />
       {waitingProof && (
@@ -310,12 +312,11 @@ export default function GameOver() {
           </div>
         </div>
       )}
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  scrollContainer: { flex: 1, overflowY: 'auto', width: '100%' },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, maxWidth: 600, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
   header: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xl },
   scoreContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
@@ -393,18 +394,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONTS.bodyLight,
     fontSize: 11,
     color: COLORS.text.secondary,
-  },
-  progressBg: {
-    height: 6,
-    borderRadius: RADIUS.sharp,
-    backgroundColor: COLORS.surface.elevated,
-    marginTop: SPACING.xs,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: RADIUS.sharp,
-    backgroundColor: COLORS.accent.gold,
   },
   statsGrid: { display: 'flex', flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.xs },

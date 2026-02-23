@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useGame } from '../game/translator';
 import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 export default function PvpFriend() {
   const navigate = useNavigate();
@@ -50,160 +50,116 @@ export default function PvpFriend() {
 
   if (mode === 'select') {
     return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <span style={styles.title}>{t('pvpFriend.title')}</span>
-            <span style={styles.subtitle}>{t('pvpFriend.subtitle')}</span>
-            <div style={styles.divider} />
-          </div>
-
-          <div style={styles.options}>
-            <NavalButton
-              title={t('pvpFriend.create')}
-              subtitle={t('pvpFriend.createSub')}
-              variant="pvp"
-              onPress={handleCreate}
-            />
-            <NavalButton
-              title={t('pvpFriend.join')}
-              subtitle={t('pvpFriend.joinSub')}
-              variant="pvp"
-              onPress={() => {
-                haptics.light();
-                setMode('join');
-              }}
-            />
-          </div>
-
+      <PageShell
+        title={t('pvpFriend.title')}
+        subtitle={t('pvpFriend.subtitle')}
+        actions={
           <NavalButton
             title={t('pvpFriend.back')}
-            variant="danger"
+            variant="ghost"
             size="small"
             onPress={() => {
               haptics.light();
               navigate('/pvp-mode', { replace: true });
             }}
           />
+        }
+      >
+        <div style={styles.options}>
+          <NavalButton
+            title={t('pvpFriend.create')}
+            subtitle={t('pvpFriend.createSub')}
+            variant="pvp"
+            onPress={handleCreate}
+          />
+          <NavalButton
+            title={t('pvpFriend.join')}
+            subtitle={t('pvpFriend.joinSub')}
+            variant="pvp"
+            onPress={() => {
+              haptics.light();
+              setMode('join');
+            }}
+          />
         </div>
-      </GradientContainer>
+      </PageShell>
     );
   }
 
   if (mode === 'create') {
     return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <span style={styles.label}>{t('pvpFriend.matchCode')}</span>
-            <span style={styles.matchCode}>{pvp.matchCode || '...'}</span>
-            <span style={styles.shareText}>{t('pvpFriend.shareCode')}</span>
-            <div style={styles.divider} />
-          </div>
-
-          <div style={styles.waitingSection}>
-            <RadarSpinner size={80} />
-            <span style={styles.waitingText}>{t('pvpFriend.waiting')}</span>
-          </div>
-
+      <PageShell
+        hideHeader
+        actions={
           <NavalButton
             title={t('pvpFriend.cancel')}
-            variant="danger"
+            variant="ghost"
             size="small"
             onPress={handleCancel}
           />
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xxl }}>
+          <span style={styles.label}>{t('pvpFriend.matchCode')}</span>
+          <span style={styles.matchCode}>{pvp.matchCode || '...'}</span>
+          <span style={styles.shareText}>{t('pvpFriend.shareCode')}</span>
         </div>
-      </GradientContainer>
+        <div style={styles.waitingSection}>
+          <RadarSpinner size={80} />
+          <span style={styles.waitingText}>{t('pvpFriend.waiting')}</span>
+        </div>
+      </PageShell>
     );
   }
 
   // mode === 'join'
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('pvpFriend.joinTitle')}</span>
-          <span style={styles.subtitle}>{t('pvpFriend.enterCode')}</span>
-          <div style={styles.divider} />
-        </div>
-
-        <div style={styles.joinSection}>
-          <input
-            style={styles.codeInput}
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-            placeholder="000000"
-            maxLength={6}
-            inputMode="numeric"
-            disabled={pvp.phase === 'connecting'}
-          />
-
-          {pvp.phase === 'connecting' ? (
-            <div style={styles.connectingRow}>
-              <RadarSpinner size={40} />
-              <span style={styles.connectingText}>{t('pvpFriend.connecting')}</span>
-            </div>
-          ) : (
-            <NavalButton
-              title={t('pvpFriend.joinBtn')}
-              variant="pvp"
-              onPress={handleJoin}
-              disabled={joinCode.length < 6}
-            />
-          )}
-
-          {pvp.error && (
-            <span style={styles.errorText}>{pvp.error}</span>
-          )}
-        </div>
-
+    <PageShell
+      title={t('pvpFriend.joinTitle')}
+      subtitle={t('pvpFriend.enterCode')}
+      actions={
         <NavalButton
           title={t('pvpFriend.back')}
-          variant="danger"
+          variant="ghost"
           size="small"
           onPress={handleCancel}
         />
+      }
+    >
+      <div style={styles.joinSection}>
+        <input
+          style={styles.codeInput}
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+          placeholder="000000"
+          maxLength={6}
+          inputMode="numeric"
+          disabled={pvp.phase === 'connecting'}
+        />
+
+        {pvp.phase === 'connecting' ? (
+          <div style={styles.connectingRow}>
+            <RadarSpinner size={40} />
+            <span style={styles.connectingText}>{t('pvpFriend.connecting')}</span>
+          </div>
+        ) : (
+          <NavalButton
+            title={t('pvpFriend.joinBtn')}
+            variant="pvp"
+            onPress={handleJoin}
+            disabled={joinCode.length < 6}
+          />
+        )}
+
+        {pvp.error && (
+          <span style={styles.errorText}>{pvp.error}</span>
+        )}
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xxl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 24,
-    color: COLORS.accent.gold,
-    letterSpacing: 4,
-  },
-  subtitle: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.sm,
-  },
-  divider: {
-    width: 60,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   label: {
     fontFamily: FONTS.heading,
     fontSize: 12,
@@ -260,7 +216,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.accent.gold,
     textAlign: 'center' as const,
     letterSpacing: 8,
-    outline: 'none',
     boxSizing: 'border-box' as const,
   },
   connectingRow: {

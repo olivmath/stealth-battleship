@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { StatusFeedback } from '../components/UI/StatusFeedback';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { NavalText } from '../components/UI/NavalText';
@@ -9,7 +10,7 @@ import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
 // Dynamic import to avoid eager crypto.subtle access
 const walletInteractor = () => import('../wallet/interactor');
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 export default function PvpMode() {
   const { t } = useTranslation();
@@ -71,170 +72,133 @@ export default function PvpMode() {
   // Loading wallet check
   if (walletExists === null) {
     return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <RadarSpinner size={60} />
-        </div>
-      </GradientContainer>
+      <PageShell hideHeader>
+        <StatusFeedback status="loading" />
+      </PageShell>
     );
   }
 
   // No wallet — create PIN flow
   if (!walletExists) {
     return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <span style={styles.title}>{t('pvpMode.title')}</span>
-            <NavalText variant="bodyLight" style={{ textAlign: 'center', marginTop: SPACING.sm }}>
-              {t('pvpMode.createPinPrompt', 'Create a PIN to generate your wallet')}
-            </NavalText>
-            <div style={styles.divider} />
-          </div>
-
-          <div style={styles.pinSection}>
-            <span style={styles.pinLabel}>{t('pvpMode.pinLabel', 'PIN (4 digits)')}</span>
-            <input
-              style={styles.pinInput}
-              type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="····"
-              maxLength={4}
-              inputMode="numeric"
-              disabled={connecting}
-            />
-
-            <span style={styles.pinLabel}>{t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}</span>
-            <input
-              style={styles.pinInput}
-              type="password"
-              value={pinConfirm}
-              onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="····"
-              maxLength={4}
-              inputMode="numeric"
-              disabled={connecting}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
-            />
-
-            {pin.length > 0 && pin.length < 4 && (
-              <span style={styles.errorText}>{t('pvpMode.pinInvalid', 'PIN must be 4 digits')}</span>
-            )}
-            {pinConfirm.length > 0 && !pinsMatch && (
-              <span style={styles.errorText}>{t('pvpMode.pinMismatch', 'PINs do not match')}</span>
-            )}
-            {authError && <span style={styles.errorText}>{authError}</span>}
-
-            {connecting ? (
-              <RadarSpinner size={40} />
-            ) : (
-              <NavalButton
-                title={t('pvpMode.createWallet', 'Create Wallet')}
-                variant="pvp"
-                onPress={handleCreate}
-                disabled={!pinValid || !pinsMatch}
-              />
-            )}
-          </div>
-
+      <PageShell
+        title={t('pvpMode.title')}
+        subtitle={t('pvpMode.createPinPrompt', 'Create a PIN to generate your wallet')}
+        actions={
           <NavalButton
             title={t('pvpMode.back')}
-            variant="danger"
+            variant="ghost"
             size="small"
             onPress={() => navigate('/menu', { replace: true })}
           />
+        }
+      >
+        <div style={styles.pinSection}>
+          <span style={styles.pinLabel}>{t('pvpMode.pinLabel', 'PIN (4 digits)')}</span>
+          <input
+            style={styles.pinInput}
+            type="password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="····"
+            maxLength={4}
+            inputMode="numeric"
+            disabled={connecting}
+          />
+
+          <span style={styles.pinLabel}>{t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}</span>
+          <input
+            style={styles.pinInput}
+            type="password"
+            value={pinConfirm}
+            onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="····"
+            maxLength={4}
+            inputMode="numeric"
+            disabled={connecting}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
+          />
+
+          {pin.length > 0 && pin.length < 4 && (
+            <span style={styles.errorText}>{t('pvpMode.pinInvalid', 'PIN must be 4 digits')}</span>
+          )}
+          {pinConfirm.length > 0 && !pinsMatch && (
+            <span style={styles.errorText}>{t('pvpMode.pinMismatch', 'PINs do not match')}</span>
+          )}
+          {authError && <span style={styles.errorText}>{authError}</span>}
+
+          {connecting ? (
+            <RadarSpinner size={40} />
+          ) : (
+            <NavalButton
+              title={t('pvpMode.createWallet', 'Create Wallet')}
+              variant="pvp"
+              onPress={handleCreate}
+              disabled={!pinValid || !pinsMatch}
+            />
+          )}
         </div>
-      </GradientContainer>
+      </PageShell>
     );
   }
 
   // Wallet exists but not connected — enter PIN to unlock
   if (!isConnected) {
     return (
-      <GradientContainer>
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <span style={styles.title}>{t('pvpMode.title')}</span>
-            <NavalText variant="bodyLight" style={{ textAlign: 'center', marginTop: SPACING.sm }}>
-              {t('pvpMode.enterPinPrompt', 'Enter your PIN to connect')}
-            </NavalText>
-            <div style={styles.divider} />
-          </div>
-
-          <div style={styles.pinSection}>
-            <input
-              style={styles.pinInput}
-              type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="····"
-              maxLength={4}
-              inputMode="numeric"
-              disabled={connecting}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleUnlock(); }}
-            />
-            {authError && <span style={styles.errorText}>{authError}</span>}
-            {connecting ? (
-              <RadarSpinner size={40} />
-            ) : (
-              <NavalButton
-                title={t('pvpMode.connect', 'Connect')}
-                variant="pvp"
-                onPress={handleUnlock}
-                disabled={!pin}
-              />
-            )}
-          </div>
-
+      <PageShell
+        title={t('pvpMode.title')}
+        subtitle={t('pvpMode.enterPinPrompt', 'Enter your PIN to connect')}
+        actions={
           <NavalButton
             title={t('pvpMode.back')}
-            variant="danger"
+            variant="ghost"
             size="small"
             onPress={() => navigate('/menu', { replace: true })}
           />
+        }
+      >
+        <div style={styles.pinSection}>
+          <input
+            style={styles.pinInput}
+            type="password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            placeholder="····"
+            maxLength={4}
+            inputMode="numeric"
+            disabled={connecting}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleUnlock(); }}
+          />
+          {authError && <span style={styles.errorText}>{authError}</span>}
+          {connecting ? (
+            <RadarSpinner size={40} />
+          ) : (
+            <NavalButton
+              title={t('pvpMode.connect', 'Connect')}
+              variant="pvp"
+              onPress={handleUnlock}
+              disabled={!pin}
+            />
+          )}
         </div>
-      </GradientContainer>
+      </PageShell>
     );
   }
 
   // Connected — show mode selection
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('pvpMode.title')}</span>
-          <span style={styles.subtitle}>{t('pvpMode.subtitle')}</span>
-          <NavalText variant="bodyLight" style={{ fontSize: 10, marginTop: 4 }}>
-            {pvp.myPublicKeyHex?.slice(0, 12)}...
-          </NavalText>
-          <div style={styles.divider} />
-        </div>
-
-        <div style={styles.options}>
-          <NavalButton
-            title={t('pvpMode.random')}
-            subtitle={t('pvpMode.randomSub')}
-            variant="pvp"
-            onPress={() => {
-              haptics.light();
-              navigate('/pvp-lobby', { replace: true });
-            }}
-          />
-          <NavalButton
-            title={t('pvpMode.friend')}
-            subtitle={t('pvpMode.friendSub')}
-            variant="pvp"
-            onPress={() => {
-              haptics.light();
-              navigate('/pvp-friend', { replace: true });
-            }}
-          />
-        </div>
-
+    <PageShell
+      title={t('pvpMode.title')}
+      subtitle={t('pvpMode.subtitle')}
+      headerExtra={
+        <NavalText variant="bodyLight" style={{ fontSize: 10, marginTop: 4 }}>
+          {pvp.myPublicKeyHex?.slice(0, 12)}...
+        </NavalText>
+      }
+      actions={
         <NavalButton
           title={t('pvpMode.back')}
-          variant="danger"
+          variant="ghost"
           size="small"
           onPress={() => {
             haptics.light();
@@ -242,47 +206,33 @@ export default function PvpMode() {
             navigate('/menu', { replace: true });
           }}
         />
+      }
+    >
+      <div style={styles.options}>
+        <NavalButton
+          title={t('pvpMode.random')}
+          subtitle={t('pvpMode.randomSub')}
+          variant="pvp"
+          onPress={() => {
+            haptics.light();
+            navigate('/pvp-lobby', { replace: true });
+          }}
+        />
+        <NavalButton
+          title={t('pvpMode.friend')}
+          subtitle={t('pvpMode.friendSub')}
+          variant="pvp"
+          onPress={() => {
+            haptics.light();
+            navigate('/pvp-friend', { replace: true });
+          }}
+        />
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xxl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 28,
-    color: COLORS.accent.gold,
-    letterSpacing: 4,
-  },
-  subtitle: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.sm,
-  },
-  divider: {
-    width: 60,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   options: {
     display: 'flex',
     flexDirection: 'column',
@@ -311,7 +261,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.accent.gold,
     textAlign: 'center' as const,
     letterSpacing: 6,
-    outline: 'none',
     boxSizing: 'border-box' as const,
   },
   errorText: {

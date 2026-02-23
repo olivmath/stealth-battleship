@@ -1,7 +1,7 @@
-import React, { useRef, useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { MiniGrid, MiniCell } from '../components/Tutorial/MiniGrid';
 // MiniCell is now exported from MiniGrid
 import { ShipShape } from '../components/Tutorial/ShipShape';
@@ -11,7 +11,7 @@ import { getShipDefinitionsForRank, RANK_PROGRESSION } from '../shared/constants
 import { getLevelInfo } from '../stats/interactor';
 import { setTutorialSeen } from '../settings/interactor';
 import { ShipDefinition } from '../shared/entities';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 interface TutorialSlide {
   id: string;
@@ -234,7 +234,6 @@ export default function Tutorial() {
   const haptics = useHaptics();
   const { t } = useTranslation();
   const { state } = useGame();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const level = getLevelInfo(state.stats.totalXP);
@@ -269,71 +268,59 @@ export default function Tutorial() {
   const currentSlide = slides[activeIndex];
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        {/* Slide content */}
-        <div style={styles.slide}>
-          <span style={styles.slideTitle}>{currentSlide.title}</span>
-          <div style={styles.illustrationContainer}>
-            {currentSlide.illustration}
-          </div>
-          <span style={styles.slideDescription}>{currentSlide.description}</span>
+    <PageShell hideHeader contentStyle={{ padding: 0 }}>
+      <div style={styles.slide}>
+        <span style={styles.slideTitle}>{currentSlide.title}</span>
+        <div style={styles.illustrationContainer}>
+          {currentSlide.illustration}
         </div>
+        <span style={styles.slideDescription}>{currentSlide.description}</span>
+      </div>
 
-        {/* Footer */}
-        <div style={styles.footer}>
-          <div style={styles.navRow}>
-            <button
-              onClick={handleBack}
-              style={styles.navButton}
-              disabled={isFirst}
-              aria-label="Previous slide"
-            >
-              <span style={{ ...styles.navText, ...(isFirst ? styles.navTextHidden : {}) }}>{t('tutorial.back')}</span>
-            </button>
+      <div style={styles.footer}>
+        <div style={styles.navRow}>
+          <button
+            onClick={handleBack}
+            style={styles.navButton}
+            disabled={isFirst}
+            aria-label="Previous slide"
+          >
+            <span style={{ ...styles.navText, ...(isFirst ? styles.navTextHidden : {}) }}>{t('tutorial.back')}</span>
+          </button>
 
-            <div style={styles.pagination}>
-              {slides.map((_, i) => (
-                <div
-                  key={i}
-                  style={{ ...styles.dot, ...(i === activeIndex ? styles.dotActive : styles.dotInactive) }}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={handleNext}
-              style={styles.navButton}
-              aria-label={isLast ? 'Start battle' : 'Next slide'}
-            >
-              <span style={{ ...styles.navText, ...styles.navTextPrimary }}>
-                {isLast ? t('tutorial.start') : t('tutorial.next')}
-              </span>
-            </button>
+          <div style={styles.pagination}>
+            {slides.map((_, i) => (
+              <div
+                key={i}
+                style={{ ...styles.dot, ...(i === activeIndex ? styles.dotActive : styles.dotInactive) }}
+              />
+            ))}
           </div>
 
           <button
-            onClick={goToPlacement}
-            style={styles.skipButton}
-            aria-label="Skip tutorial"
+            onClick={handleNext}
+            style={styles.navButton}
+            aria-label={isLast ? 'Start battle' : 'Next slide'}
           >
-            <span style={styles.skipText}>{t('tutorial.skip')}</span>
+            <span style={{ ...styles.navText, ...styles.navTextPrimary }}>
+              {isLast ? t('tutorial.start') : t('tutorial.next')}
+            </span>
           </button>
         </div>
+
+        <button
+          onClick={goToPlacement}
+          style={styles.skipButton}
+          aria-label="Skip tutorial"
+        >
+          <span style={styles.skipText}>{t('tutorial.skip')}</span>
+        </button>
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
   slide: {
     display: 'flex',
     flexDirection: 'column',
@@ -414,9 +401,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   dotActive: {
     backgroundColor: COLORS.accent.gold,
@@ -435,5 +422,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     color: COLORS.text.secondary,
     letterSpacing: 2,
+    opacity: 0.6,
   },
 };

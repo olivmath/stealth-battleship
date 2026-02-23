@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
 import { usePlayerStats } from '../stats/translator';
 import { useSettings } from '../settings/translator';
@@ -9,7 +9,7 @@ import { useHaptics } from '../hooks/useHaptics';
 import { getLevelInfo } from '../stats/interactor';
 import { saveLanguage } from '../i18n';
 import { setTutorialSeen } from '../settings/interactor';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 function ToggleOption({
   label,
@@ -66,121 +66,86 @@ export default function Settings() {
   };
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('settings.title')}</span>
-          <div style={styles.divider} />
+    <PageShell
+      title={t('settings.title')}
+      actions={
+        <NavalButton
+          title={t('settings.backToBase')}
+          onPress={() => {
+            haptics.light();
+            navigate(-1);
+          }}
+          variant="secondary"
+        />
+      }
+    >
+      <div style={styles.sections}>
+        <div style={styles.section}>
+          <span style={styles.sectionTitle}>{t('settings.gridFleet')}</span>
+          <div style={styles.readOnlyCard}>
+            <div style={styles.readOnlyRow}>
+              <span style={styles.readOnlyLabel}>{t('settings.rank')}</span>
+              <span style={styles.readOnlyValue}>{t('ranks.' + level.rank).toUpperCase()}</span>
+            </div>
+            <div style={styles.readOnlyRow}>
+              <span style={styles.readOnlyLabel}>{t('settings.grid')}</span>
+              <span style={styles.readOnlyValue}>{level.gridSize}x{level.gridSize}</span>
+            </div>
+            <div style={styles.readOnlyRow}>
+              <span style={styles.readOnlyLabel}>{t('settings.fleet')}</span>
+              <span style={styles.readOnlyValue}>
+                {level.ships.map(s => `${t('ships.' + s.name)}(${s.size})`).join(', ')}
+              </span>
+            </div>
+            <span style={styles.readOnlyHint}>{t('settings.gridHint')}</span>
+          </div>
         </div>
 
-        <div style={styles.sections}>
-          <div style={styles.section}>
-            <span style={styles.sectionTitle}>{t('settings.gridFleet')}</span>
-            <div style={styles.readOnlyCard}>
-              <div style={styles.readOnlyRow}>
-                <span style={styles.readOnlyLabel}>{t('settings.rank')}</span>
-                <span style={styles.readOnlyValue}>{t('ranks.' + level.rank).toUpperCase()}</span>
-              </div>
-              <div style={styles.readOnlyRow}>
-                <span style={styles.readOnlyLabel}>{t('settings.grid')}</span>
-                <span style={styles.readOnlyValue}>{level.gridSize}x{level.gridSize}</span>
-              </div>
-              <div style={styles.readOnlyRow}>
-                <span style={styles.readOnlyLabel}>{t('settings.fleet')}</span>
-                <span style={styles.readOnlyValue}>
-                  {level.ships.map(s => `${t('ships.' + s.name)}(${s.size})`).join(', ')}
+        <div style={styles.section}>
+          <span style={styles.sectionTitle}>{t('tutorial.title').replace('\n', ' ')}</span>
+          <button
+            style={styles.option}
+            onClick={() => {
+              haptics.light();
+              setTutorialSeen(false);
+              navigate('/tutorial');
+            }}
+          >
+            <div style={styles.optionText}>
+              <span style={styles.optionLabel}>{t('settings.reviewTutorial')}</span>
+              <span style={styles.optionDesc}>{t('settings.reviewTutorialDesc')}</span>
+            </div>
+          </button>
+        </div>
+
+        <div style={styles.section} role="radiogroup">
+          <span style={styles.sectionTitle}>{t('settings.language')}</span>
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code}
+              style={{ ...styles.option, ...(i18n.language === lang.code ? styles.optionSelected : {}) }}
+              onClick={() => handleLanguage(lang.code)}
+              role="radio"
+              aria-checked={i18n.language === lang.code}
+              aria-label={lang.label}
+            >
+              <div style={styles.optionRow}>
+                <div style={{ ...styles.radio, ...(i18n.language === lang.code ? styles.radioSelected : {}) }}>
+                  {i18n.language === lang.code && <div style={styles.radioInner} />}
+                </div>
+                <span style={{ ...styles.optionLabel, ...(i18n.language === lang.code ? styles.optionLabelSelected : {}) }}>
+                  {lang.label}
                 </span>
               </div>
-              <span style={styles.readOnlyHint}>{t('settings.gridHint')}</span>
-            </div>
-          </div>
-
-          <div style={styles.section}>
-            <span style={styles.sectionTitle}>{t('tutorial.title').replace('\n', ' ')}</span>
-            <button
-              style={styles.option}
-              onClick={() => {
-                haptics.light();
-                setTutorialSeen(false);
-                navigate('/tutorial');
-              }}
-            >
-              <div style={styles.optionText}>
-                <span style={styles.optionLabel}>{t('settings.reviewTutorial')}</span>
-                <span style={styles.optionDesc}>{t('settings.reviewTutorialDesc')}</span>
-              </div>
             </button>
-          </div>
-
-          <div style={styles.section}>
-            <span style={styles.sectionTitle}>{t('settings.language')}</span>
-            {LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                style={{ ...styles.option, ...(i18n.language === lang.code ? styles.optionSelected : {}) }}
-                onClick={() => handleLanguage(lang.code)}
-                role="radio"
-                aria-checked={i18n.language === lang.code}
-                aria-label={lang.label}
-              >
-                <div style={styles.optionRow}>
-                  <div style={{ ...styles.radio, ...(i18n.language === lang.code ? styles.radioSelected : {}) }}>
-                    {i18n.language === lang.code && <div style={styles.radioInner} />}
-                  </div>
-                  <span style={{ ...styles.optionLabel, ...(i18n.language === lang.code ? styles.optionLabelSelected : {}) }}>
-                    {lang.label}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={styles.actions}>
-          <NavalButton
-            title={t('settings.backToBase')}
-            onPress={() => {
-              haptics.light();
-              navigate(-1);
-            }}
-            variant="secondary"
-          />
+          ))}
         </div>
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 24,
-    color: COLORS.text.accent,
-    letterSpacing: 4,
-  },
-  divider: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   sections: {
     flex: 1,
     marginTop: SPACING.md,
@@ -292,8 +257,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: SPACING.xs,
-  },
-  actions: {
-    marginTop: 'auto',
   },
 };

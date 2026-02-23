@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { PinModal } from '../components/UI/PinModal';
-import { NavalText } from '../components/UI/NavalText';
-import { Divider } from '../components/UI/Divider';
 import { useGame } from '../game/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../game/adapter';
@@ -32,7 +30,8 @@ export default function Login() {
           setShowPin(true);
           setLoading(false);
         } else {
-          navigate('/wallet-setup', { replace: true });
+          // No wallet — go straight to menu (wallet created on-demand for PvP)
+          navigate('/menu', { replace: true });
         }
         return;
       }
@@ -45,7 +44,7 @@ export default function Login() {
     haptics.light();
     await savePlayerName(name.trim());
     dispatch({ type: 'SET_PLAYER', name: name.trim() });
-    navigate('/wallet-setup', { replace: true });
+    navigate('/menu', { replace: true });
   };
 
   const handlePinSuccess = async (pin: string) => {
@@ -62,15 +61,15 @@ export default function Login() {
   };
 
   if (loading && !showPin) return (
-    <GradientContainer>
+    <PageShell hideHeader>
       <div style={styles.loadingContainer}>
         <RadarSpinner size={50} />
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 
   if (showPin) return (
-    <GradientContainer>
+    <PageShell hideHeader>
       <div style={styles.loadingContainer}>
         <PinModal
           visible={true}
@@ -83,40 +82,32 @@ export default function Login() {
           }}
         />
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <NavalText variant="h1">{t('login.title')}</NavalText>
-          <NavalText variant="bodyLight" letterSpacing={6} style={{ marginTop: SPACING.xs }}>{t('login.subtitle')}</NavalText>
-          <Divider width={60} style={{ marginTop: SPACING.md }} />
-        </div>
-
-        <div style={styles.form}>
-          <span style={styles.label}>{t('login.label')}</span>
-          <input
-            style={styles.input}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('login.placeholder')}
-            aria-label="Commander name"
-            onKeyDown={(e) => { if (e.key === 'Enter') handleEnter(); }}
-            autoCapitalize="words"
-          />
-          <NavalButton
-            title={t('login.button')}
-            onPress={handleEnter}
-            disabled={!name.trim()}
-            style={styles.button}
-          />
-        </div>
-
-        <span style={styles.version}>{t('login.version')}</span>
+    <PageShell title={t('login.title')} subtitle={t('login.subtitle')}>
+      <div style={styles.form}>
+        <span style={styles.label}>{t('login.label')}</span>
+        <input
+          style={styles.input}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t('login.placeholder')}
+          aria-label="Commander name"
+          onKeyDown={(e) => { if (e.key === 'Enter') handleEnter(); }}
+          autoCapitalize="words"
+        />
+        <NavalButton
+          title={t('login.button')}
+          onPress={handleEnter}
+          disabled={!name.trim()}
+          style={styles.button}
+        />
       </div>
-    </GradientContainer>
+
+      <span style={styles.version}>{t('login.version')}</span>
+    </PageShell>
   );
 }
 
@@ -126,22 +117,6 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    justifyContent: 'center',
-    padding: SPACING.lg,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginBottom: SPACING.xxl,
   },
   form: {
     display: 'flex',
@@ -162,7 +137,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: RADIUS.default,
     padding: SPACING.md,
     backgroundColor: COLORS.surface.cardBorder,
-    outline: 'none',
   },
   button: {
     marginTop: SPACING.sm,

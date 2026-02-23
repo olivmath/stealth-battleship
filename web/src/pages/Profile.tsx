@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { ProgressBar } from '../components/UI/ProgressBar';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RankList } from '../components/Profile/RankList';
 import { useGame } from '../game/translator';
 import { usePlayerStats } from '../stats/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getLevelInfo } from '../stats/interactor';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 function LevelBadge({ totalXP }: { totalXP: number }) {
   const { t } = useTranslation();
@@ -21,13 +22,11 @@ function LevelBadge({ totalXP }: { totalXP: number }) {
         <span style={levelStyles.xpText}>{level.currentXP} XP</span>
       </div>
       <span style={levelStyles.motto}>{t('mottos.' + level.rank)}</span>
-      <div style={levelStyles.progressBg}>
-        <div style={{ ...levelStyles.progressFill, width: `${Math.round(level.progress * 100)}%` }} />
-      </div>
-      <div style={levelStyles.progressLabels}>
-        <span style={levelStyles.progressText}>{level.xpForCurrentRank}</span>
-        <span style={levelStyles.progressText}>{level.xpForNextRank}</span>
-      </div>
+      <ProgressBar
+        progress={level.progress}
+        labelLeft={String(level.xpForCurrentRank)}
+        labelRight={String(level.xpForNextRank)}
+      />
     </div>
   );
 }
@@ -63,30 +62,6 @@ const levelStyles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic',
     marginTop: 2,
   },
-  progressBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.surface.elevated,
-    marginTop: SPACING.sm,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-    backgroundColor: COLORS.accent.gold,
-  },
-  progressLabels: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  progressText: {
-    fontFamily: FONTS.bodyLight,
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    opacity: 0.6,
-  },
 };
 
 export default function Profile() {
@@ -109,113 +84,71 @@ export default function Profile() {
     : 0;
 
   return (
-    <GradientContainer>
-      <div style={styles.scrollContainer}>
-        <div style={styles.scrollContent}>
-          <div style={styles.header}>
-            <span style={styles.title}>{t('profile.title')}</span>
-            <span style={styles.name}>{state.playerName}</span>
-            <div style={styles.divider} />
-          </div>
+    <PageShell
+      title={state.playerName}
+      actions={
+        <NavalButton
+          title={t('profile.backToBase')}
+          onPress={() => {
+            haptics.light();
+            navigate(-1);
+          }}
+          variant="secondary"
+        />
+      }
+    >
+      <div style={styles.contentGap}>
+        <LevelBadge totalXP={stats.totalXP} />
 
-          <LevelBadge totalXP={stats.totalXP} />
-
-          {/* Combat Record */}
-          <div style={styles.statsContainer}>
-            <span style={styles.statsTitle}>{t('profile.combatRecord')}</span>
-            <div style={styles.statsGrid}>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{stats.wins}</span>
-                <span style={styles.statLabel}>{t('profile.victories')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{stats.losses}</span>
-                <span style={styles.statLabel}>{t('profile.defeats')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{winRate}%</span>
-                <span style={styles.statLabel}>{t('profile.winRate')}</span>
-              </div>
+        {/* Combat Record */}
+        <div style={styles.statsContainer}>
+          <span style={styles.statsTitle}>{t('profile.combatRecord')}</span>
+          <div style={styles.statsGrid}>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{stats.wins}</span>
+              <span style={styles.statLabel}>{t('profile.victories')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{stats.losses}</span>
+              <span style={styles.statLabel}>{t('profile.defeats')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{winRate}%</span>
+              <span style={styles.statLabel}>{t('profile.winRate')}</span>
             </div>
           </div>
-
-          {/* Accuracy & Shots */}
-          <div style={styles.statsContainer}>
-            <span style={styles.statsTitle}>{t('profile.firingRecord')}</span>
-            <div style={styles.statsGrid}>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{accuracy}%</span>
-                <span style={styles.statLabel}>{t('profile.accuracy')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{stats.totalShots}</span>
-                <span style={styles.statLabel}>{t('profile.totalShots')}</span>
-              </div>
-              <div style={styles.statItem}>
-                <span style={styles.statValue}>{stats.totalHits}</span>
-                <span style={styles.statLabel}>{t('profile.totalHits')}</span>
-              </div>
-            </div>
-          </div>
-
-          <RankList totalXP={stats.totalXP} />
-
-          <NavalButton
-            title={t('profile.backToBase')}
-            onPress={() => {
-              haptics.light();
-              navigate(-1);
-            }}
-            variant="secondary"
-          />
         </div>
+
+        {/* Accuracy & Shots */}
+        <div style={styles.statsContainer}>
+          <span style={styles.statsTitle}>{t('profile.firingRecord')}</span>
+          <div style={styles.statsGrid}>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{accuracy}%</span>
+              <span style={styles.statLabel}>{t('profile.accuracy')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{stats.totalShots}</span>
+              <span style={styles.statLabel}>{t('profile.totalShots')}</span>
+            </div>
+            <div style={styles.statItem}>
+              <span style={styles.statValue}>{stats.totalHits}</span>
+              <span style={styles.statLabel}>{t('profile.totalHits')}</span>
+            </div>
+          </div>
+        </div>
+
+        <RankList totalXP={stats.totalXP} />
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  scrollContainer: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: SPACING.lg,
-    width: '100%',
-    boxSizing: 'border-box' as const,
-  },
-  scrollContent: {
+  contentGap: {
     display: 'flex',
     flexDirection: 'column',
     gap: SPACING.md,
-    paddingBottom: SPACING.xl,
-    maxWidth: LAYOUT.maxContentWidth,
-    width: '100%',
-    margin: '0 auto',
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 11,
-    color: COLORS.text.secondary,
-    letterSpacing: 3,
-  },
-  name: {
-    fontFamily: FONTS.heading,
-    fontSize: 28,
-    color: COLORS.text.accent,
-    letterSpacing: 2,
-    marginTop: SPACING.xs,
-  },
-  divider: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.accent.gold,
-    marginTop: SPACING.md,
-    opacity: 0.6,
   },
   statsContainer: {
     border: `1px solid ${COLORS.grid.border}`,

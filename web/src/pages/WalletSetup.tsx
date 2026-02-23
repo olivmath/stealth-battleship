@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
+import { StatusFeedback } from '../components/UI/StatusFeedback';
 import { NavalButton } from '../components/UI/NavalButton';
-import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 const walletInteractor = () => import('../wallet/interactor');
 
 export default function WalletSetup() {
@@ -39,142 +39,82 @@ export default function WalletSetup() {
 
   if (loading) {
     return (
-      <GradientContainer>
-        <div style={styles.center}>
-          <RadarSpinner size={50} />
-          <span style={styles.loadingText}>{t('wallet.setup.generating')}</span>
-        </div>
-      </GradientContainer>
+      <PageShell hideHeader>
+        <StatusFeedback status="loading" message={t('wallet.setup.generating')} />
+      </PageShell>
     );
   }
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('wallet.setup.createTitle')}</span>
-          <span style={styles.subtitle}>{t('wallet.setup.subtitle')}</span>
-          <div style={styles.divider} />
-        </div>
+    <PageShell
+      title={t('wallet.setup.createTitle')}
+      subtitle={t('wallet.setup.subtitle')}
+      accentColor={COLORS.status.pvp}
+      actions={
+        <NavalButton
+          title={t('wallet.setup.back')}
+          variant="ghost"
+          size="small"
+          onPress={() => navigate(-1)}
+        />
+      }
+    >
+      <div style={styles.form}>
+        <span style={styles.label}>{t('wallet.setup.pinLabel')}</span>
+        <input
+          style={styles.input}
+          value={pin}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, '');
+            setPin(digits.slice(0, 4));
+            if (digits.length >= 4) {
+              setTimeout(() => pinConfirmRef.current?.focus(), 50);
+            }
+          }}
+          placeholder={t('wallet.setup.pinPlaceholder')}
+          type="password"
+          inputMode="numeric"
+          maxLength={4}
+        />
 
-        <div style={styles.form}>
-          <span style={styles.label}>{t('wallet.setup.pinLabel')}</span>
-          <input
-            style={styles.input}
-            value={pin}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, '');
-              setPin(digits.slice(0, 4));
-              if (digits.length >= 4) {
-                setTimeout(() => pinConfirmRef.current?.focus(), 50);
-              }
-            }}
-            placeholder={t('wallet.setup.pinPlaceholder')}
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-          />
+        <span style={styles.label}>{t('wallet.setup.pinConfirmLabel')}</span>
+        <input
+          ref={pinConfirmRef}
+          style={styles.input}
+          value={pinConfirm}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, '');
+            setPinConfirm(digits.slice(0, 4));
+          }}
+          placeholder={t('wallet.setup.pinConfirmPlaceholder')}
+          type="password"
+          inputMode="numeric"
+          maxLength={4}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleCreate();
+          }}
+        />
 
-          <span style={styles.label}>{t('wallet.setup.pinConfirmLabel')}</span>
-          <input
-            ref={pinConfirmRef}
-            style={styles.input}
-            value={pinConfirm}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, '');
-              setPinConfirm(digits.slice(0, 4));
-            }}
-            placeholder={t('wallet.setup.pinConfirmPlaceholder')}
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreate();
-            }}
-          />
+        {pin.length > 0 && !pinValid && (
+          <span style={styles.errorText}>{t('wallet.setup.pinInvalid')}</span>
+        )}
+        {pinConfirm.length > 0 && !pinsMatch && (
+          <span style={styles.errorText}>{t('wallet.setup.pinMismatch')}</span>
+        )}
+        {error !== '' && <span style={styles.errorText}>{error}</span>}
 
-          {pin.length > 0 && !pinValid && (
-            <span style={styles.errorText}>{t('wallet.setup.pinInvalid')}</span>
-          )}
-          {pinConfirm.length > 0 && !pinsMatch && (
-            <span style={styles.errorText}>{t('wallet.setup.pinMismatch')}</span>
-          )}
-          {error !== '' && <span style={styles.errorText}>{error}</span>}
-
-          <NavalButton
-            title={t('wallet.setup.createButton')}
-            onPress={handleCreate}
-            disabled={!pinValid || !pinsMatch}
-            style={styles.submitButton}
-          />
-          <NavalButton
-            title={t('wallet.setup.back')}
-            variant="secondary"
-            size="small"
-            onPress={() => navigate(-1)}
-          />
-        </div>
+        <NavalButton
+          title={t('wallet.setup.createButton')}
+          onPress={handleCreate}
+          disabled={!pinValid || !pinsMatch}
+          style={styles.submitButton}
+        />
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  center: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.md,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  loadingText: {
-    fontFamily: FONTS.body,
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    letterSpacing: 1,
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    justifyContent: 'center',
-    padding: SPACING.lg,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 22,
-    color: COLORS.status.pvp,
-    letterSpacing: 3,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: FONTS.headingLight,
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    letterSpacing: 4,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
-  },
-  divider: {
-    width: 60,
-    height: 2,
-    backgroundColor: COLORS.status.pvp,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   form: {
     display: 'flex',
     flexDirection: 'column',
@@ -196,7 +136,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 4,
     padding: SPACING.md,
     backgroundColor: COLORS.surface.cardBorder,
-    outline: 'none',
   },
   errorText: {
     fontFamily: FONTS.bodyLight,

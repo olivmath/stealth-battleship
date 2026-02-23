@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
 import { PinModal } from '../components/UI/PinModal';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 import { getPublicKey, getSecretKey, getBalance } from '../wallet/interactor';
 
 export default function Wallet() {
@@ -57,75 +57,15 @@ export default function Wallet() {
     : '';
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <span style={styles.title}>{t('wallet.view.title')}</span>
-          <div style={styles.divider} />
-        </div>
-
-        {/* Public Address */}
-        <div style={styles.section}>
-          <span style={styles.label}>{t('wallet.view.addressLabel')}</span>
-          <div style={styles.qrContainer}>
-            {publicKey !== '' && (
-              <QRCodeSVG
-                value={publicKey}
-                size={160}
-                bgColor="transparent"
-                fgColor={COLORS.text.primary}
-              />
-            )}
-          </div>
-          <button onClick={handleCopyAddress} style={styles.addressRow}>
-            <span style={styles.addressText}>{truncated}</span>
-            <span style={{ ...styles.copyBadge, ...(copied === 'address' ? styles.copyBadgeCopied : {}) }}>
-              <span style={{ ...styles.copyBadgeText, ...(copied === 'address' ? styles.copyBadgeTextCopied : {}) }}>
-                {copied === 'address' ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
-              </span>
-            </span>
-          </button>
-
-          {/* Balance */}
-          <div style={styles.balanceRow}>
-            <span style={styles.balanceLabel}>{t('wallet.view.balance')}</span>
-            <span style={styles.balanceValue}>
-              {balance !== null ? `${parseFloat(balance).toFixed(2)} XLM` : '\u2014'}
-            </span>
-            <span style={styles.balanceNetwork}>TESTNET</span>
-          </div>
-        </div>
-
-        {/* Secret Key */}
-        {secretKey && (
-          <div style={styles.secretBox}>
-            <div style={styles.secretHeader}>
-              <span style={styles.label}>{t('wallet.view.secretLabel')}</span>
-              <button
-                onClick={async () => {
-                  await navigator.clipboard.writeText(secretKey);
-                  haptics.success();
-                  setCopied('secret');
-                  setTimeout(() => setCopied(null), 3000);
-                }}
-                style={{ ...styles.copyBtn, ...(copied === 'secret' ? styles.copyBtnCopied : {}) }}
-              >
-                <span style={{ ...styles.copyBtnText, ...(copied === 'secret' ? styles.copyBtnTextCopied : {}) }}>
-                  {copied === 'secret' ? t('wallet.view.copied') : t('wallet.view.copyBtn')}
-                </span>
-              </button>
-            </div>
-            <span style={styles.secretText}>{secretKey}</span>
-            <span style={styles.secretWarning}>{t('wallet.view.secretWarning')}</span>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div style={styles.actions}>
+    <PageShell
+      title={t('wallet.view.title')}
+      accentColor={COLORS.status.pvp}
+      actions={
+        <>
           <NavalButton
             title={t('wallet.view.viewSecret')}
             subtitle={t('wallet.view.viewSecretSub')}
-            variant="pvp"
+            variant="danger"
             onPress={() => { haptics.light(); setShowPin(true); }}
           />
           <NavalButton
@@ -133,50 +73,77 @@ export default function Wallet() {
             variant="secondary"
             onPress={() => navigate(-1)}
           />
+        </>
+      }
+    >
+      {/* Public Address */}
+      <div style={styles.section}>
+        <span style={styles.label}>{t('wallet.view.addressLabel')}</span>
+        <div style={styles.qrContainer}>
+          {publicKey !== '' && (
+            <QRCodeSVG
+              value={publicKey}
+              size={160}
+              bgColor="transparent"
+              fgColor={COLORS.text.primary}
+            />
+          )}
         </div>
+        <button onClick={handleCopyAddress} style={styles.addressRow}>
+          <span style={styles.addressText}>{truncated}</span>
+          <span style={{ ...styles.copyBadge, ...(copied === 'address' ? styles.copyBadgeCopied : {}) }}>
+            <span style={{ ...styles.copyBadgeText, ...(copied === 'address' ? styles.copyBadgeTextCopied : {}) }}>
+              {copied === 'address' ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
+            </span>
+          </span>
+        </button>
 
-        <PinModal
-          visible={showPin}
-          title={t('wallet.view.enterPin', 'Enter PIN')}
-          error={pinError}
-          onSubmit={handlePinSuccess}
-          onCancel={() => { setShowPin(false); setPinError(false); }}
-        />
+        {/* Balance */}
+        <div style={styles.balanceRow}>
+          <span style={styles.balanceLabel}>{t('wallet.view.balance')}</span>
+          <span style={styles.balanceValue}>
+            {balance !== null ? `${parseFloat(balance).toFixed(2)} XLM` : '\u2014'}
+          </span>
+          <span style={styles.balanceNetwork}>TESTNET</span>
+        </div>
       </div>
-    </GradientContainer>
+
+      {/* Secret Key */}
+      {secretKey && (
+        <div style={styles.secretBox}>
+          <div style={styles.secretHeader}>
+            <span style={styles.label}>{t('wallet.view.secretLabel')}</span>
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(secretKey);
+                haptics.success();
+                setCopied('secret');
+                setTimeout(() => setCopied(null), 3000);
+              }}
+              style={{ ...styles.copyBtn, ...(copied === 'secret' ? styles.copyBtnCopied : {}) }}
+            >
+              <span style={{ ...styles.copyBtnText, ...(copied === 'secret' ? styles.copyBtnTextCopied : {}) }}>
+                {copied === 'secret' ? t('wallet.view.copied') : t('wallet.view.copyBtn')}
+              </span>
+            </button>
+          </div>
+          <span style={styles.secretText}>{secretKey}</span>
+          <span style={styles.secretWarning}>{t('wallet.view.secretWarning')}</span>
+        </div>
+      )}
+
+      <PinModal
+        visible={showPin}
+        title={t('wallet.view.enterPin', 'Enter PIN')}
+        error={pinError}
+        onSubmit={handlePinSuccess}
+        onCancel={() => { setShowPin(false); setPinError(false); }}
+      />
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: SPACING.lg,
-  },
-  title: {
-    fontFamily: FONTS.heading,
-    fontSize: 22,
-    color: COLORS.status.pvp,
-    letterSpacing: 3,
-  },
-  divider: {
-    width: 40,
-    height: 2,
-    backgroundColor: COLORS.status.pvp,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
   section: {
     display: 'flex',
     flexDirection: 'column',
@@ -315,11 +282,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10,
     color: COLORS.text.danger,
     opacity: 0.8,
-  },
-  actions: {
-    marginTop: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.md,
   },
 };
