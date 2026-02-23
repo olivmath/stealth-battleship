@@ -317,7 +317,7 @@ export default function GameOver() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, maxWidth: 600, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
+  content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, display: 'flex', flexDirection: 'column', gap: SPACING.lg, width: '100%', margin: '0 auto', boxSizing: 'border-box' as const },
   header: { display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xl },
   scoreContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
   scoreValue: { fontFamily: FONTS.heading, fontSize: 48, letterSpacing: 2 },
