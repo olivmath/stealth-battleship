@@ -7,7 +7,7 @@ import { registerBattleHandlers } from '../battle/translator.js';
 import { matches, matchCodeIndex, playerToMatch } from '../matchmaking/entities.js';
 import { getPlayerMatch, removeMatch } from '../matchmaking/interactor.js';
 import { endMatch } from '../battle/interactor.js';
-import { c } from '../log.js';
+import { c, debug } from '../log.js';
 
 // Map: publicKey → socketId
 export const connectedPlayers = new Map<string, string>();
@@ -33,24 +33,32 @@ export function createSocketServer(httpServer: HttpServer): Server {
     pingTimeout: 5_000,
   });
 
+  debug('[ws]', 'Socket.io server created with cors=*, pingInterval=10s, pingTimeout=5s');
+
   // Rate limiter middleware for battle:attack
   function checkRateLimit(socketId: string): boolean {
     const now = Date.now();
     const last = lastAttackTime.get(socketId) || 0;
-    if (now - last < ATTACK_COOLDOWN_MS) return false;
+    if (now - last < ATTACK_COOLDOWN_MS) {
+      debug('[ws]', `Rate limit hit for socket=${socketId.slice(0, 8)}, cooldown=${ATTACK_COOLDOWN_MS - (now - last)}ms remaining`);
+      return false;
+    }
     lastAttackTime.set(socketId, now);
     return true;
   }
 
   io.use((socket, next) => {
     const auth = socket.handshake.auth as AuthPayload;
+    debug('[ws]', `Auth attempt from socket=${socket.id.slice(0, 8)}, publicKey=${auth.publicKey?.slice(0, 8) ?? 'none'}...`);
     const result = verifyAuth(auth);
 
     if (!result.valid) {
+      debug('[ws]', `Auth REJECTED: ${result.error}`);
       console.log(c.red('[ws]') + ` Auth rejected: ${result.error}`);
       return next(new Error(result.error || 'Authentication failed'));
     }
 
+    debug('[ws]', `Auth OK for ${result.publicKey?.slice(0, 8)}...`);
     (socket.data as { publicKey: string }).publicKey = result.publicKey!;
     next();
   });
@@ -59,16 +67,20 @@ export function createSocketServer(httpServer: HttpServer): Server {
     const publicKey = (socket.data as { publicKey: string }).publicKey;
     const shortKey = publicKey.slice(0, 8);
 
+    debug('[ws]', `Connection from ${shortKey}..., socketId=${socket.id}, transport=${socket.conn.transport.name}`);
+
     // Cancel grace period if reconnecting
     const graceTimer = disconnectGrace.get(publicKey);
     if (graceTimer) {
       clearTimeout(graceTimer);
       disconnectGrace.delete(publicKey);
       console.log(c.green('[ws]') + ` ${shortKey}... reconnected within grace period`);
+      debug('[ws]', `Grace period cancelled for ${shortKey}...`);
 
       // Update socketId in match room
       const match = getPlayerMatch(publicKey);
       if (match) {
+        debug('[ws]', `Updating socketId in match ${match.id}, status=${match.status}`);
         if (match.player1.publicKey === publicKey) {
           match.player1.socketId = socket.id;
         } else if (match.player2?.publicKey === publicKey) {
@@ -92,12 +104,14 @@ export function createSocketServer(httpServer: HttpServer): Server {
       socketToPlayer.delete(socket.id);
       lastAttackTime.delete(socket.id);
 
+      debug('[ws]', `Disconnect: ${shortKey}..., reason=${reason}, remaining=${connectedPlayers.size}`);
       console.log(c.yellow('[ws]') + ` Player disconnected: ${c.dim(shortKey)}... (${reason})`);
       console.log(c.yellow('[ws]') + ` Online: ${c.val(String(connectedPlayers.size))}`);
 
       // Grace period: don't auto-forfeit immediately during battle
       const match = getPlayerMatch(publicKey);
       if (match && match.status === 'battle') {
+        debug('[ws]', `Player ${shortKey}... in active battle ${match.id}, starting ${GRACE_PERIOD_MS}ms grace period`);
         const opponentSocketId = match.player1.publicKey === publicKey
           ? match.player2?.socketId
           : match.player1.socketId;
@@ -115,6 +129,7 @@ export function createSocketServer(httpServer: HttpServer): Server {
               ? m.player2!.publicKey
               : m.player1.publicKey;
 
+            debug('[ws]', `Grace expired for ${shortKey}..., auto-forfeit match ${m.id}`);
             endMatch(m, winnerKey, 'disconnect_timeout');
 
             const winnerId = m.player1.publicKey === winnerKey
@@ -141,6 +156,7 @@ export function createSocketServer(httpServer: HttpServer): Server {
     for (const [matchId, match] of matches.entries()) {
       const isStale = now - match.createdAt > MATCH_STALE_MS;
       if (isStale && (match.status === 'waiting' || match.status === 'placing' || match.status === 'finished')) {
+        debug('[cleanup]', `Removing stale match ${matchId}, status=${match.status}, age=${Math.round((now - match.createdAt) / 1000)}s`);
         removeMatch(matchId);
         cleaned++;
       }
@@ -149,6 +165,7 @@ export function createSocketServer(httpServer: HttpServer): Server {
     if (cleaned > 0) {
       console.log(c.gray('[cleanup]') + ` Removed ${cleaned} stale matches`);
     }
+    debug('[cleanup]', `Cleanup tick: ${matches.size} active matches, ${connectedPlayers.size} players online`);
   }, MATCH_CLEANUP_INTERVAL_MS);
 
   return io;

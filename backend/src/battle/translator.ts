@@ -9,7 +9,7 @@ import {
   PlacementReadyPayload, AttackPayload, ShotResultPayload, ForfeitPayload, RevealPayload,
   TURN_TIMEOUT_MS, DEFENDER_RESPONSE_TIMEOUT_MS,
 } from './entities.js';
-import { c } from '../log.js';
+import { c, debug } from '../log.js';
 import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats, persistProofLog } from '../shared/persistence.js';
 import { getCircuit } from '../shared/circuits.js';
 import { getShipSizes } from '../matchmaking/entities.js';
@@ -32,8 +32,11 @@ export function registerBattleHandlers(
 
   // ─── Placement Ready ───
   socket.on('placement:ready', async (data: PlacementReadyPayload) => {
+    debug('[battle]', `placement:ready from ${shortKey}..., matchId=${data.matchId}, boardHash=${data.boardHash?.slice(0, 16)}...`);
+
     const match = getMatch(data.matchId);
     if (!match || match.status !== 'placing') {
+      debug('[battle]', `placement:ready REJECTED — match=${match?.id ?? 'null'}, status=${match?.status ?? 'n/a'}`);
       socket.emit('placement:error', { message: 'Invalid match or phase' });
       return;
     }
@@ -47,13 +50,16 @@ export function registerBattleHandlers(
       signature: data.signature,
     });
     if (!authResult.valid) {
+      debug('[battle]', `placement:ready signature INVALID for ${shortKey}...`);
       socket.emit('placement:error', { message: 'Invalid signature' });
       return;
     }
+    debug('[battle]', `placement:ready signature OK for ${shortKey}...`);
 
     // Verify board_validity proof server-side
     const shipSizes = getShipSizes(match.gridSize);
     const boardPublicInputs = [data.boardHash, ...shipSizes.map(String)];
+    debug('[battle]', `Verifying board_validity proof, shipSizes=${shipSizes}, proofLen=${data.proof.length}`);
     try {
       const t0 = Date.now();
       const { backend } = getCircuit('board_validity');
@@ -69,17 +75,21 @@ export function registerBattleHandlers(
       if (!isValid) {
         socket.emit('placement:error', { message: 'Invalid board proof' });
         console.log(c.red('[battle]') + ` ${shortKey}... INVALID board_validity proof`);
+        debug('[battle]', `board_validity proof INVALID for ${shortKey}...`);
         return;
       }
       console.log(c.blue('[battle]') + ` ${shortKey}... board_validity ✓ ${c.time(`(${verifyMs}ms)`)}`);
+      debug('[battle]', `board_validity proof VALID for ${shortKey}..., verifyMs=${verifyMs}`);
     } catch (err: any) {
       socket.emit('placement:error', { message: 'Proof verification failed' });
       console.error(c.red('[battle]') + ` board_validity error: ${err.message}`);
+      debug('[battle]', `board_validity EXCEPTION: ${err.message}`);
       return;
     }
 
     const result = submitPlacement(match, publicKey, data.boardHash, data.proof);
     const opponentId = getOpponentSocketId(match, publicKey);
+    debug('[battle]', `Placement submitted: bothReady=${result.bothReady}, firstTurn=${result.firstTurn}`);
 
     if (opponentId) {
       io.to(opponentId).emit('placement:opponent_ready');
@@ -105,19 +115,24 @@ export function registerBattleHandlers(
       // Emit first turn
       emitTurnStart(io, match);
       console.log(c.blue('[battle]') + ` Match ${c.boldGreen(match.id)} — BATTLE START`);
+      debug('[battle]', `BATTLE START matchId=${match.id}, firstTurn=${result.firstTurn}`);
     }
   });
 
   // ─── Attack ───
   socket.on('battle:attack', (data: AttackPayload) => {
+    debug('[battle]', `attack from ${shortKey}..., matchId=${data.matchId}, pos=(${data.row},${data.col})`);
+
     // Rate limit check
     if (checkRateLimit && !checkRateLimit(socket.id)) {
+      debug('[battle]', `attack RATE LIMITED for ${shortKey}...`);
       socket.emit('battle:error', { message: 'Rate limited — max 1 attack/second' });
       return;
     }
 
     const match = getMatch(data.matchId);
     if (!match) {
+      debug('[battle]', `attack REJECTED — match not found: ${data.matchId}`);
       socket.emit('battle:error', { message: 'Match not found' });
       return;
     }
@@ -131,12 +146,14 @@ export function registerBattleHandlers(
       signature: data.signature,
     });
     if (!authResult.valid) {
+      debug('[battle]', `attack signature INVALID for ${shortKey}...`);
       socket.emit('battle:error', { message: 'Invalid signature' });
       return;
     }
 
     const result = processAttack(match, publicKey, data.row, data.col);
     if (!result.ok) {
+      debug('[battle]', `attack REJECTED: ${result.error}`);
       socket.emit('battle:error', { message: result.error });
       return;
     }
@@ -152,6 +169,7 @@ export function registerBattleHandlers(
         col: data.col,
         turnNumber: match.turnNumber,
       });
+      debug('[battle]', `Attack forwarded to defender, turn=${match.turnNumber}, defenderTimeout=${DEFENDER_RESPONSE_TIMEOUT_MS}ms`);
     }
 
     // Start defender response timeout
@@ -159,6 +177,7 @@ export function registerBattleHandlers(
     match.defenderTimer = setTimeout(() => {
       if (match.status !== 'battle') return;
       // Defender didn't respond — attacker wins
+      debug('[battle]', `DEFENDER TIMEOUT in match ${match.id}`);
       endMatch(match, publicKey, 'defender_timeout');
       io.to(match.player1.socketId).emit('battle:game_over', {
         winner: publicKey,
@@ -185,8 +204,11 @@ export function registerBattleHandlers(
 
   // ─── Shot Result (from defender) ───
   socket.on('battle:shot_result', async (data: ShotResultPayload) => {
+    debug('[battle]', `shot_result from ${shortKey}..., matchId=${data.matchId}, pos=(${data.row},${data.col}), result=${data.result}`);
+
     const match = getMatch(data.matchId);
     if (!match || match.status !== 'battle') {
+      debug('[battle]', `shot_result REJECTED — match=${match?.id ?? 'null'}, status=${match?.status ?? 'n/a'}`);
       socket.emit('battle:error', { message: 'Invalid match or phase' });
       return;
     }
@@ -200,6 +222,7 @@ export function registerBattleHandlers(
       signature: data.signature,
     });
     if (!authResult.valid) {
+      debug('[battle]', `shot_result signature INVALID for ${shortKey}...`);
       socket.emit('battle:error', { message: 'Invalid signature' });
       return;
     }
@@ -211,6 +234,7 @@ export function registerBattleHandlers(
     }
 
     // Verify shot_proof server-side
+    debug('[battle]', `Verifying shot_proof, proofLen=${data.proof.length}, sunk=${data.sunkShipName ?? 'none'}`);
     try {
       const t0 = Date.now();
       const { backend } = getCircuit('shot_proof');
@@ -221,6 +245,7 @@ export function registerBattleHandlers(
         : match.player2BoardHash!;
       const resultBit = data.result === 'hit' ? '1' : '0';
       const shotPublicInputs = [defenderHash, String(data.row), String(data.col), resultBit];
+      debug('[battle]', `shot_proof publicInputs: hash=${defenderHash.slice(0, 16)}..., row=${data.row}, col=${data.col}, result=${resultBit}`);
       const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: shotPublicInputs });
       const verifyMs = Date.now() - t0;
 
@@ -233,6 +258,7 @@ export function registerBattleHandlers(
         // Invalid shot proof = cheating → opponent wins instantly
         const attackerPk = publicKey === match.player1.publicKey
           ? match.player2!.publicKey : match.player1.publicKey;
+        debug('[battle]', `shot_proof INVALID — ${shortKey}... loses, cheating detected`);
         endMatch(match, attackerPk, 'invalid_proof');
         io.to(match.player1.socketId).emit('battle:game_over', {
           winner: attackerPk, reason: 'invalid_proof', turnNumber: match.turnNumber,
@@ -247,9 +273,11 @@ export function registerBattleHandlers(
         return;
       }
       console.log(c.blue('[battle]') + ` ${shortKey}... shot_proof ✓ ${c.time(`(${verifyMs}ms)`)}`);
+      debug('[battle]', `shot_proof VALID, verifyMs=${verifyMs}`);
     } catch (err: any) {
       socket.emit('battle:error', { message: 'Shot proof verification failed' });
       console.error(c.red('[battle]') + ` shot_proof error: ${err.message}`);
+      debug('[battle]', `shot_proof EXCEPTION: ${err.message}`);
       return;
     }
 
@@ -278,6 +306,7 @@ export function registerBattleHandlers(
 
     // Check win condition
     if (checkWinCondition(match, publicKey)) {
+      debug('[battle]', `WIN CONDITION MET — attacker=${attackerPk.slice(0, 8)}... wins match ${match.id}`);
       endMatch(match, attackerPk, 'all_ships_sunk');
       io.to(match.player1.socketId).emit('battle:game_over', {
         winner: attackerPk,
@@ -299,13 +328,19 @@ export function registerBattleHandlers(
 
     // Advance turn
     advanceTurn(match);
+    debug('[battle]', `Turn advanced: turn=${match.turnNumber}, currentTurn=${match.currentTurn?.slice(0, 8)}...`);
     emitTurnStart(io, match);
   });
 
   // ─── Forfeit ───
   socket.on('battle:forfeit', (data: ForfeitPayload) => {
+    debug('[battle]', `forfeit from ${shortKey}..., matchId=${data.matchId}`);
+
     const match = getMatch(data.matchId);
-    if (!match || match.status === 'finished') return;
+    if (!match || match.status === 'finished') {
+      debug('[battle]', `forfeit IGNORED — match=${match?.id ?? 'null'}, status=${match?.status ?? 'n/a'}`);
+      return;
+    }
 
     const winnerKey = publicKey === match.player1.publicKey
       ? match.player2?.publicKey
@@ -331,13 +366,17 @@ export function registerBattleHandlers(
     void upsertPlayerStats(winnerKey, true);
     void upsertPlayerStats(publicKey, false);
 
+    debug('[battle]', `Forfeit processed: winner=${winnerKey.slice(0, 8)}...`);
     console.log(c.yellow('[battle]') + ` ${shortKey}... forfeited match ${match.id}`);
   });
 
   // ─── Reveal (post-game: players reveal ships+nonce for turns_proof) ───
   socket.on('battle:reveal', async (data: RevealPayload) => {
+    debug('[battle]', `reveal from ${shortKey}..., matchId=${data.matchId}, ships=${data.ships?.length}, nonce=${data.nonce?.slice(0, 8)}...`);
+
     const match = getMatch(data.matchId);
     if (!match || match.status !== 'finished') {
+      debug('[battle]', `reveal REJECTED — match=${match?.id ?? 'null'}, status=${match?.status ?? 'n/a'}`);
       socket.emit('battle:error', { message: 'Match not finished or not found' });
       return;
     }
@@ -350,6 +389,7 @@ export function registerBattleHandlers(
       signature: data.signature,
     });
     if (!authResult.valid) {
+      debug('[battle]', `reveal signature INVALID for ${shortKey}...`);
       socket.emit('battle:error', { message: 'Invalid signature' });
       return;
     }
@@ -362,9 +402,11 @@ export function registerBattleHandlers(
     }
 
     console.log(c.blue('[battle]') + ` ${shortKey}... revealed ships for ${match.id}`);
+    debug('[battle]', `Reveal stored. p1Reveal=${!!match.player1Reveal}, p2Reveal=${!!match.player2Reveal}`);
 
     // Both revealed? Generate turns_proof server-side
     if (match.player1Reveal && match.player2Reveal) {
+      debug('[battle]', `Both revealed — generating turns_proof for match ${match.id}`);
       try {
         const t0 = Date.now();
         const { noir, backend } = getCircuit('turns_proof');
@@ -381,6 +423,8 @@ export function registerBattleHandlers(
           })),
           total_turns: match.turnNumber,
         };
+
+        debug('[battle]', `turns_proof input: totalTurns=${match.turnNumber}, attacks=${match.attacks.length}`);
 
         const { witness } = await noir.execute(turnsInput);
         const proof = await backend.generateProof(witness);
@@ -400,8 +444,10 @@ export function registerBattleHandlers(
           matchId: match.id, proof: proofHex,
         });
 
+        debug('[battle]', `turns_proof generated: proofSize=${proof.proof.length}, elapsed=${verifyMs}ms`);
         console.log(c.boldGreen('[battle]') + ` turns_proof generated for ${match.id} ${c.time(`(${verifyMs}ms)`)}`);
       } catch (err: any) {
+        debug('[battle]', `turns_proof EXCEPTION: ${err.message}`);
         console.error(c.red('[battle]') + ` turns_proof generation error: ${err.message}`);
         io.to(match.player1.socketId).emit('battle:error', { message: 'turns_proof generation failed' });
         io.to(match.player2!.socketId).emit('battle:error', { message: 'turns_proof generation failed' });
@@ -416,6 +462,8 @@ export function registerBattleHandlers(
 
 function emitTurnStart(io: Server, match: import('../matchmaking/entities.js').MatchRoom): void {
   const deadline = Date.now() + TURN_TIMEOUT_MS;
+
+  debug('[battle]', `emitTurnStart: turn=${match.turnNumber}, currentTurn=${match.currentTurn?.slice(0, 8)}..., deadline=${new Date(deadline).toISOString()}`);
 
   io.to(match.player1.socketId).emit('battle:turn_start', {
     currentTurn: match.currentTurn,
@@ -436,6 +484,7 @@ function emitTurnStart(io: Server, match: import('../matchmaking/entities.js').M
       ? m.player2!.publicKey
       : m.player1.publicKey;
 
+    debug('[battle]', `TURN TIMEOUT: ${timedOutPlayer.slice(0, 8)}... timed out, winner=${winnerKey.slice(0, 8)}...`);
     endMatch(m, winnerKey, 'timeout');
 
     io.to(m.player1.socketId).emit('battle:game_over', {
