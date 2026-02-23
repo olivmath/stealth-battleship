@@ -32,7 +32,7 @@ export const BattleshipZKVideo: React.FC = () => {
           </Sequence>
         );
       })}
-      <Subtitles />
+      {/* <Subtitles /> */}
       <ProgressBar />
     </AbsoluteFill>
   );
