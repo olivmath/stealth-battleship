@@ -16,6 +16,10 @@ Command your fleet in the ultimate game of deception — where **no one can chea
 
 ---
 
+## Demo
+
+https://github.com/olivmath/battleship-zk/raw/main/assets/zkbb.mp4
+
 ## Screenshots
 
 <table>
