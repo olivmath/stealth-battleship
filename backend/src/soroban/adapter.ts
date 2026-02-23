@@ -71,7 +71,7 @@ async function buildSignSubmit(
   preparedTx.sign(kp);
 
   const sendResult = await server.sendTransaction(preparedTx);
-  debug('[soroban]', `tx sent: hash=${sendResult.hash}, status=${sendResult.status}`);
+  console.log(c.bgMagenta('⛓ BLOCKCHAIN') + ` tx sent → hash=${c.boldCyan(sendResult.hash)} status=${sendResult.status}`);
 
   if (sendResult.status === 'ERROR') {
     throw new Error(`Transaction send failed: ${sendResult.status}`);
@@ -156,7 +156,7 @@ export async function openMatchOnChain(params: OpenMatchParams): Promise<OpenMat
     }
   }
 
-  console.log(c.cyan('[soroban]') + ` open_match tx: ${txHash}, sessionId: ${sessionId}`);
+  console.log(c.bgMagenta('⛓ BLOCKCHAIN') + ` open_match confirmed → tx=${c.boldCyan(txHash)} sessionId=${sessionId}`);
   return { txHash, sessionId };
 }
 
@@ -178,6 +178,6 @@ export async function closeMatchOnChain(params: CloseMatchParams): Promise<strin
   ];
 
   const { txHash } = await buildSignSubmit(kp, 'close_match', args);
-  console.log(c.cyan('[soroban]') + ` close_match tx: ${txHash}`);
+  console.log(c.bgMagenta('⛓ BLOCKCHAIN') + ` close_match confirmed → tx=${c.boldCyan(txHash)}`);
   return txHash;
 }
