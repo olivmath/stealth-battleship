@@ -12,7 +12,7 @@ import { COLORS, FONTS, SPACING } from '../shared/theme';
 
 export default function PvpLobby() {
   const navigate = useNavigate();
-  const { dispatch } = useGame();
+  const { state, dispatch } = useGame();
   const pvp = usePvP();
   const haptics = useHaptics();
   const { t } = useTranslation();
@@ -23,7 +23,7 @@ export default function PvpLobby() {
   // Start search on mount
   useEffect(() => {
     if (pvp.myPublicKeyHex && pvp.phase !== 'searching') {
-      pvp.findRandomMatch(10);
+      pvp.findRandomMatch(state.settings.gridSize);
     }
   }, [pvp.myPublicKeyHex]);
 
@@ -76,7 +76,7 @@ export default function PvpLobby() {
             <NavalButton
               title="Retry"
               variant="pvp"
-              onPress={() => pvp.findRandomMatch(10)}
+              onPress={() => pvp.findRandomMatch(state.settings.gridSize)}
             />
           </>
         ) : (
