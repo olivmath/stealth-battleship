@@ -1,3 +1,8 @@
+- [ ] assinar ataques por baixo dos panos para o backend identificar
+- [ ] enviar provas para Soroban validar on-chain (precisa criar um protocolo pra isso uma prova no comeco e outra no final)
+- [ ] backend deve salvar infos para o app como historico e rank global e etc para ajudar
+- [ ] provas sao enviadas para a blockchain via backend para facilitar e salvar txhash no banco
+- [ ] preparar migracao do backend para server funciton do supabase 
 - [ ] Mostrar as provas no historico
 - [ ] implementar o modelo 3d na home
 - [ ] testanto o web no meu iphone deu isso na hora de criar a wallet: undefined is not an object (evaluating 'crypto.subtle.digest')
