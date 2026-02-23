@@ -1,6 +1,45 @@
 // ANSI color helpers for terminal logs
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 const IS_DEBUG = () => process.env.DEBUG === 'true';
+
+// ─── File logging ───
+
+const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
+function stripAnsi(s: string): string {
+  return s.replace(ANSI_REGEX, '');
+}
+
+let logStream: fs.WriteStream | null = null;
+
+/** Call once at startup. When LOG_FILE=true, all console output also goes to logs/server-<timestamp>.log */
+export function initFileLogger(): void {
+  if (process.env.LOG_FILE !== 'true') return;
+
+  const logsDir = path.resolve('logs');
+  if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+
+  const filename = `server-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+  const filepath = path.join(logsDir, filename);
+  logStream = fs.createWriteStream(filepath, { flags: 'a' });
+
+  const origLog = console.log.bind(console);
+  const origError = console.error.bind(console);
+  const origWarn = console.warn.bind(console);
+
+  function writeToFile(...args: unknown[]): void {
+    const line = args.map(a => typeof a === 'string' ? stripAnsi(a) : String(a)).join(' ');
+    logStream!.write(line + '\n');
+  }
+
+  console.log = (...args: unknown[]) => { origLog(...args); writeToFile(...args); };
+  console.error = (...args: unknown[]) => { origError(...args); writeToFile(...args); };
+  console.warn = (...args: unknown[]) => { origWarn(...args); writeToFile(...args); };
+
+  origLog(`[log] Writing logs to ${filepath}`);
+}
 
 export function debug(tag: string, ...args: unknown[]): void {
   if (!IS_DEBUG()) return;

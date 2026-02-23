@@ -8,7 +8,9 @@ import { createSocketServer } from './ws/socket.js';
 import { initStellarAsset, setupIssuerFlags } from './payment/stellar-asset.js';
 import { startPaymentStream } from './payment/interactor.js';
 import { initSorobanAdapter } from './soroban/adapter.js';
-import { c, debug } from './log.js';
+import { c, debug, initFileLogger } from './log.js';
+
+initFileLogger();
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const PORT = new URL(BACKEND_URL).port || '3001';
