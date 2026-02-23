@@ -44,4 +44,4 @@ yarn-error.*
 .firecrawl/
 .worktrees/
 
-target
+targetbackend/logs/
