@@ -78,10 +78,25 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         const ship = state.opponentShips.find(s => s.id === action.shipId);
         if (ship) ship.positions.forEach(p => { newBoard[p.row][p.col] = { state: 'sunk', shipId: ship.id }; });
       }
-      const newShips = state.opponentShips.map(s => {
-        if (s.id === action.shipId) { const h = s.hits + 1; return { ...s, hits: h, isSunk: action.result === 'sunk' }; }
-        return s;
-      });
+      let newShips: PlacedShip[];
+      if (action.shipId) {
+        // Arcade: we know which ship was hit
+        newShips = state.opponentShips.map(s => {
+          if (s.id === action.shipId) { const h = s.hits + 1; return { ...s, hits: h, isSunk: action.result === 'sunk' }; }
+          return s;
+        });
+      } else if (action.result === 'hit' || action.result === 'sunk') {
+        // PvP: distribute hit to first non-sunk placeholder ship with remaining HP
+        newShips = [...state.opponentShips];
+        const idx = newShips.findIndex(s => !s.isSunk && s.hits < s.size);
+        if (idx !== -1) {
+          const s = newShips[idx];
+          const h = s.hits + 1;
+          newShips[idx] = { ...s, hits: h, isSunk: h >= s.size };
+        }
+      } else {
+        newShips = state.opponentShips;
+      }
       const newStreak = action.result !== 'miss' ? state.tracking.currentStreak + 1 : 0;
       const newLongest = Math.max(state.tracking.longestStreak, newStreak);
       const newFirstHit = { ...state.tracking.shipFirstHitTurn };

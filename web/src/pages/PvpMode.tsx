@@ -29,6 +29,7 @@ export default function PvpMode() {
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [pinError, setPinError] = useState(false);
   const [battleBalance, setBattleBalance] = useState<string | null>(null);
+  const [stellarAddress, setStellarAddress] = useState<string | null>(null);
 
   useEffect(() => {
     walletInteractor().then(m => m.hasWallet()).then(exists => {
@@ -103,6 +104,7 @@ export default function PvpMode() {
       // Check if player already has a BATTLE token — skip payment if so
       const publicKey = await getPublicKey();
       if (publicKey) {
+        setStellarAddress(publicKey);
         const [statusRes, addrRes] = await Promise.all([
           fetch(`${API_URL}/api/payment/status/${publicKey}`),
           fetch(`${API_URL}/api/payment/address`),
@@ -244,9 +246,11 @@ export default function PvpMode() {
       subtitle={t('pvpMode.subtitle')}
       headerExtra={
         <div style={styles.headerInfo}>
-          <NavalText variant="bodyLight" style={{ fontSize: 10 }}>
-            {pvp.myPublicKeyHex?.slice(0, 12)}...
-          </NavalText>
+          {stellarAddress && (
+            <NavalText variant="bodyLight" style={{ fontSize: 12, letterSpacing: 1 }}>
+              {stellarAddress.slice(0, 8)}...{stellarAddress.slice(-8)}
+            </NavalText>
+          )}
           {battleBalance !== null && (
             <span style={styles.battleChip}>
               {parseInt(battleBalance)} BATTLE

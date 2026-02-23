@@ -20,7 +20,7 @@ import { useWebKeyboard } from '../hooks/useWebKeyboard';
 import { usePvP } from '../pvp/translator';
 import { getShipDefinitionsForRank, getShipStyle, getColumnLabels, getRowLabels } from '../shared/constants';
 import { getLevelInfo } from '../stats/interactor';
-import { ShipDefinition, Orientation, Position, GridSizeOption } from '../shared/entities';
+import { ShipDefinition, Orientation, Position, GridSizeOption, PlacedShip } from '../shared/entities';
 import { calculatePositions, validatePlacement, autoPlaceShips, createEmptyBoard, computeBoardCommitment } from '../game/engine';
 import { boardValidity, toShipTuples } from '../zk';
 import type { ShipTuples } from '../zk';
@@ -247,10 +247,20 @@ export default function Placement() {
 
         // Store commitment for later use in battle
         const commitment = await computeBoardCommitment(state.playerBoard, state.playerShips);
+        // Create placeholder opponent ships (same sizes as player) for health bar tracking
+        const pvpOpponentShips: PlacedShip[] = shipDefs.map((def, i) => ({
+          id: `pvp-opponent-${def.id}-${i}`,
+          name: def.name,
+          size: def.size,
+          positions: [],
+          orientation: 'horizontal' as const,
+          hits: 0,
+          isSunk: false,
+        }));
+
         dispatch({
           type: 'START_GAME',
-          // In PvP we don't have opponent ships yet — use empty placeholders
-          opponentShips: [],
+          opponentShips: pvpOpponentShips,
           opponentBoard: createEmptyBoard(gridSize),
           commitment: {
             ...commitment,
