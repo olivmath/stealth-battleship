@@ -10,7 +10,7 @@ doctest = false
 
 [dependencies]
 soroban-sdk = { workspace = true, default-features = false, features = ["alloc"] }
-ultrahonk_soroban_verifier = { git = "https://github.com/nicholasgasior/ultrahonk_soroban_verifier.git", branch = "p25-preview" }
+ultrahonk_soroban_verifier = { git = "https://github.com/yugocabrio/rs-soroban-ultrahonk.git", package = "ultrahonk_soroban_verifier" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
