@@ -141,7 +141,7 @@ export interface SubtitleEntry {
 
 export const SUBTITLES: SubtitleEntry[] = [
   // Scene 1 — Hook
-  { text: "Hey! This is Battleship ZK —", from: 3, to: 7 },
+  { text: "Hey! This is Stealth Battleship —", from: 3, to: 7 },
   { text: "a trustless naval warfare game built on Stellar.", from: 7, to: 11 },
   { text: "\"In war, information is power.\"", from: 11, to: 14 },
   { text: "\"But what if you could prove... without revealing?\"", from: 14, to: 19 },

@@ -1,4 +1,4 @@
-# Roteiro de Slides — Battleship ZK
+# Roteiro de Slides — Stealth Battleship
 
 > Conteúdo de cada slide para a apresentação Spectacle.
 > Estilo: dark naval, Orbitron + Rajdhani, navy/gold/teal.
@@ -8,8 +8,8 @@
 ## SLIDE 1 — COVER
 
 ```
-BATTLESHIP ZK
-━━━━━━━━━━━━━
+STEALTH BATTLESHIP
+━━━━━━━━━━━━━━━━━━
 
 Trustless Naval Warfare on Stellar
 
@@ -300,8 +300,8 @@ WHY THIS SHOULD WIN
 ## SLIDE 13 — CLOSING
 
 ```
-BATTLESHIP ZK
-━━━━━━━━━━━━━
+STEALTH BATTLESHIP
+━━━━━━━━━━━━━━━━━━
 
 "Fair by math. Fun by design."
 

@@ -1,4 +1,4 @@
-# Roteiro de Narração — Battleship ZK
+# Roteiro de Narração — Stealth Battleship
 
 > Texto para ler durante a gravação do video demo (2-3 min).
 > Fale de forma natural, use o texto como guia, não precisa ser word-by-word.
@@ -8,9 +8,9 @@
 
 ## [0:00 — 0:15] INTRO
 
-> _Tela: Logo Battleship ZK + tagline animada_
+> _Tela: Logo Stealth Battleship + tagline animada_
 
-"Hey! This is Battleship ZK — a trustless naval warfare game where every move is cryptographically proven using zero-knowledge proofs, built on Stellar."
+"Hey! This is Stealth Battleship — a trustless naval warfare game where every move is cryptographically proven using zero-knowledge proofs, built on Stellar."
 
 ---
 
@@ -88,7 +88,7 @@
 
 > _Tela: Logo + links + "Fair by math. Fun by design."_
 
-"Battleship ZK proves that zero-knowledge isn't just for DeFi — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have everything we need to make this real."
+"Stealth Battleship proves that zero-knowledge isn't just for DeFi — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have everything we need to make this real."
 
 "**Fair by math. Fun by design.** Thanks for watching."
 

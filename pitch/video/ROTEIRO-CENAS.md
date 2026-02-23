@@ -1,4 +1,4 @@
-# Roteiro de Cenas — Video Demo Battleship ZK
+# Roteiro de Cenas — Video Demo Stealth Battleship
 
 > Descrição visual frame-by-frame de cada cena do video.
 > Use como referência para gravar e/ou montar no Remotion.
@@ -9,7 +9,7 @@
 
 ### Visual
 - Fundo escuro navy (#0a1628) com grid sutil animado (linhas de radar)
-- Logo "BATTLESHIP ZK" em fonte Orbitron, scale-in com glow dourado
+- Logo "STEALTH BATTLESHIP" em fonte Orbitron, scale-in com glow dourado
 - Tagline aparece abaixo: "Trustless Naval Warfare on Stellar"
 - Particle effect sutil (pontos flutuantes como sonar)
 - Logo Stellar + Logo Noir pequenos no canto inferior
@@ -24,7 +24,7 @@
 ### Visual
 - Diagrama split-screen:
   - **Esquerda:** "Traditional Battleship" — ícone de servidor no centro vendo 2 boards transparentes (ambos visíveis). Label: "Server sees everything"
-  - **Direita:** "Battleship ZK" — ícone de cadeado no centro, 2 boards com "?" opaco. Label: "Zero knowledge"
+  - **Direita:** "Stealth Battleship" — ícone de cadeado no centro, 2 boards com "?" opaco. Label: "Zero knowledge"
 - Animação: o lado esquerdo fica vermelho/danger, o direito fica verde/seguro
 - Ícones simples: eye (olho) no server, lock (cadeado) no ZK
 
@@ -184,7 +184,7 @@
 ## CENA 7 — ENCERRAMENTO (2:20 — 2:40) | 20s
 
 ### Visual
-- Logo "BATTLESHIP ZK" grande no centro
+- Logo "STEALTH BATTLESHIP" grande no centro
 - Tagline: **"Fair by math. Fun by design."** aparece com typewriter effect
 - Links abaixo (fade-in):
   ```

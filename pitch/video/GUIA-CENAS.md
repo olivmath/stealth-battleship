@@ -1,4 +1,4 @@
-# Guia de Cenas — Battleship ZK Trailer
+# Guia de Cenas — Stealth Battleship Trailer
 
 Leia como uma historia. Cada cena descreve o que voce ve, ouve e sente.
 Os tempos entre colchetes sao o relogio global do video.
@@ -22,7 +22,7 @@ Aos 13 segundos a frase some e uma nova entra com o mesmo efeito:
     "But what if you could prove...
      without revealing?"
 
-Aos 17 segundos a imagem escurece e o logo BATTLESHIP ZK emerge do centro com um brilho dourado. Abaixo: "Trustless Naval Warfare on Stellar". Dois pings de sonar marcam o momento.
+Aos 17 segundos a imagem escurece e o logo STEALTH BATTLESHIP emerge do centro com um brilho dourado. Abaixo: "Trustless Naval Warfare on Stellar". Dois pings de sonar marcam o momento.
 
 Narracao (voiceover, sem rosto):
 "In war... information is power. But what if you could prove your strategy... without revealing it?"
@@ -35,7 +35,7 @@ A tela se divide em dois lados com um slide horizontal.
 
 Lado esquerdo — borda vermelha pulsando — mostra "TRADITIONAL BATTLESHIP" com um icone de olho e dois boards visiveis. Texto: "Server sees everything".
 
-Lado direito — borda verde solida — mostra "BATTLESHIP ZK" com um cadeado e dois boards com "???". Texto: "No one sees your board".
+Lado direito — borda verde solida — mostra "STEALTH BATTLESHIP" com um cadeado e dois boards com "???". Texto: "No one sees your board".
 
 Neste momento o rosto do apresentador aparece num quadradinho no canto inferior direito (PiP).
 
@@ -205,7 +205,7 @@ Narracao (PiP):
 
 Imagens de frota naval ao por-do-sol. Wide shot epico. Luz dourada. Silhuetas de navios. A musica resolve — sai da tensao, acorde maior. Ondas suaves.
 
-A imagem faz fade para fundo navy escuro. O logo BATTLESHIP ZK aparece grande no centro com escala e brilho dourado. Ping de sonar.
+A imagem faz fade para fundo navy escuro. O logo STEALTH BATTLESHIP aparece grande no centro com escala e brilho dourado. Ping de sonar.
 
 Abaixo do logo, o tagline aparece letra por letra:
 
@@ -225,6 +225,6 @@ Texto final pequeno: "Built for Stellar Hacks 2026"
 A musica sustenta o ultimo acorde e faz fade. Um ping de sonar final. Silencio. Tela preta.
 
 Narracao (voiceover, sem rosto):
-"Battleship ZK. Fair by math. Fun by design."
+"Stealth Battleship. Fair by math. Fun by design."
 
 Os ultimos 5 segundos sao so musica e logo.

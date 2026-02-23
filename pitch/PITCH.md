@@ -1,4 +1,4 @@
-# Battleship ZK — Stellar Hacks: ZK Gaming
+# Stealth Battleship — Stellar Hacks: ZK Gaming
 
 > **Trustless naval warfare. Every shot proven. No board reveal needed.**
 
@@ -6,7 +6,7 @@
 
 ## One-Liner
 
-A mobile-first ZK Battleship game where Noir circuits cryptographically prove every move — hidden boards, honest shots, and verifiable outcomes — all settled on Stellar.
+Stealth Battleship — a mobile-first naval warfare game where Noir circuits cryptographically prove every move — hidden boards, honest shots, and verifiable outcomes — all settled on Stellar.
 
 ---
 
@@ -22,7 +22,7 @@ This kills competitive integrity. If the server knows your board, it can cheat. 
 
 ## The Solution: Prove-as-You-Go
 
-Battleship ZK eliminates board reveal entirely. Instead of commit-reveal, we use a **prove-as-you-go** architecture where every game action generates a zero-knowledge proof in real-time:
+Stealth Battleship eliminates board reveal entirely. Instead of commit-reveal, we use a **prove-as-you-go** architecture where every game action generates a zero-knowledge proof in real-time:
 
 | Game Moment | What Happens | ZK Circuit |
 |---|---|---|
@@ -228,7 +228,7 @@ Most ZK game submissions use 1 circuit. We have 3 specialized circuits that cove
 
 ## Summary
 
-Battleship ZK proves that zero-knowledge isn't just for DeFi or identity — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have the cryptographic primitives to make this real. Every ship placement is committed, every shot is proven, every outcome is verifiable. No trust required.
+Stealth Battleship proves that zero-knowledge isn't just for DeFi or identity — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have the cryptographic primitives to make this real. Every ship placement is committed, every shot is proven, every outcome is verifiable. No trust required.
 
 **Fair by math. Fun by design.**
 

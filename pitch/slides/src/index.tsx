@@ -61,7 +61,7 @@ function Presentation() {
               letterSpacing: "6px",
               lineHeight: 1,
             }}>
-              BATTLESHIP ZK
+              STEALTH BATTLESHIP
             </div>
 
             {/* Divider line */}
@@ -684,7 +684,7 @@ function Presentation() {
               textShadow: shadows.textGold,
               letterSpacing: "4px",
             }}>
-              BATTLESHIP ZK
+              STEALTH BATTLESHIP
             </div>
 
             <div style={{

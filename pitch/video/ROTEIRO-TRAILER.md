@@ -1,4 +1,4 @@
-# ROTEIRO — Trailer Cinematografico Battleship ZK
+# ROTEIRO — Trailer Cinematografico Stealth Battleship
 
 > **Formato:** Trailer para hackathon | **Duracao:** 2:30 | **Idioma:** Ingles
 > **Estilo:** Cinematic narrative — footage naval + ZK tech + demo do jogo
@@ -38,7 +38,7 @@
                      without revealing?"
 
 [0:17 — 0:20]  FOOTAGE escurece gradualmente.
-               LOGO "BATTLESHIP ZK" emerge do centro com glow dourado.
+               LOGO "STEALTH BATTLESHIP" emerge do centro com glow dourado.
                Abaixo do logo: "Trustless Naval Warfare on Stellar"
                SFX: sonar ping duplo. Musica sustenta.
 ```
@@ -66,7 +66,7 @@ Tela escurece. Logo permanece 1s, depois faz fade. Split screen emerge.
 [0:20 — 0:22]  Split screen aparece com slide horizontal:
 
                ┌─────────────────────┬─────────────────────┐
-               │  TRADITIONAL        │  BATTLESHIP ZK      │
+               │  TRADITIONAL        │  STEALTH BATTLESHIP      │
                │  BATTLESHIP         │                     │
                │                     │                     │
                │   👁 SERVER 👁       │     🔒 ZK 🔒        │
@@ -422,7 +422,7 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
                SFX: ondas suaves.
 
 [2:15 — 2:18]  Footage faz fade gradual pra fundo navy (#0a1628).
-               LOGO "BATTLESHIP ZK" aparece grande no centro.
+               LOGO "STEALTH BATTLESHIP" aparece grande no centro.
                Scale-in com glow dourado (#c9a634).
                SFX: sonar ping.
 
@@ -453,7 +453,7 @@ Diagrama faz fade. Footage de frota ao por-do-sol emerge.
 
 ### NARRACAO (voiceover)
 
-> *"Battleship ZK. Fair by math. Fun by design."*
+> *"Stealth Battleship. Fair by math. Fun by design."*
 
 *(silencio nos ultimos 5s — so musica e logo)*
 
