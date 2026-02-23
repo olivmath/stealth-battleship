@@ -1,7 +1,7 @@
 import { storage } from '../shared/storage';
 import type { WalletData } from './entities';
 
-const WALLET_KEY = '@battleship_wallet';
+const WALLET_KEY = '@stealth_wallet';
 const PBKDF2_ITERATIONS = 600_000;
 
 // Check if Web Crypto API is available (requires HTTPS on iOS Safari)

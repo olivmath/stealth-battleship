@@ -2,8 +2,8 @@ import { storage } from '../shared/storage';
 import type { PlayerStats, MatchRecord, MatchStats, GameCommitment } from './entities';
 import type { DifficultyLevel } from '../shared/entities';
 
-const SCORES_KEY = '@battleship_scores';
-const HISTORY_KEY = '@battleship_history';
+const SCORES_KEY = '@stealth_scores';
+const HISTORY_KEY = '@stealth_history';
 
 const DEFAULT_STATS: PlayerStats = { wins: 0, losses: 0, totalShots: 0, totalHits: 0, totalXP: 0 };
 

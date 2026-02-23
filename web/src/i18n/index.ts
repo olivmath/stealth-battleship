@@ -6,7 +6,7 @@ import en from './locales/en.json';
 import ptBR from './locales/pt-BR.json';
 import es from './locales/es.json';
 
-const LANGUAGE_KEY = '@battleship_language';
+const LANGUAGE_KEY = '@stealth_language';
 
 export async function getLanguage(): Promise<string | null> {
   return storage.getItem(LANGUAGE_KEY);

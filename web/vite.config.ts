@@ -13,9 +13,9 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
       },
       manifest: {
-        name: 'Battleship ZK',
-        short_name: 'Battleship',
-        description: 'Naval warfare with zero-knowledge proofs',
+        name: 'Stealth Battleship',
+        short_name: 'Stealth',
+        description: 'Stealth naval warfare powered by zero-knowledge proofs',
         start_url: '/',
         display: 'standalone',
         orientation: 'portrait',

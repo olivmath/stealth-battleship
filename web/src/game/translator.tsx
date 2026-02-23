@@ -224,11 +224,11 @@ export function useGameEffects() {
       }).then((result) => {
         console.log(`[ZK] turnsProof OK — ${result.proof.length} bytes, winner=${result.winner}`);
         try {
-          const records = JSON.parse(localStorage.getItem('@battleship_history') || '[]');
+          const records = JSON.parse(localStorage.getItem('@stealth_history') || '[]');
           const latest = records[records.length - 1];
           if (latest) {
             latest.turnsProof = Array.from(result.proof);
-            localStorage.setItem('@battleship_history', JSON.stringify(records));
+            localStorage.setItem('@stealth_history', JSON.stringify(records));
             console.log('[ZK] turnsProof saved to match history');
           }
         } catch (e) {

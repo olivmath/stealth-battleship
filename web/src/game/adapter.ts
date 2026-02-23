@@ -1,6 +1,6 @@
 import { storage } from '../shared/storage';
 
-const USER_KEY = '@battleship_user';
+const USER_KEY = '@stealth_user';
 
 function safeParse<T>(data: string, fallback: T): T {
   try { return JSON.parse(data) as T; } catch { return fallback; }
