@@ -54,7 +54,7 @@ async function buildSignSubmit(
   const contract = new Contract(getContractId());
 
   const tx = new TransactionBuilder(account, {
-    fee: BASE_FEE,
+    fee: '100000000', // 10 XLM — UltraHonk verification is compute-heavy
     networkPassphrase: Networks.TESTNET,
   })
     .addOperation(contract.call(method, ...args))
