@@ -78,6 +78,7 @@ export default function Login() {
           onSubmit={handlePinSuccess}
           onCancel={() => {
             setShowPin(false);
+            setPinError(false);
             setLoading(false);
           }}
         />

@@ -6,6 +6,7 @@ import { StatusFeedback } from '../components/UI/StatusFeedback';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { NavalText } from '../components/UI/NavalText';
+import { PinModal } from '../components/UI/PinModal';
 import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
 // Dynamic import to avoid eager crypto.subtle access
@@ -22,20 +23,30 @@ export default function PvpMode() {
   const haptics = useHaptics();
   const pvp = usePvP();
   const [walletExists, setWalletExists] = useState<boolean | null>(null);
-  const [pin, setPin] = useState('');
-  const [pinConfirm, setPinConfirm] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [authError, setAuthError] = useState('');
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [paymentError, setPaymentError] = useState('');
   const [secretKey, setSecretKey] = useState<string | null>(null);
+  const [pinError, setPinError] = useState(false);
+  const [pinStep, setPinStep] = useState<'enter' | 'confirm'>('enter');
+  const [tempPin, setTempPin] = useState('');
 
   useEffect(() => {
     walletInteractor().then(m => m.hasWallet()).then(setWalletExists);
   }, []);
 
-  const pinValid = pin.length === 4 && /^\d{4}$/.test(pin);
-  const pinsMatch = pin === pinConfirm;
+  // Reset create flow after pin mismatch error
+  useEffect(() => {
+    if (pinError && !walletExists) {
+      const timer = setTimeout(() => {
+        setPinError(false);
+        setPinStep('enter');
+        setTempPin('');
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [pinError, walletExists]);
 
   // Payment step: send 0.001 XLM to server, verify, then connect
   const handlePayment = async (secret: string) => {
@@ -71,36 +82,49 @@ export default function PvpMode() {
   };
 
   // Wallet exists: unlock with PIN
-  const handleUnlock = async () => {
-    if (!pin) return;
+  const handleUnlock = async (pinValue: string) => {
     setConnecting(true);
     setAuthError('');
     try {
       const { getSecretKey: getSK } = await walletInteractor();
-      const secret = await getSK(pin);
+      const secret = await getSK(pinValue);
       setSecretKey(secret);
       setConnecting(false);
     } catch {
-      setAuthError(t('pvpMode.invalidPin', 'Invalid PIN'));
+      setPinError(true);
       setConnecting(false);
     }
   };
 
   // No wallet: create with PIN
-  const handleCreate = async () => {
-    if (!pinValid || !pinsMatch) return;
+  const handleCreate = async (pinValue: string) => {
     setConnecting(true);
     setAuthError('');
     try {
       const { createWallet, getSecretKey: getSK } = await walletInteractor();
-      await createWallet(pin);
-      const secret = await getSK(pin);
+      await createWallet(pinValue);
+      const secret = await getSK(pinValue);
       setWalletExists(true);
       setSecretKey(secret);
       setConnecting(false);
     } catch (e: any) {
       setAuthError(e.message || t('pvpMode.errorCreating', 'Error creating wallet'));
       setConnecting(false);
+    }
+  };
+
+  // Two-step PIN flow for wallet creation
+  const handleCreatePinSubmit = (enteredPin: string) => {
+    if (pinStep === 'enter') {
+      setTempPin(enteredPin);
+      setPinStep('confirm');
+      setPinError(false);
+    } else {
+      if (enteredPin === tempPin) {
+        handleCreate(enteredPin);
+      } else {
+        setPinError(true);
+      }
     }
   };
 
@@ -133,51 +157,22 @@ export default function PvpMode() {
           />
         }
       >
-        <div style={styles.pinSection}>
-          <span style={styles.pinLabel}>{t('pvpMode.pinLabel', 'PIN (4 digits)')}</span>
-          <input
-            style={styles.pinInput}
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="····"
-            maxLength={4}
-            inputMode="numeric"
-            disabled={connecting}
-          />
-
-          <span style={styles.pinLabel}>{t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}</span>
-          <input
-            style={styles.pinInput}
-            type="password"
-            value={pinConfirm}
-            onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="····"
-            maxLength={4}
-            inputMode="numeric"
-            disabled={connecting}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
-          />
-
-          {pin.length > 0 && pin.length < 4 && (
-            <span style={styles.errorText}>{t('pvpMode.pinInvalid', 'PIN must be 4 digits')}</span>
-          )}
-          {pinConfirm.length > 0 && !pinsMatch && (
-            <span style={styles.errorText}>{t('pvpMode.pinMismatch', 'PINs do not match')}</span>
-          )}
-          {authError && <span style={styles.errorText}>{authError}</span>}
-
-          {connecting ? (
+        {connecting ? (
+          <div style={styles.pinSection}>
             <RadarSpinner size={40} />
-          ) : (
-            <NavalButton
-              title={t('pvpMode.createWallet', 'Create Wallet')}
-              variant="pvp"
-              onPress={handleCreate}
-              disabled={!pinValid || !pinsMatch}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <PinModal
+            visible={true}
+            title={pinStep === 'enter'
+              ? t('pvpMode.pinLabel', 'PIN (4 digits)')
+              : t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}
+            error={pinError}
+            onSubmit={handleCreatePinSubmit}
+            onCancel={() => navigate('/menu', { replace: true })}
+          />
+        )}
+        {authError && <div style={styles.pinSection}><span style={styles.errorText}>{authError}</span></div>}
       </PageShell>
     );
   }
@@ -251,30 +246,22 @@ export default function PvpMode() {
           />
         }
       >
-        <div style={styles.pinSection}>
-          <input
-            style={styles.pinInput}
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="····"
-            maxLength={4}
-            inputMode="numeric"
-            disabled={connecting}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleUnlock(); }}
-          />
-          {authError && <span style={styles.errorText}>{authError}</span>}
-          {connecting ? (
+        {connecting ? (
+          <div style={styles.pinSection}>
             <RadarSpinner size={40} />
-          ) : (
-            <NavalButton
-              title={t('pvpMode.connect', 'Connect')}
-              variant="pvp"
-              onPress={handleUnlock}
-              disabled={!pin}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <PinModal
+            visible={true}
+            title={t('wallet.view.enterPin', 'Enter PIN')}
+            error={pinError}
+            onSubmit={handleUnlock}
+            onCancel={() => {
+              setPinError(false);
+              navigate('/menu', { replace: true });
+            }}
+          />
+        )}
       </PageShell>
     );
   }
@@ -337,25 +324,6 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: SPACING.md,
-  },
-  pinLabel: {
-    fontFamily: FONTS.heading,
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    letterSpacing: 2,
-  },
-  pinInput: {
-    width: 200,
-    border: `1.5px solid ${COLORS.accent.gold}`,
-    backgroundColor: COLORS.overlay.darkPanel,
-    borderRadius: 4,
-    padding: `${SPACING.md}px ${SPACING.lg}px`,
-    fontFamily: FONTS.heading,
-    fontSize: 24,
-    color: COLORS.accent.gold,
-    textAlign: 'center' as const,
-    letterSpacing: 6,
-    boxSizing: 'border-box' as const,
   },
   errorText: {
     fontFamily: FONTS.body,
