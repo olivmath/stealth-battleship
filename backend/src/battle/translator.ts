@@ -10,6 +10,7 @@ import {
   TURN_TIMEOUT_MS, DEFENDER_RESPONSE_TIMEOUT_MS,
 } from './entities.js';
 import { c, debug } from '../log.js';
+import { resetRateLimit } from '../ws/socket.js';
 import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats, persistProofLog } from '../shared/persistence.js';
 import { getCircuit } from '../shared/circuits.js';
 import { getShipSizes } from '../matchmaking/entities.js';
@@ -506,6 +507,12 @@ export function registerBattleHandlers(
 
 function emitTurnStart(io: Server, match: import('../matchmaking/entities.js').MatchRoom): void {
   const deadline = Date.now() + TURN_TIMEOUT_MS;
+
+  // Reset rate limit for active player so cooldown doesn't span across turns
+  const activeSocketId = match.currentTurn === match.player1.publicKey
+    ? match.player1.socketId
+    : match.player2!.socketId;
+  resetRateLimit(activeSocketId);
 
   debug('[battle]', `emitTurnStart: turn=${match.turnNumber}, currentTurn=${match.currentTurn?.slice(0, 8)}..., deadline=${new Date(deadline).toISOString()}`);
 

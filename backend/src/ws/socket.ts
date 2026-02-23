@@ -16,7 +16,12 @@ export const socketToPlayer = new Map<string, string>();
 
 // Rate limiting: socketId → last attack timestamp
 const lastAttackTime = new Map<string, number>();
-const ATTACK_COOLDOWN_MS = 1000;
+const ATTACK_COOLDOWN_MS = process.env.ATTACK_COOLDOWN_MS !== undefined ? Number(process.env.ATTACK_COOLDOWN_MS) : 1000;
+
+/** Reset rate limit for a socket (call on turn start so cooldown doesn't span turns) */
+export function resetRateLimit(socketId: string): void {
+  lastAttackTime.delete(socketId);
+}
 
 // Reconnection grace: publicKey → timeout handle
 const disconnectGrace = new Map<string, ReturnType<typeof setTimeout>>();
