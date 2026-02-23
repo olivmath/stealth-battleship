@@ -2,7 +2,7 @@
 
 ## Contexto
 
-O jogo Battleship ZK e atualmente single-player vs AI. O botao "PvP ONLINE" ja existe no menu (desabilitado). A arquitetura atual usa engine de funcoes puras (`processAttack`, `checkWinCondition`) o que facilita reuso em PvP. Nao existe nenhum backend, banco de dados, ou codigo de rede. Toda persistencia e local via AsyncStorage.
+O jogo Stealth Battleship e atualmente single-player vs AI. O botao "PvP ONLINE" ja existe no menu (desabilitado). A arquitetura atual usa engine de funcoes puras (`processAttack`, `checkWinCondition`) o que facilita reuso em PvP. Nao existe nenhum backend, banco de dados, ou codigo de rede. Toda persistencia e local via AsyncStorage.
 
 O objetivo e adicionar modo PvP online mantendo o jogo leve e preparando o caminho para ZK proofs no futuro.
 

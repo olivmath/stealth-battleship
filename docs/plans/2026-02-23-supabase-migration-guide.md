@@ -1,6 +1,6 @@
 # Supabase Migration Guide
 
-> Migrate the Battleship ZK backend from Express + Socket.io to Supabase Edge Functions + Realtime.
+> Migrate the Stealth Battleship backend from Express + Socket.io to Supabase Edge Functions + Realtime.
 
 ## 1. Overview
 

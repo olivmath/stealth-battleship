@@ -1,8 +1,8 @@
-# Product Requirements Document: Battleship ZK — V2
+# Product Requirements Document: Stealth Battleship — V2
 
 ## Overview
 
-**Product:** Battleship ZK - Mobile naval combat game
+**Product:** Stealth Battleship - Mobile naval combat game
 **Platform:** iOS & Android (React Native / Expo)
 **Version:** 2.0.0 (Feature-Complete Single Player)
 **Status:** In Development

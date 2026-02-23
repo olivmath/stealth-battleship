@@ -1,4 +1,4 @@
-# Trailer Cinematografico — Battleship ZK
+# Trailer Cinematografico — Stealth Battleship
 
 > Design doc para trailer de 2:30 para hackathon Stellar Hacks: ZK Gaming 2026
 > Abordagem: Cinematic Narrative — footage naval + tech + demo + PiP rosto
@@ -41,7 +41,7 @@ CENA 6 — ENCERRAMENTO             2:10 — 2:30  (20s / 600 frames)
 - Texto aparece com glitch effect:
   - *"In war, information is power."* (pausa)
   - *"But what if you could prove... without revealing?"*
-- Logo BATTLESHIP ZK emerge do fog com glow dourado
+- Logo STEALTH BATTLESHIP emerge do fog com glow dourado
 
 ### Audio
 - SFX: ondas + sonar ping
@@ -171,7 +171,7 @@ Dividida em 3 blocos de 15s:
 ### Visual
 - Footage: frota naval ao por-do-sol (epico, wide shot)
 - Fade pra fundo navy (#0a1628)
-- Logo BATTLESHIP ZK grande centralizado
+- Logo STEALTH BATTLESHIP grande centralizado
 - Tagline typewriter: *"Fair by math. Fun by design."*
 - Links fade-in:
   ```
@@ -223,7 +223,7 @@ Dividida em 3 blocos de 15s:
 
 ### Motion Graphics (Remotion)
 - [ ] Particulas sonar/radar overlay
-- [ ] Logo BATTLESHIP ZK com glow animation
+- [ ] Logo STEALTH BATTLESHIP com glow animation
 - [ ] Split screen problema (server vs ZK)
 - [ ] Cards dos 3 circuitos com badges
 - [ ] Grid 6x6 animado com hash visual
@@ -258,7 +258,7 @@ Dividida em 3 blocos de 15s:
 *"In war, information is power. But what if you could prove your strategy... without revealing it?"*
 
 *(texto na tela, nao falado)*
-*"This is Battleship ZK."*
+*"This is Stealth Battleship."*
 
 ### [0:20 — 0:35] PROBLEMA (PiP rosto)
 *"In regular digital Battleship, someone always sees both boards. A server, a smart contract, or an end-game reveal. With ZK proofs — no one ever sees your board."*
@@ -279,7 +279,7 @@ Dividida em 3 blocos de 15s:
 *"The architecture is hybrid. Two Soroban transactions per game. Real-time turns on Convex. We chose Stellar because Protocol 25 gives us native BN254 and Poseidon2 — the exact primitives our circuits use."*
 
 ### [2:10 — 2:30] ENCERRAMENTO (voiceover, sem rosto)
-*"Battleship ZK. Fair by math. Fun by design."*
+*"Stealth Battleship. Fair by math. Fun by design."*
 
 ---
 

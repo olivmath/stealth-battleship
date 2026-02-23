@@ -1,4 +1,4 @@
-# Battleship ZK — Roadmap de Implementação
+# Stealth Battleship — Roadmap de Implementação
 
 **Data:** 2026-02-21
 **Escopo:** Arcade ZK → PvP ZK (incremental, validável por etapa)

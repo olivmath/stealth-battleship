@@ -64,7 +64,7 @@
 
 - [ ] Contexto
 
- O jogo Battleship ZK tem single-player funcionando (web + mobile) com provas ZK
+ O jogo Stealth Battleship tem single-player funcionando (web + mobile) com provas ZK
  geradas localmente. O backend Express (porta 3001) hoje serve apenas como proof
  server stateless. O objetivo é transformá-lo no servidor PvP completo:
  matchmaking, coordenação de turnos, verificação de provas, e autenticação via

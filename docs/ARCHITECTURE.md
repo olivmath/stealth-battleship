@@ -1,4 +1,4 @@
-# Architecture Document: Battleship ZK
+# Architecture Document: Stealth Battleship
 
 ## Tech Stack
 

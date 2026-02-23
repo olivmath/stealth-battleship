@@ -1,4 +1,4 @@
-# Review Adversarial -- Battleship ZK (v3)
+# Review Adversarial -- Stealth Battleship (v3)
 
 **Tipo de conteudo:** Codebase completa da aplicacao (React Native / Expo)
 **Escopo da revisao:** Qualidade de codigo, design, algoritmos, game balance, extensibilidade
@@ -63,7 +63,7 @@ A arquitetura toma varias decisoes hostis ao futuro:
 
 - **O board expoe todas as posicoes dos navios em memoria.** `state.opponentBoard` contem `shipId` completo em cada celula. Para PvP, isso e um vetor de trapaca -- qualquer inspetor de memoria revela a frota do oponente. Provas ZK exigem esconder esses dados atras de commitments, o que significa que o modelo de dados inteiro do board precisa ser repensado.
 - **`GameState.ai` esta hardcoded no shape do estado.** Nao existe abstracao para "oponente" -- e literalmente `ai: AIState`. PvP requer substituir isso por um peer de rede, o que significa refatorar o reducer, context, e toda tela que referencia `state.ai`.
-- **Nenhum padrao commit/reveal.** Battleship ZK precisa de: (1) commit do hash do board no placement, (2) em cada ataque, provar o resultado da celula sem revelar o board. Atualmente `processAttack` recebe o board completo como input e retorna o board mutado -- nao ha hash, nao ha prova, nao ha separacao entre estado privado e resultado publico.
+- **Nenhum padrao commit/reveal.** Stealth Battleship precisa de: (1) commit do hash do board no placement, (2) em cada ataque, provar o resultado da celula sem revelar o board. Atualmente `processAttack` recebe o board completo como input e retorna o board mutado -- nao ha hash, nao ha prova, nao ha separacao entre estado privado e resultado publico.
 - **`AIState.firedPositions` usa `Set<string>`** que nao pode ser serializado com JSON para transporte de rede ou inputs de prova sem serializacao customizada.
 - **IDs de match sao `Date.now().toString()`** -- nao-deterministicos e propensos a colisao. Registros on-chain precisam de identificadores deterministicos e unicos.
 - **Nenhuma abstracao de wallet/signer.** Adicionar web3 significa introduzir conexao de carteira, assinatura de transacoes, e sincronizacao de estado on-chain do zero -- nao existem hooks, types, ou patterns para construir em cima.

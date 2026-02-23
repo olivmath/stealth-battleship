@@ -1,4 +1,4 @@
-# Battleship ZK — Statistics & Scoring Guide
+# Stealth Battleship — Statistics & Scoring Guide
 
 ## Why Stats Matter in Battleship
 
