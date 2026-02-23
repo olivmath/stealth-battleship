@@ -1,67 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { GradientContainer } from '../components/UI/GradientContainer';
 import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { useGame } from '../game/translator';
+import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
-
-function generateMatchId(): string {
-  const chars = '0123456789';
-  let id = '';
-  for (let i = 0; i < 6; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-}
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 export default function PvpFriend() {
   const navigate = useNavigate();
   const { dispatch } = useGame();
+  const pvp = usePvP();
   const haptics = useHaptics();
   const { t } = useTranslation();
   const [mode, setMode] = useState<'select' | 'create' | 'join'>('select');
-  const [matchId, setMatchId] = useState('');
   const [joinCode, setJoinCode] = useState('');
-  const [connecting, setConnecting] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // matchCode comes from PvP context
 
+  // Navigate when both players joined
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+    if (pvp.phase === 'placing' && pvp.match?.opponentKey) {
+      haptics.medium();
+      const timer = setTimeout(() => {
+        dispatch({ type: 'RESET_GAME' });
+        navigate('/placement?mode=pvp', { replace: true });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pvp.phase, pvp.match?.opponentKey]);
 
   const handleCreate = () => {
     haptics.light();
-    const id = generateMatchId();
-    setMatchId(id);
     setMode('create');
-
-    timerRef.current = setTimeout(() => {
-      haptics.medium();
-      dispatch({ type: 'RESET_GAME' });
-      navigate('/placement?mode=pvp', { replace: true });
-    }, 4000);
+    pvp.createFriendMatch(10);
   };
 
   const handleJoin = () => {
     haptics.light();
-    setConnecting(true);
-
-    timerRef.current = setTimeout(() => {
-      haptics.medium();
-      dispatch({ type: 'RESET_GAME' });
-      navigate('/placement?mode=pvp', { replace: true });
-    }, 2000);
+    pvp.joinFriendMatch(joinCode);
   };
 
   const handleCancel = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setConnecting(false);
-    setMatchId('');
+    pvp.cancelSearch();
     setJoinCode('');
     setMode('select');
   };
@@ -114,7 +96,7 @@ export default function PvpFriend() {
         <div style={styles.container}>
           <div style={styles.header}>
             <span style={styles.label}>{t('pvpFriend.matchCode')}</span>
-            <span style={styles.matchCode}>{matchId}</span>
+            <span style={styles.matchCode}>{pvp.matchCode || '...'}</span>
             <span style={styles.shareText}>{t('pvpFriend.shareCode')}</span>
             <div style={styles.divider} />
           </div>
@@ -153,10 +135,10 @@ export default function PvpFriend() {
             placeholder="000000"
             maxLength={6}
             inputMode="numeric"
-            disabled={connecting}
+            disabled={pvp.phase === 'connecting'}
           />
 
-          {connecting ? (
+          {pvp.phase === 'connecting' ? (
             <div style={styles.connectingRow}>
               <RadarSpinner size={40} />
               <span style={styles.connectingText}>{t('pvpFriend.connecting')}</span>
@@ -168,6 +150,10 @@ export default function PvpFriend() {
               onPress={handleJoin}
               disabled={joinCode.length < 6}
             />
+          )}
+
+          {pvp.error && (
+            <span style={styles.errorText}>{pvp.error}</span>
           )}
         </div>
 
@@ -189,6 +175,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SPACING.lg,
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   header: {
     display: 'flex',
@@ -269,10 +258,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONTS.heading,
     fontSize: 28,
     color: COLORS.accent.gold,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     letterSpacing: 8,
     outline: 'none',
-    boxSizing: 'border-box',
+    boxSizing: 'border-box' as const,
   },
   connectingRow: {
     display: 'flex',
@@ -285,5 +274,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     color: COLORS.text.secondary,
     letterSpacing: 3,
+  },
+  errorText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.accent.fire,
+    textAlign: 'center' as const,
   },
 };

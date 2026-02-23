@@ -6,61 +6,77 @@ import { NavalButton } from '../components/UI/NavalButton';
 import { RadarSpinner } from '../components/UI/RadarSpinner';
 import { OpponentStatus } from '../components/PvP/OpponentStatus';
 import { useGame } from '../game/translator';
+import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
-import { MOCK_OPPONENT, MATCHMAKING_DELAY, FOUND_DELAY } from '../services/pvpMock';
-import { COLORS, FONTS, SPACING } from '../shared/theme';
+import { COLORS, FONTS, SPACING, LAYOUT } from '../shared/theme';
 
 export default function PvpLobby() {
   const navigate = useNavigate();
   const { dispatch } = useGame();
+  const pvp = usePvP();
   const haptics = useHaptics();
   const { t } = useTranslation();
-  const [phase, setPhase] = useState<'searching' | 'found'>('searching');
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  const isSearching = pvp.phase === 'searching' || pvp.phase === 'connecting';
+  const isFound = pvp.phase === 'placing' || pvp.phase === 'found';
+
+  // Start search on mount
   useEffect(() => {
-    const t1 = setTimeout(() => {
-      setPhase('found');
-      haptics.medium();
+    if (pvp.myPublicKeyHex && pvp.phase !== 'searching') {
+      pvp.findRandomMatch(10);
+    }
+  }, [pvp.myPublicKeyHex]);
 
-      const t2 = setTimeout(() => {
+  // Navigate when match found
+  useEffect(() => {
+    if (isFound && pvp.match) {
+      haptics.medium();
+      const timer = setTimeout(() => {
         dispatch({ type: 'RESET_GAME' });
         navigate('/placement?mode=pvp', { replace: true });
-      }, FOUND_DELAY);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isFound, pvp.match]);
 
-      timersRef.current.push(t2);
-    }, MATCHMAKING_DELAY);
-
-    timersRef.current.push(t1);
-
-    return () => {
-      timersRef.current.forEach(clearTimeout);
-    };
-  }, []);
+  const opponentName = pvp.match?.opponentKey
+    ? pvp.match.opponentKey.slice(0, 8) + '...'
+    : '';
 
   return (
     <GradientContainer>
       <div style={styles.container}>
         <div style={styles.content}>
-          {phase === 'searching' ? (
+          {isSearching ? (
             <>
               <RadarSpinner size={120} />
               <span style={styles.statusText}>{t('pvpLobby.searching')}</span>
             </>
-          ) : (
+          ) : isFound ? (
             <>
-              <OpponentStatus name={MOCK_OPPONENT} status="online" />
+              <OpponentStatus name={opponentName} status="online" />
               <span style={styles.foundText}>{t('pvpLobby.found')}</span>
             </>
+          ) : pvp.phase === 'error' ? (
+            <>
+              <span style={styles.errorText}>{pvp.error || 'Connection failed'}</span>
+              <NavalButton
+                title="Retry"
+                variant="pvp"
+                onPress={() => pvp.findRandomMatch(10)}
+              />
+            </>
+          ) : (
+            <RadarSpinner size={120} />
           )}
         </div>
 
-        {phase === 'searching' && (
+        {isSearching && (
           <NavalButton
             title={t('pvpLobby.cancel')}
             variant="danger"
             onPress={() => {
-              timersRef.current.forEach(clearTimeout);
+              pvp.cancelSearch();
               navigate('/menu', { replace: true });
             }}
           />
@@ -77,6 +93,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: SPACING.lg,
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: LAYOUT.maxContentWidth,
+    boxSizing: 'border-box' as const,
   },
   content: {
     flex: 1,
@@ -97,5 +116,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
     color: COLORS.accent.victory,
     letterSpacing: 3,
+  },
+  errorText: {
+    fontFamily: FONTS.heading,
+    fontSize: 14,
+    color: COLORS.accent.fire,
+    letterSpacing: 2,
+    textAlign: 'center' as const,
   },
 };
