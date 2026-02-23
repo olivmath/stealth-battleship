@@ -6,45 +6,39 @@
 
 ## One-Liner
 
-Stealth Battleship — a mobile-first naval warfare game where Noir circuits cryptographically prove every move — hidden boards, honest shots, and verifiable outcomes — all settled on Stellar.
+Stealth Battleship — a trustless naval warfare game where every move is cryptographically proven using zero-knowledge proofs, built on Stellar.
 
 ---
 
 ## The Problem
 
-Classic digital Battleship has a fundamental trust problem: **someone has to see both boards**. Whether it's a server, a smart contract storing plaintext, or an end-of-game reveal — every existing implementation requires players to trust a third party or expose their strategy.
+In regular digital Battleship, someone always has to see both boards — a server, a smart contract, or an end-game reveal. That means you have to trust someone not to cheat.
 
-This kills competitive integrity. If the server knows your board, it can cheat. If the board is revealed on-chain, anyone watching the mempool can front-run. If we rely on commit-reveal, a losing player can simply disconnect before revealing.
-
-**"Trust me, bro" is not a game mechanic.**
+We eliminate that entirely. With ZK proofs, **no one ever sees your board** — not the server, not the blockchain, anybody.
 
 ---
 
-## The Solution: Prove-as-You-Go
+## How It Works: Three Noir Circuits — Client-Side
 
-Stealth Battleship eliminates board reveal entirely. Instead of commit-reveal, we use a **prove-as-you-go** architecture where every game action generates a zero-knowledge proof in real-time:
+We have three Noir circuits running client-side:
 
-| Game Moment | What Happens | ZK Circuit |
-|---|---|---|
-| Place ships | Prove board is valid (correct sizes, no overlaps, within bounds) without revealing positions | `board_validity` |
-| Receive a shot | Prove hit/miss is honest against committed board hash | `shot_proof` |
-| Game ends | Prove the entire game sequence was fair and compute the winner | `turns_proof` |
+| Circuit | What Happens |
+|---|---|
+| **Board Validity** | When you place your ships, a ZK proof generated on the device ensures your board is valid — correct ship sizes, no overlaps, within bounds — without revealing where. |
+| **Shot Proof** | Whenever you receive a shot, the device responds with a proof that confirms whether it was a hit or a miss, verified against the hash of your committed board. Lying is mathematically impossible. |
+| **Move Proof** (`turns_proof`) | At the end of the game, the entire game sequence is reproduced within a circuit to calculate and prove the winner by the backend and saved on chain. |
 
 **Private inputs never leave the player's device.** The board, nonce, and ship positions stay local. Only cryptographic proofs and public commitments go on-chain.
 
 ---
 
-## Why ZK Is Essential (Not Decorative)
+## What Makes This Different
 
-This is not "a game with ZK mentioned in the README." ZK is the **core mechanic** that makes the game work:
+ZK isn't a feature — it **IS** the game. Remove it and nothing works.
 
-1. **Hidden Information** — Ship positions are Poseidon-hashed and committed on-chain. The board is never revealed, not even after the game ends.
-
-2. **Honest Shot Resolution** — Every hit/miss declaration is backed by a Noir proof that the result matches the committed board. Lying is mathematically impossible.
-
-3. **Provable Outcomes** — The `turns_proof` circuit replays the entire game and computes the winner inside the circuit. No dispute possible.
-
-4. **No Trusted Server** — The server coordinates turns but cannot influence outcomes. Proof verification is trustless.
+- **Three specialized circuits** covering the complete game lifecycle.
+- **Prove-as-you-go** — no commit-reveal, no board reveal, ever.
+- **A real, polished mobile game** — with animations, haptics, AI opponent, match history, rankings, and three languages.
 
 ---
 
@@ -83,21 +77,18 @@ This gives us **trustless settlement** with **real-time gameplay** — no player
 
 ---
 
-## Stellar-Native Design
+## Why Stellar
 
-We chose Stellar deliberately, not as an afterthought:
+We chose Stellar because Protocol 25 X-Ray gives us **native BN254 curve operations and Poseidon2 hashing** — the exact primitives our Noir circuits use. This means proof verification on-chain is efficient, not emulated.
 
 | Stellar Feature | How We Use It |
 |---|---|
 | **Protocol 25 (X-Ray)** | Native BN254 curve ops + Poseidon2 hash — the exact primitives our Noir circuits use |
 | **Poseidon2 on-chain** | Board hashes are computed with Poseidon, verified natively on Soroban — no expensive emulation |
-| **Low tx cost** | 3 blockchain moments per game makes on-chain anchoring viable for every match, not just high-stakes |
-| **XLM payments** | Entry fee paid in XLM at match start; winner settlement at end |
-| **BATTLE custom asset** | Custom token with clawback issued at match start, burned on resolution — prevents griefing |
+| **Low tx cost** | 3 blockchain moments per game makes on-chain anchoring viable for every match |
+| **XLM payments** | Entry fee paid in XLM at match start |
+| **BATTLE custom asset** | Custom token with clawback issued at match start, clawed back to winner at end |
 | **Soroban smart contracts** | UltraHonk verifier deployed for board_validity proof verification |
-| **Game Hub contract** | `start_game()` / `end_game()` integration with `CB4VZAT2...` |
-
-Protocol 25 is not just compatible — it's **the reason this design is efficient**. BN254 + Poseidon on-chain means our proofs verify cheaply where other chains would need precompiles or expensive workarounds.
 
 ---
 
@@ -120,8 +111,8 @@ Protocol 25 is not just compatible — it's **the reason this design is efficien
 
 ### `board_validity`
 ```
-Private: board[6][6], nonce
-Public:  board_hash, ship_count, ship_sizes
+Private: board, nonce
+Public:  board_hash, ship_sizes
 
 Proves: valid ship placement (sizes, bounds, no overlaps)
         + board_hash == Poseidon(board, nonce)
@@ -129,7 +120,7 @@ Proves: valid ship placement (sizes, bounds, no overlaps)
 
 ### `shot_proof`
 ```
-Private: board[6][6], nonce
+Private: board, nonce
 Public:  board_hash, row, col, is_hit
 
 Proves: is_hit == (board[row][col] == 1)
@@ -153,62 +144,44 @@ All circuits compile with `nargo`, tested with `nargo test`, and generate ACIR a
 
 | Component | Status |
 |---|---|
-| 3 Noir circuits (board_validity, shot_proof, turns_proof) + hash_helper | Implemented & tested |
-| Full mobile game (6x6 grid, AI opponent, placement, battle, gameover) | Shipped (v3) |
-| ZK Service abstraction (zkService.ts) | In progress |
-| WebView-based proof generation (NoirJS + bb.js) | In progress |
-| i18n (EN, PT-BR, ES) | Complete |
-| Match history, ranking system, settings | Complete |
-| Soroban contract + Game Hub integration | Planned |
+| 3+1 Noir circuits (board_validity, shot_proof, turns_proof, hash_helper) | Done |
+| Full mobile game (6x6/10x10 grid, AI opponent, animations, haptics) | Done |
+| ZK Service (WebView proof generation — NoirJS + bb.js) | Done |
+| Express + Socket.io backend (PvP real-time) | Done |
+| Supabase integration (persistence, rankings, stats) | Done |
+| Stellar payment flow (XLM + BATTLE token with clawback) | Done |
+| Web client for PvP | Done |
+| Ed25519 signed actions (anti-cheat) | Done |
+| i18n (EN, PT-BR, ES) | Done |
+| Match history, ranking system (6 ranks), settings | Done |
 
 ---
 
 ## Game Flow — Player Experience
 
-### Arcade Mode (vs AI — fully local)
+### Demo Flow
 ```
-1. MENU           →  "Play vs AI"
-2. PLACEMENT      →  Drag & drop ships on grid
-3. ZK COMMITMENT  →  "Securing your fleet..." (board_validity proof, WASM local ~2-5s)
-4. BATTLE         →  Turn-based: tap to attack, ZK proves every response locally
-5. GAME OVER      →  turns_proof generated locally, no backend, no blockchain
-```
-
-### PvP Mode
-```
-1. MENU           →  "Find Match"
-2. PAYMENT        →  XLM entry fee + BATTLE token issuance on Stellar
-3. PLACEMENT      →  Drag & drop ships on grid
-4. ZK COMMITMENT  →  "Securing your fleet..." (board_validity proof ~2-5s, anchored on-chain)
-5. BATTLE         →  Turn-based via Socket.io; server verifies each shot_proof synchronously
-                      Invalid proof = instant loss, no appeals
-6. REVEAL         →  Players reveal ship positions at end (server cross-checks with board hash)
-7. GAME OVER      →  Server generates turns_proof, anchors on Stellar, winner gets XLM
+1. Place ships on 10x10 grid — drag & drop, or auto placed
+2. Tap Ready → "Securing your fleet..." (board_validity proof on device, ~2-5s)
+3. Board hash committed on Stellar via Soroban
+4. Battle — tap to attack, opponent's device generates shot_proof
+5. Game ends — server generates turns_proof, submits on-chain
+6. BATTLE token clawed back to winner
 ```
 
 The ZK proof generation is masked by loading animations — the player sees "Securing your fleet..." while Noir circuits crunch in the background. The game feels smooth; the math is invisible.
 
 ---
 
-## Why This Should Win
+## What Makes This Different
 
-### 1. ZK is the Game, Not a Feature
-Every single game action — placement, shots, outcome — is cryptographically proven. Remove ZK, and the game doesn't work. This is the definition of "ZK-powered mechanic."
+1. **ZK isn't a feature — it IS the game.** Remove it and nothing works.
 
-### 2. The Hardest ZK Gaming Problem
-Battleship is the canonical hidden-information game. It requires **per-turn proofs** (not just one proof at the end), **committed state** (board hash), and **interactive verification** — all of which we implement.
+2. **Three specialized circuits** covering the complete game lifecycle.
 
-### 3. Production-Quality Game
-This isn't a proof-of-concept with a text UI. It's a polished mobile game with animations, haptics, AI opponent, match history, rankings, and i18n — built to be played, not just demoed.
+3. **Prove-as-you-go** — no commit-reveal, no board reveal, ever.
 
-### 4. Stellar-Native Architecture
-Protocol 25's BN254 + Poseidon primitives are not just "used" — they're the reason our on-chain verification is efficient. We designed around Stellar's strengths.
-
-### 5. Prove-as-You-Go > Commit-Reveal
-Our architecture eliminates the classic commit-reveal pattern. No board reveal, no end-game disputes, no "disconnect to avoid losing." Every proof is real-time.
-
-### 6. 3-Circuit Design
-Most ZK game submissions use 1 circuit. We have 3 specialized circuits that cover the complete game lifecycle: validity, per-shot honesty, and full-game integrity.
+4. **A real, polished mobile game** — with animations, haptics, AI opponent, match history, rankings, and three languages.
 
 ---
 
@@ -228,7 +201,7 @@ Most ZK game submissions use 1 circuit. We have 3 specialized circuits that cove
 
 ## Summary
 
-Stealth Battleship proves that zero-knowledge isn't just for DeFi or identity — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have the cryptographic primitives to make this real. Every ship placement is committed, every shot is proven, every outcome is verifiable. No trust required.
+Stealth Battleship proves that zero-knowledge isn't just for DeFi — it's the foundation of fair, trustless gaming. On Stellar's Protocol 25, we have everything we need to make this real.
 
 **Fair by math. Fun by design.**
 
