@@ -155,6 +155,19 @@ export default function Battle() {
 
     if (rc.result === 'miss') haptics.light();
     else haptics.medium();
+
+    if (rc.sunkShipName && rc.sunkShipSize) {
+      const syntheticShip: PlacedShip = {
+        id: `sunk-${rc.turnNumber}`,
+        name: rc.sunkShipName,
+        size: rc.sunkShipSize,
+        positions: [],
+        orientation: 'horizontal',
+        hits: rc.sunkShipSize,
+        isSunk: true,
+      };
+      setTimeout(() => showSunkAnimation(syntheticShip), 500);
+    }
   }, [pvp.lastResultConfirmed, isPvP]);
 
   // ─── PvP: Handle incoming_attack from opponent ───
@@ -182,6 +195,10 @@ export default function Battle() {
 
     dispatch({ type: 'OPPONENT_ATTACK', position: { row: atk.row, col: atk.col }, result, shipId, opponentState: undefined });
 
+    // Compute sunk info for the attacker
+    const sunkShipName = result === 'sunk' ? newShips.find(s => s.id === shipId)?.name : undefined;
+    const sunkShipSize = result === 'sunk' ? newShips.find(s => s.id === shipId)?.size : undefined;
+
     // Send shot result to server with ZK proof
     const proofResult = result === 'sunk' ? 'hit' : result;
     if (state.commitment?.playerZk) {
@@ -189,13 +206,13 @@ export default function Battle() {
       try {
         const playerTuples = toShipTuples(state.playerShips);
         // Generate proof in background, send result immediately
-        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', []);
+        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
         generateShotProof(playerTuples, nonce, boardHash, atk.row, atk.col, result !== 'miss', 'opponent->player');
       } catch (e) {
-        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', []);
+        pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
       }
     } else {
-      pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', []);
+      pvp.respondShotResult(atk.row, atk.col, proofResult as 'hit' | 'miss', [], sunkShipName, sunkShipSize);
     }
   }, [pvp.lastIncomingAttack, isPvP]);
 

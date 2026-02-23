@@ -35,6 +35,8 @@ export interface PvPResultConfirmed {
   col: number;
   result: 'hit' | 'miss';
   turnNumber: number;
+  sunkShipName?: string;
+  sunkShipSize?: number;
 }
 
 export interface PvPGameOver {

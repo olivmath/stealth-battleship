@@ -182,6 +182,8 @@ export function registerBattleHandlers(
         col: data.col,
         result: data.result,
         turnNumber: match.turnNumber,
+        sunkShipName: data.sunkShipName,
+        sunkShipSize: data.sunkShipSize,
       });
     }
 
