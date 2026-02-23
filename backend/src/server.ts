@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 async function main() {
   console.log('');
   console.log(c.bgBlue('═══════════════════════════════════════'));
-  console.log(c.bgBlue('   Battleship ZK — Proof Server        '));
+  console.log(c.bgBlue('   Stealth Battleship — Proof Server    '));
   console.log(c.bgBlue('═══════════════════════════════════════'));
   console.log('');
 
