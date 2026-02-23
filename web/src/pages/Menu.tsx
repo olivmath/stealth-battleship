@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { GradientContainer } from '../components/UI/GradientContainer';
+import { PageShell } from '../components/UI/PageShell';
 import { NavalButton } from '../components/UI/NavalButton';
-import { NavalText } from '../components/UI/NavalText';
-import { Divider } from '../components/UI/Divider';
 import { useGame } from '../game/translator';
 import { usePlayerStats } from '../stats/translator';
 import { useSettings } from '../settings/translator';
@@ -12,7 +10,7 @@ import { useHaptics } from '../hooks/useHaptics';
 import { useResponsive } from '../hooks/useResponsive';
 import { getLevelInfo } from '../stats/interactor';
 import { confirm } from '../hooks/useConfirm';
-import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../shared/theme';
+import { COLORS, FONTS, SPACING } from '../shared/theme';
 import { Ship3D } from '../components/Ship/Ship3D';
 
 export default function Menu() {
@@ -83,25 +81,22 @@ export default function Menu() {
   });
 
   return (
-    <GradientContainer>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <NavalText variant="label" letterSpacing={3}>{t('menu.welcome')}</NavalText>
-          <NavalText variant="h2" style={{ marginTop: SPACING.xs }}>{state.playerName}</NavalText>
-          <Divider style={{ marginTop: SPACING.md }} />
-        </div>
-
+    <PageShell
+      title={state.playerName}
+      subtitle={t('menu.welcome')}
+    >
+      <div style={styles.shipContainer}>
         <Ship3D />
+      </div>
 
-
-        {/* Actions */}
-        <div style={styles.actions}>
+      <div style={styles.actions}>
           {/* Tier 1 - Play Modes */}
           <div style={fadeIn(1)}>
             <NavalButton
               title={t('menu.arcade')}
               subtitle={t('menu.arcadeSub')}
               onPress={handleStartBattle}
+              style={{ width: '100%' }}
             />
           </div>
           <div style={fadeIn(2)}>
@@ -113,6 +108,7 @@ export default function Menu() {
                 haptics.light();
                 navigate('/pvp-mode', { replace: true });
               }}
+              style={{ width: '100%' }}
             />
           </div>
 
@@ -188,28 +184,18 @@ export default function Menu() {
               <span style={styles.logoutText}>{t('menu.logout')}</span>
             </button>
           </div>
-        </div>
       </div>
-    </GradientContainer>
+    </PageShell>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
+  shipContainer: {
+    maxHeight: 200,
     display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    padding: SPACING.lg,
-    gap: SPACING.md,
-    width: '100%',
-    maxWidth: LAYOUT.maxContentWidth,
-    boxSizing: 'border-box' as const,
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'column',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.md,
+    overflow: 'hidden',
   },
   actions: {
     display: 'flex',

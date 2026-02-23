@@ -147,61 +147,20 @@ function Counter({ ships, align }: { ships: PlacedShip[]; align: 'left' | 'right
 }
 
 /**
- * Dual health bar: ENEMY [████←  ][  →████] YOURS
- * Both bars shrink toward center. Enemy on left, player on right.
+ * Minimal dual health bar: [YOU ████→  ][  ←████ ENEMY]
+ * Both bars start at edges and shrink toward center. Label inside.
  */
-export function HealthBarDual({ playerShips, opponentShips, playerLabel, opponentLabel }: Props) {
+export function HealthBarDual({ playerShips, opponentShips }: Props) {
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      gap: 4,
       width: '100%',
     }}>
-      {/* Enemy label */}
-      <span style={{
-        fontFamily: FONTS.heading,
-        fontSize: 8,
-        color: COLORS.text.secondary,
-        letterSpacing: 2,
-        whiteSpace: 'nowrap',
-        textTransform: 'uppercase' as const,
-      }}>
-        {opponentLabel}
-      </span>
-
-      {/* Enemy counter */}
-      <Counter ships={opponentShips} align="right" />
-
-      {/* Enemy bar (reversed — shrinks toward center) */}
-      <ShipSegments ships={opponentShips} reversed />
-
-      {/* Center divider */}
-      <div style={{
-        width: 2,
-        height: 18,
-        backgroundColor: COLORS.grid.border,
-        flexShrink: 0,
-      }} />
-
-      {/* Player bar (normal — shrinks toward center) */}
-      <ShipSegments ships={playerShips} />
-
-      {/* Player counter */}
-      <Counter ships={playerShips} align="left" />
-
-      {/* Player label */}
-      <span style={{
-        fontFamily: FONTS.heading,
-        fontSize: 8,
-        color: COLORS.text.secondary,
-        letterSpacing: 2,
-        whiteSpace: 'nowrap',
-        textTransform: 'uppercase' as const,
-      }}>
-        {playerLabel}
-      </span>
+      <HealthBarSide ships={playerShips} label="YOU" side="left" />
+      <HealthBarSide ships={opponentShips} label="ENEMY" side="right" />
 
       <style>{`
         @keyframes healthSweep {
@@ -209,6 +168,87 @@ export function HealthBarDual({ playerShips, opponentShips, playerLabel, opponen
           100% { left: 100%; }
         }
       `}</style>
+    </div>
+  );
+}
+
+function HealthBarSide({ ships, label, side }: { ships: PlacedShip[]; label: string; side: 'left' | 'right' }) {
+  const totalCells = ships.reduce((sum, s) => sum + s.size, 0);
+  const isRight = side === 'right';
+
+  // Build flat array: total segments, alive count from center outward
+  const hitCells = ships.reduce((sum, s) => sum + s.hits, 0);
+  const alive = totalCells - hitCells;
+
+  return (
+    <div style={{
+      flex: 1,
+      height: 18,
+      borderRadius: 2,
+      border: `1px solid ${COLORS.grid.border}`,
+      backgroundColor: 'rgba(10, 14, 26, 0.7)',
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '3px 3px',
+      gap: 2,
+      flexDirection: isRight ? 'row' : 'row-reverse',
+    }}>
+      {/* Segments — alive from center, dead from outer edge, letter on each */}
+      {Array.from({ length: totalCells }).map((_, i) => {
+        // i=0 is center side, i=last is outer edge
+        const isAlive = i < alive;
+        // Letters on outer-edge blocks, reading naturally left-to-right
+        // flexDirection: left='row-reverse' (i=0 at right/center, i=last at left/outer)
+        // flexDirection: right='row' (i=0 at left/center, i=last at right/outer)
+        // In both cases i=last is the outer edge.
+        // Left side: outer blocks are leftmost visually → label reads L→R from left edge
+        //   visual position (left→right) = totalCells-1-i, so letterIdx = totalCells-1-i
+        // Right side: outer blocks are rightmost visually → label reads L→R ending at right edge
+        //   visual position from right = totalCells-1-i, letterIdx from right = label.length-1-(totalCells-1-i - (totalCells-label.length))
+        const visualFromOuter = totalCells - 1 - i; // 0=outermost
+        let letter: string | null = null;
+        if (visualFromOuter < label.length) {
+          // Left: outermost=label[0], next=label[1]... reads L→R from left edge
+          // Right: outermost=label[label.length-1], next=label[label.length-2]... reads L→R from right edge
+          letter = isRight ? label[label.length - 1 - visualFromOuter] : label[visualFromOuter];
+        }
+        return (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              height: '100%',
+              borderRadius: 1,
+              transition: 'all 0.4s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              ...(isAlive ? {
+                backgroundColor: COLORS.accent.gold,
+                boxShadow: `0 0 4px ${COLORS.accent.gold}40`,
+              } : {
+                backgroundColor: COLORS.cell.sunk,
+                opacity: 0.3,
+              }),
+            }}
+          >
+            {letter && (
+              <span style={{
+                fontFamily: FONTS.heading,
+                fontSize: 7,
+                fontWeight: 700,
+                color: '#ffffff',
+                lineHeight: 1,
+                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+              }}>
+                {letter}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
