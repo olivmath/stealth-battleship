@@ -175,7 +175,7 @@ Dividida em 3 blocos de 15s:
 - Tagline typewriter: *"Fair by math. Fun by design."*
 - Links fade-in:
   ```
-  github.com/olivmath/battleship-zk
+  github.com/olivmath/stealth-battleship
   Stellar Testnet | Noir + UltraHonk
   ```
 - Logos: Stellar + Noir + Convex alinhados na base
