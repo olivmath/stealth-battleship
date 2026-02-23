@@ -2,15 +2,15 @@ import { Server, Socket } from 'socket.io';
 import {
   findRandomMatch, cancelSearch, createFriendMatch, joinFriendMatch,
 } from './interactor.js';
-import { hasValidPayment, consumePayment } from '../payment/interactor.js';
+import { playerHasBattleToken, consumeBattleToken } from '../payment/interactor.js';
 import { c } from '../log.js';
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   const publicKey = (socket.data as { publicKey: string }).publicKey;
   const shortKey = publicKey.slice(0, 8);
 
-  socket.on('match:find_random', (data: { gridSize?: number }) => {
-    if (!hasValidPayment(publicKey)) {
+  socket.on('match:find_random', async (data: { gridSize?: number }) => {
+    if (!(await playerHasBattleToken(publicKey))) {
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
     }
@@ -28,9 +28,9 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
       const p1Id = match.player1.socketId;
       const p2Id = match.player2!.socketId;
 
-      // Consume payments for both players on successful match
-      consumePayment(match.player1.publicKey);
-      consumePayment(match.player2!.publicKey);
+      // Clawback BATTLE tokens for both players on successful match
+      await consumeBattleToken(match.player1.publicKey);
+      await consumeBattleToken(match.player2!.publicKey);
 
       io.to(p1Id).emit('match:found', {
         matchId: match.id,
@@ -53,8 +53,8 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
     console.log(c.magenta('[match]') + ` ${shortKey}... cancelled search`);
   });
 
-  socket.on('match:create_friend', (data: { gridSize?: number }) => {
-    if (!hasValidPayment(publicKey)) {
+  socket.on('match:create_friend', async (data: { gridSize?: number }) => {
+    if (!(await playerHasBattleToken(publicKey))) {
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
     }
@@ -66,8 +66,8 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
     console.log(c.magenta('[match]') + ` ${shortKey}... created friend match ${c.boldYellow(matchCode)}`);
   });
 
-  socket.on('match:join_friend', (data: { matchCode: string }) => {
-    if (!hasValidPayment(publicKey)) {
+  socket.on('match:join_friend', async (data: { matchCode: string }) => {
+    if (!(await playerHasBattleToken(publicKey))) {
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
     }
@@ -88,9 +88,9 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
     const match = result.match;
     const p1Id = match.player1.socketId;
 
-    // Consume payments for both players on successful friend match
-    consumePayment(match.player1.publicKey);
-    consumePayment(publicKey);
+    // Clawback BATTLE tokens for both players on successful friend match
+    await consumeBattleToken(match.player1.publicKey);
+    await consumeBattleToken(publicKey);
 
     // Notify both players
     io.to(p1Id).emit('match:friend_joined', {

@@ -1,68 +1,59 @@
-import { Horizon, Keypair } from '@stellar/stellar-sdk';
-import { PVP_FEE_XLM, verifiedPayments } from './entities.js';
+import { Horizon } from '@stellar/stellar-sdk';
+import { getSupabase } from '../shared/supabase.js';
+import { getServerPublicKey, issueBattleToken, hasBattleToken, clawbackBattleToken } from './stellar-asset.js';
+import { PVP_FEE_XLM } from './entities.js';
 import { c } from '../log.js';
+import crypto from 'crypto';
 
 const horizon = new Horizon.Server('https://horizon-testnet.stellar.org');
 
-let serverPublicKey: string | null = null;
-
-export function initServerWallet(): string {
-  const secret = process.env.STELLAR_SERVER_SECRET;
-  if (!secret) throw new Error('STELLAR_SERVER_SECRET not set');
-  const kp = Keypair.fromSecret(secret);
-  serverPublicKey = kp.publicKey();
-  console.log(c.cyan('[payment]') + ` Server wallet: ${serverPublicKey}`);
-  return serverPublicKey;
+export async function generateMemo(playerPk: string): Promise<string> {
+  const memo = `BZK-${crypto.randomBytes(4).toString('hex')}`;
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const sb = getSupabase();
+  await sb.from('pending_payments').insert({ memo, player_pk: playerPk, status: 'pending', expires_at: expiresAt });
+  console.log(c.cyan('[payment]') + ` Memo generated: ${memo} for ${playerPk.slice(0, 8)}...`);
+  return memo;
 }
 
-export function getServerAddress(): string {
-  if (!serverPublicKey) throw new Error('Server wallet not initialized');
-  return serverPublicKey;
+export function startPaymentStream(): void {
+  const serverPk = getServerPublicKey();
+  console.log(c.cyan('[payment]') + ' Starting Horizon SSE payment stream...');
+  horizon.payments().forAccount(serverPk).cursor('now').stream({
+    onmessage: async (payment: any) => {
+      if (payment.type !== 'payment' || payment.asset_type !== 'native') return;
+      if (parseFloat(payment.amount) < parseFloat(PVP_FEE_XLM)) return;
+      try {
+        const tx = await horizon.transactions().transaction(payment.transaction_hash).call();
+        const memo = tx.memo;
+        if (!memo || !memo.startsWith('BZK-')) return;
+        console.log(c.cyan('[payment]') + ` Detected payment: ${payment.amount} XLM, memo: ${memo}, from: ${payment.from.slice(0, 8)}...`);
+        const sb = getSupabase();
+        const { data: pending } = await sb.from('pending_payments').select().eq('memo', memo).eq('status', 'pending').single();
+        if (!pending) { console.log(c.yellow('[payment]') + ` No pending payment for memo: ${memo}`); return; }
+        if (new Date(pending.expires_at) < new Date()) {
+          await sb.from('pending_payments').update({ status: 'expired' }).eq('memo', memo);
+          console.log(c.yellow('[payment]') + ` Memo expired: ${memo}`); return;
+        }
+        const tokenTxHash = await issueBattleToken(pending.player_pk);
+        await sb.from('pending_payments').update({ status: 'matched' }).eq('memo', memo);
+        await sb.from('payments').insert({
+          player_pk: pending.player_pk, tx_hash: payment.transaction_hash,
+          amount_xlm: parseFloat(payment.amount), memo, battle_token_tx_hash: tokenTxHash, status: 'completed',
+        });
+        console.log(c.cyan('[payment]') + ` BATTLE token issued to ${pending.player_pk.slice(0, 8)}...`);
+      } catch (err: any) {
+        console.error(c.red('[payment]') + ` SSE handler error: ${err.message}`);
+      }
+    },
+    onerror: (err: any) => { console.error(c.red('[payment]') + ` SSE stream error: ${err?.message || err}`); },
+  });
 }
 
-export async function verifyPayment(txHash: string, playerPk: string): Promise<{ valid: boolean; error?: string }> {
-  if (verifiedPayments.has(txHash)) {
-    return { valid: false, error: 'Transaction already used' };
-  }
-
-  try {
-    const ops = await horizon.operations().forTransaction(txHash).call();
-
-    const paymentOp = ops.records.find((op: any) =>
-      op.type === 'payment' &&
-      op.asset_type === 'native' &&
-      op.to === serverPublicKey &&
-      parseFloat(op.amount) >= parseFloat(PVP_FEE_XLM)
-    );
-
-    if (!paymentOp) {
-      return { valid: false, error: 'No valid payment found in transaction' };
-    }
-
-    verifiedPayments.set(txHash, { txHash, playerPk, timestamp: Date.now() });
-
-    console.log(c.cyan('[payment]') + ` Payment verified for ${playerPk.slice(0, 8)}...`);
-    console.log(c.cyan('[payment]') + ` TX: https://stellar.expert/explorer/testnet/tx/${txHash}`);
-    console.log(c.cyan('[payment]') + ` Amount: >= ${PVP_FEE_XLM} XLM | Verified payments in memory: ${verifiedPayments.size}`);
-
-    return { valid: true };
-  } catch (err: any) {
-    return { valid: false, error: `Horizon error: ${err.message}` };
-  }
+export async function playerHasBattleToken(playerPk: string): Promise<boolean> {
+  return hasBattleToken(playerPk);
 }
 
-export function hasValidPayment(playerPk: string): boolean {
-  for (const [, payment] of verifiedPayments) {
-    if (payment.playerPk === playerPk) return true;
-  }
-  return false;
-}
-
-export function consumePayment(playerPk: string): void {
-  for (const [hash, payment] of verifiedPayments) {
-    if (payment.playerPk === playerPk) {
-      verifiedPayments.delete(hash);
-      return;
-    }
-  }
+export async function consumeBattleToken(playerPk: string): Promise<string> {
+  return clawbackBattleToken(playerPk);
 }

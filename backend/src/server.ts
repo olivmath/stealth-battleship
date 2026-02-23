@@ -5,7 +5,8 @@ import { createServer } from 'http';
 import app from './app.js';
 import { loadCircuits } from './shared/circuits.js';
 import { createSocketServer } from './ws/socket.js';
-import { initServerWallet } from './payment/interactor.js';
+import { initStellarAsset, setupIssuerFlags } from './payment/stellar-asset.js';
+import { startPaymentStream } from './payment/interactor.js';
 import { c } from './log.js';
 
 const PORT = process.env.PORT || 3000;
@@ -23,11 +24,13 @@ async function main() {
   console.log(c.cyan('[server]') + ` Circuits ready ${c.ok('✓')} ${c.time(`(${Date.now() - t0}ms)`)}`);
   console.log('');
 
-  // Initialize Stellar server wallet (optional — server works without it)
+  // Initialize Stellar BATTLE asset + SSE payment stream
   try {
-    initServerWallet();
+    initStellarAsset();
+    await setupIssuerFlags();
+    startPaymentStream();
   } catch (err: any) {
-    console.log(c.yellow('[payment]') + ` Wallet not initialized: ${err.message}`);
+    console.log(c.yellow('[payment]') + ` Stellar not initialized: ${err.message}`);
     console.log(c.yellow('[payment]') + ' PvP payment gate will be unavailable');
   }
 
@@ -37,9 +40,7 @@ async function main() {
   httpServer.listen(PORT, () => {
     console.log(c.cyan('[server]') + ` Listening on ${c.boldCyan(`http://0.0.0.0:${PORT}`)}`);
     console.log(c.cyan('[server]') + ` Health:         ${c.green('GET')}  ${c.dim(`http://localhost:${PORT}/health`)}`);
-    console.log(c.cyan('[server]') + ` Board Validity: ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/board-validity`)}`);
-    console.log(c.cyan('[server]') + ` Shot Proof:     ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/shot-proof`)}`);
-    console.log(c.cyan('[server]') + ` Turns Proof:    ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/prove/turns-proof`)}`);
+    console.log(c.cyan('[server]') + ` Payment:        ${c.yellow('POST')} ${c.dim(`http://localhost:${PORT}/api/payment/memo`)}`);
     console.log(c.cyan('[server]') + ` WebSocket:      ${c.magenta('WS')}   ${c.dim(`ws://localhost:${PORT}`)}`);
     console.log('');
     console.log(c.bgGreen('Ready for proof requests + PvP'));
