@@ -52,7 +52,7 @@ export function createTurnsProofAdapter(): TurnsProofPort {
       console.log(`   ${c.ok('✓')} Witness ${c.time(`(${Date.now() - t0}ms)`)}`);
 
       console.log(`   ${c.magenta('Generating proof...')}`);
-      const proofResult = await circuit.backend.generateProof(witness);
+      const proofResult = await circuit.backend.generateProof(witness, { keccak: true });
       return proofResult;
     },
   };

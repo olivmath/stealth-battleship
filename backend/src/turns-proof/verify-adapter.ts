@@ -14,7 +14,7 @@ export function createTurnsProofVerifyAdapter(): TurnsProofVerifyPort {
       const valid = await circuit.backend.verifyProof({
         proof: new Uint8Array(proof),
         publicInputs,
-      });
+      }, { keccak: true });
       console.log(`   ${c.ok('✓')} Verification ${c.time(`(${Date.now() - t0}ms)`)}`);
 
       return valid;

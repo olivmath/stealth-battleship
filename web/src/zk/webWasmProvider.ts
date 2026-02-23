@@ -73,7 +73,7 @@ export class WebWasmZKProvider implements ZKProvider {
 
     const backend = new this.UltraHonkBackend(circuit.bytecode);
     try {
-      const proofData = await backend.generateProof(witness);
+      const proofData = await backend.generateProof(witness, { keccak: true });
       return { proof: proofData.proof, publicInputs: proofData.publicInputs };
     } finally {
       await backend.destroy();
