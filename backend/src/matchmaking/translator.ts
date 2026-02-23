@@ -3,16 +3,18 @@ import {
   findRandomMatch, cancelSearch, createFriendMatch, joinFriendMatch,
 } from './interactor.js';
 import { playerHasBattleToken, consumeBattleToken } from '../payment/interactor.js';
+import { hexToStellarPublic } from '../auth/entities.js';
 import { c, debug } from '../log.js';
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   const publicKey = (socket.data as { publicKey: string }).publicKey;
+  const stellarKey = hexToStellarPublic(publicKey);
   const shortKey = publicKey.slice(0, 8);
 
   socket.on('match:find_random', async (data: { gridSize?: number }) => {
     debug('[match]', `find_random from ${shortKey}..., gridSize=${data?.gridSize}`);
 
-    if (!(await playerHasBattleToken(publicKey))) {
+    if (!(await playerHasBattleToken(stellarKey))) {
       debug('[match]', `${shortKey}... has no BATTLE token — rejected`);
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
@@ -35,8 +37,8 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
       debug('[match]', `Pair found! matchId=${match.id}, p1=${match.player1.publicKey.slice(0, 8)}..., p2=${match.player2!.publicKey.slice(0, 8)}...`);
 
       // Clawback BATTLE tokens for both players on successful match
-      await consumeBattleToken(match.player1.publicKey);
-      await consumeBattleToken(match.player2!.publicKey);
+      await consumeBattleToken(hexToStellarPublic(match.player1.publicKey));
+      await consumeBattleToken(hexToStellarPublic(match.player2!.publicKey));
       debug('[match]', `Tokens consumed for both players`);
 
       io.to(p1Id).emit('match:found', {
@@ -64,7 +66,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   socket.on('match:create_friend', async (data: { gridSize?: number }) => {
     debug('[match]', `create_friend from ${shortKey}..., gridSize=${data?.gridSize}`);
 
-    if (!(await playerHasBattleToken(publicKey))) {
+    if (!(await playerHasBattleToken(stellarKey))) {
       debug('[match]', `${shortKey}... has no BATTLE token — rejected`);
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
@@ -81,7 +83,7 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   socket.on('match:join_friend', async (data: { matchCode: string }) => {
     debug('[match]', `join_friend from ${shortKey}..., code=${data?.matchCode}`);
 
-    if (!(await playerHasBattleToken(publicKey))) {
+    if (!(await playerHasBattleToken(stellarKey))) {
       debug('[match]', `${shortKey}... has no BATTLE token — rejected`);
       socket.emit('match:error', { message: 'Payment required to play PvP' });
       return;
@@ -105,8 +107,8 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
     const p1Id = match.player1.socketId;
 
     // Clawback BATTLE tokens for both players on successful friend match
-    await consumeBattleToken(match.player1.publicKey);
-    await consumeBattleToken(publicKey);
+    await consumeBattleToken(hexToStellarPublic(match.player1.publicKey));
+    await consumeBattleToken(stellarKey);
     debug('[match]', `Friend match joined: matchId=${match.id}, tokens consumed`);
 
     // Notify both players
