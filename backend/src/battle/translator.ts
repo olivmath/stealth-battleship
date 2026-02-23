@@ -122,7 +122,7 @@ export function registerBattleHandlers(
           proof2: match.player2BoardProof!, pubInputs2,
         }).then(({ txHash, sessionId }) => {
           match.sorobanSessionId = sessionId;
-          console.log(c.bgMagenta('⛓ BLOCKCHAIN') + ` open_match tx confirmed → tx=${c.boldCyan(txHash)} sessionId=${sessionId}`);
+          console.log(c.cyan('[stellar]') + ` open_match tx confirmed → tx=${c.boldCyan(txHash)} sessionId=${sessionId}`);
         }).catch((err) => {
           console.error(c.yellow('[soroban]') + ` open_match failed: ${err.message}`);
         });
@@ -499,7 +499,7 @@ export function registerBattleHandlers(
             pubInputs: turnsPublicInputs,
             player1Won: match.winner === match.player1.publicKey,
           }).then((txHash) => {
-            console.log(c.bgMagenta('⛓ BLOCKCHAIN') + ` close_match tx confirmed → tx=${c.boldCyan(txHash)}`);
+            console.log(c.cyan('[stellar]') + ` close_match tx confirmed → tx=${c.boldCyan(txHash)}`);
           }).catch((err) => {
             console.error(c.yellow('[soroban]') + ` close_match failed: ${err.message}`);
           });

@@ -1,6 +1,6 @@
 [package]
-name = "battleship"
-version = "0.2.0"
+name = "zk-verifier"
+version = "0.1.0"
 edition = "2021"
 publish = false
 
@@ -10,6 +10,7 @@ doctest = false
 
 [dependencies]
 soroban-sdk = { workspace = true, default-features = false, features = ["alloc"] }
+ultrahonk_soroban_verifier = { path = "../../vendor/ultrahonk-rust-verifier/ultrahonk-soroban-verifier", default-features = false }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

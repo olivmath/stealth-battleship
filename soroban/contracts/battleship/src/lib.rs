@@ -4,9 +4,25 @@ use soroban_sdk::{
     contract, contractclient, contracterror, contractimpl, contracttype, log, symbol_short,
     Address, Bytes, Env, Symbol,
 };
-use ultrahonk_soroban_verifier::UltraHonkVerifier;
 
-// ─── Game Hub interface (cross-contract calls) ───
+// ─── Cross-contract: Verifier ───
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum VerifierError {
+    NotAdmin = 1,
+    VerificationFailed = 2,
+    VkNotSet = 3,
+}
+
+#[contractclient(name = "VerifierClient")]
+pub trait Verifier {
+    fn verify_board(env: Env, proof: Bytes, public_inputs: Bytes) -> Result<bool, VerifierError>;
+    fn verify_turns(env: Env, proof: Bytes, public_inputs: Bytes) -> Result<bool, VerifierError>;
+}
+
+// ─── Cross-contract: Game Hub ───
 
 #[contractclient(name = "GameHubClient")]
 pub trait GameHub {
@@ -24,9 +40,8 @@ pub trait GameHub {
 
 // ─── Storage keys ───
 
-const VK_BOARD: Symbol = symbol_short!("vk_board");
-const VK_TURNS: Symbol = symbol_short!("vk_turns");
 const ADMIN: Symbol = symbol_short!("admin");
+const VERIFIER: Symbol = symbol_short!("verifier");
 const GAME_HUB: Symbol = symbol_short!("game_hub");
 const SESSION_CTR: Symbol = symbol_short!("sess_ctr");
 
@@ -49,33 +64,31 @@ pub enum Error {
     VerificationFailed = 2,
     MatchNotFound = 3,
     MatchAlreadyClosed = 4,
-    VkNotSet = 5,
 }
 
 // ─── Contract ───
 
 #[contract]
-pub struct BattleshipVerifier;
+pub struct BattleshipContract;
 
 #[contractimpl]
-impl BattleshipVerifier {
-    /// Deploy-time constructor: stores admin, game hub address, and both VKs.
+impl BattleshipContract {
+    /// Deploy-time constructor: stores admin, verifier address, and game hub address.
     pub fn __constructor(
         env: Env,
         admin: Address,
+        verifier: Address,
         game_hub: Address,
-        vk_board_validity: Bytes,
-        vk_turns_proof: Bytes,
     ) {
         env.storage().instance().set(&ADMIN, &admin);
+        env.storage().instance().set(&VERIFIER, &verifier);
         env.storage().instance().set(&GAME_HUB, &game_hub);
-        env.storage().instance().set(&VK_BOARD, &vk_board_validity);
-        env.storage().instance().set(&VK_TURNS, &vk_turns_proof);
         env.storage().instance().set(&SESSION_CTR, &0u32);
-        log!(&env, "BattleshipVerifier deployed");
+        log!(&env, "BattleshipContract deployed");
     }
 
-    /// Verify both players' board_validity proofs and open a match on Game Hub.
+    /// Verify both players' board_validity proofs via the Verifier contract
+    /// and open a match on Game Hub.
     /// Only callable by admin (backend server).
     /// Returns the session_id.
     pub fn open_match(
@@ -91,28 +104,15 @@ impl BattleshipVerifier {
         let admin: Address = env.storage().instance().get(&ADMIN).ok_or(Error::NotAdmin)?;
         admin.require_auth();
 
-        // Get board_validity VK and create verifier
-        let vk: Bytes = env
-            .storage()
-            .instance()
-            .get(&VK_BOARD)
-            .ok_or(Error::VkNotSet)?;
-        let verifier = UltraHonkVerifier::new(&env, &vk)
-            .map_err(|_| Error::VkNotSet)?;
+        // Cross-contract: verify player 1 board proof
+        let verifier_addr: Address = env.storage().instance().get(&VERIFIER).unwrap();
+        let verifier = VerifierClient::new(&env, &verifier_addr);
 
-        // Verify player 1 board proof
-        verifier.verify(&proof1, &pub_inputs1)
-            .map_err(|_| {
-                log!(&env, "Player 1 board proof verification failed");
-                Error::VerificationFailed
-            })?;
+        // Verify player 1 board proof (panics on verification failure)
+        verifier.verify_board(&proof1, &pub_inputs1);
 
-        // Verify player 2 board proof
-        verifier.verify(&proof2, &pub_inputs2)
-            .map_err(|_| {
-                log!(&env, "Player 2 board proof verification failed");
-                Error::VerificationFailed
-            })?;
+        // Verify player 2 board proof (panics on verification failure)
+        verifier.verify_board(&proof2, &pub_inputs2);
 
         // Increment session counter
         let session_id: u32 = env
@@ -135,7 +135,7 @@ impl BattleshipVerifier {
             .temporary()
             .extend_ttl(&session_id, 518_400, 518_400);
 
-        // Cross-contract call: game_hub.start_game(game_id, session_id, p1, p2, points, points)
+        // Cross-contract: game_hub.start_game(...)
         let game_hub_addr: Address = env.storage().instance().get(&GAME_HUB).unwrap();
         let self_addr = env.current_contract_address();
         let client = GameHubClient::new(&env, &game_hub_addr);
@@ -145,7 +145,7 @@ impl BattleshipVerifier {
         Ok(session_id)
     }
 
-    /// Verify turns_proof and close a match on Game Hub.
+    /// Verify turns_proof via the Verifier contract and close a match on Game Hub.
     /// Only callable by admin (backend server).
     pub fn close_match(
         env: Env,
@@ -169,27 +169,18 @@ impl BattleshipVerifier {
             return Err(Error::MatchAlreadyClosed);
         }
 
-        // Get turns_proof VK and create verifier
-        let vk: Bytes = env
-            .storage()
-            .instance()
-            .get(&VK_TURNS)
-            .ok_or(Error::VkNotSet)?;
-        let verifier = UltraHonkVerifier::new(&env, &vk)
-            .map_err(|_| Error::VkNotSet)?;
+        // Cross-contract: verify turns proof
+        let verifier_addr: Address = env.storage().instance().get(&VERIFIER).unwrap();
+        let verifier = VerifierClient::new(&env, &verifier_addr);
 
-        // Verify turns proof
-        verifier.verify(&proof, &pub_inputs)
-            .map_err(|_| {
-                log!(&env, "Turns proof verification failed");
-                Error::VerificationFailed
-            })?;
+        // Verify turns proof (panics on verification failure)
+        verifier.verify_turns(&proof, &pub_inputs);
 
         // Mark closed
         match_state.closed = true;
         env.storage().temporary().set(&session_id, &match_state);
 
-        // Cross-contract call: game_hub.end_game(session_id, player1_won)
+        // Cross-contract: game_hub.end_game(...)
         let game_hub_addr: Address = env.storage().instance().get(&GAME_HUB).unwrap();
         let client = GameHubClient::new(&env, &game_hub_addr);
         client.end_game(&session_id, &player1_won);
