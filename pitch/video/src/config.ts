@@ -75,56 +75,42 @@ const TIMELINE = {
     },
   },
 
-  // ▸ CENA 4 — DEMO ARCADE (single player)
-  demoArcade: {
+  // ▸ CENA 4 — DEMO PVP (two phones) — was scene 5, shifted up
+  demoPvp: {
     at: [80, 105],
     blocks: {
-      letMeShow: [80, 82],
-      placement: [82, 87],
-      readyProof: [87, 91],
-      deployTx: [91, 94],
-      battle: [94, 99],
-      hitResult: [99, 103],
-      zoomOut: [103, 105],
+      intro: [80, 83],
+      bothPhones: [83, 88],
+      matchmaking: [88, 91],
+      aliceAttacks: [91, 95],
+      bobResponds: [95, 99],
+      proofVerify: [99, 102],
+      zoomOut: [102, 105],
     },
   },
 
-  // ▸ CENA 5 — DEMO PVP (two phones)
-  demoPvp: {
-    at: [105, 130],
-    blocks: {
-      intro: [105, 108],
-      bothPhones: [108, 113],
-      matchmaking: [113, 116],
-      aliceAttacks: [116, 120],
-      bobResponds: [120, 124],
-      proofVerify: [124, 127],
-      zoomOut: [127, 130],
-    },
-  },
-
-  // ▸ CENA 6 — ARQUITETURA + STELLAR
+  // ▸ CENA 5 — ARQUITETURA + STELLAR — was scene 6
   architecture: {
-    at: [130, 150],
+    at: [105, 125],
     blocks: {
-      players: [130, 133],
-      backend: [133, 136],
-      messages: [136, 140],
-      blockchain: [140, 144],
-      protocol25: [144, 148],
-      fadeOut: [148, 150],
+      players: [105, 108],
+      backend: [108, 111],
+      messages: [111, 115],
+      blockchain: [115, 119],
+      protocol25: [119, 123],
+      fadeOut: [123, 125],
     },
   },
 
-  // ▸ CENA 7 — ENCERRAMENTO
+  // ▸ CENA 6 — ENCERRAMENTO (slide cover style)
   closingEpic: {
-    at: [150, 170],
+    at: [125, 145],
     blocks: {
-      footage: [150, 155],
-      logoReveal: [155, 158],
-      tagline: [158, 163],
-      links: [163, 167],
-      partnerLogos: [167, 170],
+      footage: [125, 130],
+      logoReveal: [130, 133],
+      tagline: [133, 138],
+      links: [138, 141],
+      partnerLogos: [141, 145],
     },
   },
 } as const;
@@ -168,31 +154,23 @@ export const SUBTITLES: SubtitleEntry[] = [
   { text: "to compute and prove the winner.", from: 71, to: 75 },
   { text: "The circuit IS the referee.", from: 75, to: 80 },
 
-  // Scene 4 — Demo Arcade
-  { text: "Let me show you the game in action.", from: 80, to: 83 },
-  { text: "Ship placement — drag and drop on the grid.", from: 83, to: 87 },
-  { text: "Board validity proof generating client-side.", from: 87, to: 91 },
-  { text: "Board hash committed on Stellar testnet.", from: 91, to: 95 },
-  { text: "Battle begins — tap to attack.", from: 95, to: 99 },
-  { text: "Shot proof verified — result is honest.", from: 99, to: 104 },
+  // Scene 4 — Demo PvP (shifted from 105-130 to 80-105)
+  { text: "Let's see real-time PvP in action.", from: 81, to: 85 },
+  { text: "Two players, two devices, zero trust.", from: 85, to: 89 },
+  { text: "Matchmaking connects both players instantly.", from: 89, to: 93 },
+  { text: "Alice attacks — Bob's device generates the proof.", from: 93, to: 98 },
+  { text: "Proof verified on-chain. No one can cheat.", from: 98, to: 103 },
 
-  // Scene 5 — Demo PvP
-  { text: "Now let's see real-time PvP.", from: 106, to: 110 },
-  { text: "Two players, two devices, zero trust.", from: 110, to: 114 },
-  { text: "Matchmaking connects both players instantly.", from: 114, to: 118 },
-  { text: "Alice attacks — Bob's device generates the proof.", from: 118, to: 123 },
-  { text: "Proof verified on-chain. No one can cheat.", from: 123, to: 128 },
+  // Scene 5 — Architecture (shifted from 130-150 to 105-125)
+  { text: "The architecture is hybrid: on-chain + off-chain.", from: 106, to: 111 },
+  { text: "Two Soroban transactions per game — open and close.", from: 111, to: 116 },
+  { text: "Protocol 25 gives us native BN254 and Poseidon2.", from: 116, to: 121 },
+  { text: "Proof verification on-chain is efficient, not emulated.", from: 121, to: 125 },
 
-  // Scene 6 — Architecture
-  { text: "The architecture is hybrid: on-chain + off-chain.", from: 131, to: 136 },
-  { text: "Two Soroban transactions per game — open and close.", from: 136, to: 141 },
-  { text: "Protocol 25 gives us native BN254 and Poseidon2.", from: 141, to: 146 },
-  { text: "Proof verification on-chain is efficient, not emulated.", from: 146, to: 150 },
-
-  // Scene 7 — Closing
-  { text: "ZK isn't a feature — it IS the game.", from: 151, to: 155 },
-  { text: "Fair by math. Fun by design.", from: 156, to: 162 },
-  { text: "Built for Stellar Hacks 2026. Thanks for watching.", from: 163, to: 169 },
+  // Scene 6 — Closing (shifted from 150-170 to 125-145)
+  { text: "ZK isn't a feature — it IS the game.", from: 126, to: 130 },
+  { text: "Fair by math. Fun by design.", from: 131, to: 137 },
+  { text: "Built for Stellar Hacks 2026. Thanks for watching.", from: 138, to: 144 },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -274,13 +252,6 @@ export const CONFIG = {
         ),
       },
     },
-    demoArcade: {
-      ...span(TIMELINE.demoArcade.at),
-      blocks: deriveSimpleBlocks(
-        TIMELINE.demoArcade.blocks,
-        TIMELINE.demoArcade.at[0]
-      ),
-    },
     demoPvp: {
       ...span(TIMELINE.demoPvp.at),
       blocks: deriveSimpleBlocks(
@@ -309,7 +280,6 @@ export const SCENE_ORDER = [
   "hookCinematic",
   "problemSplit",
   "threeProofs",
-  "demoArcade",
   "demoPvp",
   "architecture",
   "closingEpic",
@@ -334,7 +304,6 @@ export const SCENE_COLORS: Record<SceneName, string> = {
   hookCinematic: "#1a2a4a",
   problemSplit: "#ff3a3a",
   threeProofs: "#00d4aa",
-  demoArcade: "#c9a634",
   demoPvp: "#ff6b35",
   architecture: "#7c3aed",
   closingEpic: "#1a2a4a",

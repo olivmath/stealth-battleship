@@ -5,7 +5,6 @@ import { CONFIG, TOTAL_FRAMES, getScene } from "./config";
 import { HookCinematic } from "./scenes/HookCinematic";
 import { ProblemSplit } from "./scenes/ProblemSplit";
 import { ThreeProofs } from "./scenes/ThreeProofs";
-import { GameDemo } from "./scenes/GameDemo";
 import { DemoPvp } from "./scenes/DemoPvp";
 import { Architecture } from "./scenes/Architecture";
 import { ClosingEpic } from "./scenes/ClosingEpic";
@@ -51,15 +50,7 @@ const RemotionRoot: React.FC = () => {
         height={height}
       />
       <Composition
-        id="4-Demo-Arcade"
-        component={GameDemo}
-        durationInFrames={getScene("demoArcade").duration}
-        fps={fps}
-        width={width}
-        height={height}
-      />
-      <Composition
-        id="5-Demo-PvP"
+        id="4-Demo-PvP"
         component={DemoPvp}
         durationInFrames={getScene("demoPvp").duration}
         fps={fps}
@@ -67,7 +58,7 @@ const RemotionRoot: React.FC = () => {
         height={height}
       />
       <Composition
-        id="6-Arquitetura"
+        id="5-Arquitetura"
         component={Architecture}
         durationInFrames={getScene("architecture").duration}
         fps={fps}
@@ -75,7 +66,7 @@ const RemotionRoot: React.FC = () => {
         height={height}
       />
       <Composition
-        id="7-Encerramento"
+        id="6-Encerramento"
         component={ClosingEpic}
         durationInFrames={getScene("closingEpic").duration}
         fps={fps}

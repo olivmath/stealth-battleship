@@ -7,7 +7,6 @@ import { Subtitles } from "./components/Subtitles";
 import { HookCinematic } from "./scenes/HookCinematic";
 import { ProblemSplit } from "./scenes/ProblemSplit";
 import { ThreeProofs } from "./scenes/ThreeProofs";
-import { GameDemo } from "./scenes/GameDemo";
 import { DemoPvp } from "./scenes/DemoPvp";
 import { Architecture } from "./scenes/Architecture";
 import { ClosingEpic } from "./scenes/ClosingEpic";
@@ -16,7 +15,6 @@ const SCENE_COMPONENTS: Record<(typeof SCENE_ORDER)[number], React.FC> = {
   hookCinematic: HookCinematic,
   problemSplit: ProblemSplit,
   threeProofs: ThreeProofs,
-  demoArcade: GameDemo,
   demoPvp: DemoPvp,
   architecture: Architecture,
   closingEpic: ClosingEpic,
