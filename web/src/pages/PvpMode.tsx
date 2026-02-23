@@ -24,29 +24,21 @@ export default function PvpMode() {
   const pvp = usePvP();
   const [walletExists, setWalletExists] = useState<boolean | null>(null);
   const [connecting, setConnecting] = useState(false);
-  const [authError, setAuthError] = useState('');
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [paymentError, setPaymentError] = useState('');
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [pinError, setPinError] = useState(false);
-  const [pinStep, setPinStep] = useState<'enter' | 'confirm'>('enter');
-  const [tempPin, setTempPin] = useState('');
 
   useEffect(() => {
-    walletInteractor().then(m => m.hasWallet()).then(setWalletExists);
+    walletInteractor().then(m => m.hasWallet()).then(exists => {
+      if (!exists) {
+        // No wallet — redirect to login to create one
+        navigate('/', { replace: true });
+      } else {
+        setWalletExists(true);
+      }
+    });
   }, []);
-
-  // Reset create flow after pin mismatch error
-  useEffect(() => {
-    if (pinError && !walletExists) {
-      const timer = setTimeout(() => {
-        setPinError(false);
-        setPinStep('enter');
-        setTempPin('');
-      }, 900);
-      return () => clearTimeout(timer);
-    }
-  }, [pinError, walletExists]);
 
   // Payment step: memo-based flow — request memo, send payment with trustline, poll for token
   const handlePayment = async (secret: string) => {
@@ -98,10 +90,9 @@ export default function PvpMode() {
     }
   };
 
-  // Wallet exists: unlock with PIN
+  // Unlock wallet with PIN
   const handleUnlock = async (pinValue: string) => {
     setConnecting(true);
-    setAuthError('');
     try {
       const { getSecretKey: getSK } = await walletInteractor();
       const secret = await getSK(pinValue);
@@ -110,38 +101,6 @@ export default function PvpMode() {
     } catch {
       setPinError(true);
       setConnecting(false);
-    }
-  };
-
-  // No wallet: create with PIN
-  const handleCreate = async (pinValue: string) => {
-    setConnecting(true);
-    setAuthError('');
-    try {
-      const { createWallet, getSecretKey: getSK } = await walletInteractor();
-      await createWallet(pinValue);
-      const secret = await getSK(pinValue);
-      setWalletExists(true);
-      setSecretKey(secret);
-      setConnecting(false);
-    } catch (e: any) {
-      setAuthError(e.message || t('pvpMode.errorCreating', 'Error creating wallet'));
-      setConnecting(false);
-    }
-  };
-
-  // Two-step PIN flow for wallet creation
-  const handleCreatePinSubmit = (enteredPin: string) => {
-    if (pinStep === 'enter') {
-      setTempPin(enteredPin);
-      setPinStep('confirm');
-      setPinError(false);
-    } else {
-      if (enteredPin === tempPin) {
-        handleCreate(enteredPin);
-      } else {
-        setPinError(true);
-      }
     }
   };
 
@@ -155,41 +114,6 @@ export default function PvpMode() {
     return (
       <PageShell hideHeader>
         <StatusFeedback status="loading" />
-      </PageShell>
-    );
-  }
-
-  // No wallet — create PIN flow
-  if (!walletExists) {
-    return (
-      <PageShell
-        title={t('pvpMode.title')}
-        subtitle={t('pvpMode.createPinPrompt', 'Create a PIN to generate your wallet')}
-        actions={
-          <NavalButton
-            title={t('pvpMode.back')}
-            variant="ghost"
-            size="small"
-            onPress={() => navigate('/menu', { replace: true })}
-          />
-        }
-      >
-        {connecting ? (
-          <div style={styles.pinSection}>
-            <RadarSpinner size={40} />
-          </div>
-        ) : (
-          <PinModal
-            visible={true}
-            title={pinStep === 'enter'
-              ? t('pvpMode.pinLabel', 'PIN (4 digits)')
-              : t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}
-            error={pinError}
-            onSubmit={handleCreatePinSubmit}
-            onCancel={() => navigate('/menu', { replace: true })}
-          />
-        )}
-        {authError && <div style={styles.pinSection}><span style={styles.errorText}>{authError}</span></div>}
       </PageShell>
     );
   }
