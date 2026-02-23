@@ -8,15 +8,18 @@ import { PinModal } from '../components/UI/PinModal';
 import { useGame } from '../game/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { getPlayerName, savePlayerName } from '../game/adapter';
-import { hasWallet, getSecretKey } from '../wallet/interactor';
+import { hasWallet, getSecretKey, createWallet } from '../wallet/interactor';
 import { COLORS, FONTS, SPACING, RADIUS, LAYOUT } from '../shared/theme';
+
+type LoginPhase = 'loading' | 'nameEntry' | 'createPin' | 'confirmPin' | 'creatingWallet' | 'unlockPin';
 
 export default function Login() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [showPin, setShowPin] = useState(false);
+  const [phase, setPhase] = useState<LoginPhase>('loading');
   const [pinError, setPinError] = useState(false);
+  const [tempPin, setTempPin] = useState('');
+  const [authError, setAuthError] = useState('');
   const navigate = useNavigate();
   const { dispatch } = useGame();
   const haptics = useHaptics();
@@ -27,31 +30,41 @@ export default function Login() {
         dispatch({ type: 'SET_PLAYER', name: saved });
         const walletExists = await hasWallet();
         if (walletExists) {
-          setShowPin(true);
-          setLoading(false);
+          setPhase('unlockPin');
         } else {
-          // No wallet — go straight to menu (wallet created on-demand for PvP)
-          navigate('/menu', { replace: true });
+          // Has name but no wallet (edge case / migration)
+          setName(saved);
+          setPhase('createPin');
         }
         return;
       }
-      setLoading(false);
+      setPhase('nameEntry');
     });
   }, []);
+
+  // Reset create flow after pin mismatch
+  useEffect(() => {
+    if (pinError && phase === 'confirmPin') {
+      const timer = setTimeout(() => {
+        setPinError(false);
+        setTempPin('');
+        setPhase('createPin');
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [pinError, phase]);
 
   const handleEnter = async () => {
     if (!name.trim()) return;
     haptics.light();
-    await savePlayerName(name.trim());
-    dispatch({ type: 'SET_PLAYER', name: name.trim() });
-    navigate('/menu', { replace: true });
+    setPhase('createPin');
   };
 
-  const handlePinSuccess = async (pin: string) => {
+  // Returning user: unlock existing wallet
+  const handleUnlockPin = async (pin: string) => {
     try {
       setPinError(false);
       await getSecretKey(pin);
-      setShowPin(false);
       haptics.success();
       navigate('/menu', { replace: true });
     } catch {
@@ -60,7 +73,35 @@ export default function Login() {
     }
   };
 
-  if (loading && !showPin) return (
+  // New user: two-step PIN creation
+  const handleCreatePinSubmit = async (enteredPin: string) => {
+    if (phase === 'createPin') {
+      setTempPin(enteredPin);
+      setPinError(false);
+      setPhase('confirmPin');
+    } else if (phase === 'confirmPin') {
+      if (enteredPin === tempPin) {
+        setPhase('creatingWallet');
+        setAuthError('');
+        try {
+          await savePlayerName(name.trim());
+          dispatch({ type: 'SET_PLAYER', name: name.trim() });
+          await createWallet(enteredPin);
+          haptics.success();
+          navigate('/menu', { replace: true });
+        } catch (e: any) {
+          setAuthError(e.message || 'Error creating wallet');
+          setPhase('createPin');
+          setTempPin('');
+        }
+      } else {
+        haptics.error();
+        setPinError(true);
+      }
+    }
+  };
+
+  if (phase === 'loading') return (
     <PageShell hideHeader>
       <div style={styles.loadingContainer}>
         <RadarSpinner size={50} />
@@ -68,20 +109,50 @@ export default function Login() {
     </PageShell>
   );
 
-  if (showPin) return (
+  if (phase === 'unlockPin') return (
     <PageShell hideHeader>
       <div style={styles.loadingContainer}>
         <PinModal
           visible={true}
           title={t('wallet.view.enterPin', 'Enter PIN')}
           error={pinError}
-          onSubmit={handlePinSuccess}
+          onSubmit={handleUnlockPin}
           onCancel={() => {
-            setShowPin(false);
             setPinError(false);
-            setLoading(false);
+            setPhase('nameEntry');
           }}
         />
+      </div>
+    </PageShell>
+  );
+
+  if (phase === 'createPin' || phase === 'confirmPin') return (
+    <PageShell
+      title={t('login.title')}
+      subtitle={name.trim() ? t('pvpMode.createPinPrompt', 'Create a PIN to generate your wallet') : undefined}
+    >
+      {authError && <span style={styles.errorText}>{authError}</span>}
+      <PinModal
+        key={phase}
+        visible={true}
+        title={phase === 'createPin'
+          ? t('pvpMode.pinLabel', 'PIN (4 digits)')
+          : t('pvpMode.pinConfirmLabel', 'CONFIRM PIN')}
+        error={pinError}
+        onSubmit={handleCreatePinSubmit}
+        onCancel={() => {
+          setPinError(false);
+          setTempPin('');
+          setPhase('nameEntry');
+        }}
+      />
+    </PageShell>
+  );
+
+  if (phase === 'creatingWallet') return (
+    <PageShell hideHeader>
+      <div style={styles.loadingContainer}>
+        <RadarSpinner size={50} />
       </div>
     </PageShell>
   );
@@ -149,5 +220,12 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     marginTop: SPACING.xxl,
     opacity: 0.5,
+  },
+  errorText: {
+    fontFamily: FONTS.body,
+    fontSize: 13,
+    color: COLORS.accent.fire,
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
 };
