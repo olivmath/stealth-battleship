@@ -13,6 +13,8 @@ import { c, debug } from '../log.js';
 import { persistMatch, persistAttack, persistMatchEnd, upsertPlayerStats, persistProofLog } from '../shared/persistence.js';
 import { getCircuit } from '../shared/circuits.js';
 import { getShipSizes } from '../matchmaking/entities.js';
+import { openMatchOnChain, closeMatchOnChain } from '../soroban/adapter.js';
+import { getServerPublicKey } from '../payment/stellar-asset.js';
 
 function getOpponentSocketId(
   match: { player1: { publicKey: string; socketId: string }; player2?: { publicKey: string; socketId: string } },
@@ -64,7 +66,7 @@ export function registerBattleHandlers(
       const t0 = Date.now();
       const { backend } = getCircuit('board_validity');
       const proofBytes = new Uint8Array(data.proof);
-      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: boardPublicInputs });
+      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: boardPublicInputs }, { keccak: true });
       const verifyMs = Date.now() - t0;
 
       void persistProofLog({
@@ -103,6 +105,25 @@ export function registerBattleHandlers(
         player1Pk: match.player1.publicKey,
         player2Pk: match.player2!.publicKey,
       });
+
+      // Fire-and-forget: submit board proofs on-chain
+      try {
+        const serverAddr = getServerPublicKey();
+        const shipSizes1 = getShipSizes(match.gridSize);
+        const pubInputs1 = [match.player1BoardHash!, ...shipSizes1.map(String)];
+        const pubInputs2 = [match.player2BoardHash!, ...shipSizes1.map(String)];
+        void openMatchOnChain({
+          p1Pk: serverAddr, p2Pk: serverAddr, // V1: server address for both (no player wallets yet)
+          proof1: match.player1BoardProof!, pubInputs1,
+          proof2: match.player2BoardProof!, pubInputs2,
+        }).then((txHash) => {
+          debug('[soroban]', `open_match tx confirmed: ${txHash}`);
+        }).catch((err) => {
+          console.error(c.yellow('[soroban]') + ` open_match failed: ${err.message}`);
+        });
+      } catch (err: any) {
+        debug('[soroban]', `open_match skipped: ${err.message}`);
+      }
 
       // Both ready — start battle
       io.to(match.player1.socketId).emit('placement:both_ready', {
@@ -246,7 +267,7 @@ export function registerBattleHandlers(
       const resultBit = data.result === 'hit' ? '1' : '0';
       const shotPublicInputs = [defenderHash, String(data.row), String(data.col), resultBit];
       debug('[battle]', `shot_proof publicInputs: hash=${defenderHash.slice(0, 16)}..., row=${data.row}, col=${data.col}, result=${resultBit}`);
-      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: shotPublicInputs });
+      const isValid = await backend.verifyProof({ proof: proofBytes, publicInputs: shotPublicInputs }, { keccak: true });
       const verifyMs = Date.now() - t0;
 
       void persistProofLog({
@@ -427,7 +448,7 @@ export function registerBattleHandlers(
         debug('[battle]', `turns_proof input: totalTurns=${match.turnNumber}, attacks=${match.attacks.length}`);
 
         const { witness } = await noir.execute(turnsInput);
-        const proof = await backend.generateProof(witness);
+        const proof = await backend.generateProof(witness, { keccak: true });
         const verifyMs = Date.now() - t0;
 
         void persistProofLog({
@@ -443,6 +464,28 @@ export function registerBattleHandlers(
         io.to(match.player2!.socketId).emit('battle:turns_proof', {
           matchId: match.id, proof: proofHex,
         });
+
+        // Fire-and-forget: submit turns_proof on-chain
+        try {
+          const turnsPublicInputs = [
+            match.player1BoardHash!,
+            match.player2BoardHash!,
+            String(match.turnNumber),
+            match.winner === match.player1.publicKey ? '1' : '0',
+          ];
+          void closeMatchOnChain({
+            sessionId: 0, // TODO: store session_id from open_match response
+            proof: Array.from(proof.proof),
+            pubInputs: turnsPublicInputs,
+            player1Won: match.winner === match.player1.publicKey,
+          }).then((txHash) => {
+            debug('[soroban]', `close_match tx confirmed: ${txHash}`);
+          }).catch((err) => {
+            console.error(c.yellow('[soroban]') + ` close_match failed: ${err.message}`);
+          });
+        } catch (err: any) {
+          debug('[soroban]', `close_match skipped: ${err.message}`);
+        }
 
         debug('[battle]', `turns_proof generated: proofSize=${proof.proof.length}, elapsed=${verifyMs}ms`);
         console.log(c.boldGreen('[battle]') + ` turns_proof generated for ${match.id} ${c.time(`(${verifyMs}ms)`)}`);

@@ -7,6 +7,7 @@ import { loadCircuits } from './shared/circuits.js';
 import { createSocketServer } from './ws/socket.js';
 import { initStellarAsset, setupIssuerFlags } from './payment/stellar-asset.js';
 import { startPaymentStream } from './payment/interactor.js';
+import { initSorobanAdapter } from './soroban/adapter.js';
 import { c, debug } from './log.js';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
@@ -41,6 +42,15 @@ async function main() {
   } catch (err: any) {
     console.log(c.yellow('[payment]') + ` Stellar not initialized: ${err.message}`);
     console.log(c.yellow('[payment]') + ' PvP payment gate will be unavailable');
+  }
+
+  // Initialize Soroban contract adapter
+  try {
+    initSorobanAdapter();
+    console.log(c.cyan('[soroban]') + ` On-chain verifier ${c.ok('✓')}`);
+  } catch (err: any) {
+    console.log(c.yellow('[soroban]') + ` Not initialized: ${err.message}`);
+    console.log(c.yellow('[soroban]') + ' On-chain proof submission will be unavailable');
   }
 
   const httpServer = createServer(app);
