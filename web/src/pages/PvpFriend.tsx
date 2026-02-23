@@ -9,6 +9,27 @@ import { usePvP } from '../pvp/translator';
 import { useHaptics } from '../hooks/useHaptics';
 import { COLORS, FONTS, SPACING } from '../shared/theme';
 
+function CopyCodeButton({ code }: { code: string }) {
+  const { t } = useTranslation();
+  const haptics = useHaptics();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    haptics.light();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button onClick={handleCopy} style={{ ...styles.copyBtn, ...(copied ? styles.copyBtnCopied : {}) }}>
+      <span style={{ ...styles.copyBtnText, ...(copied ? styles.copyBtnTextCopied : {}) }}>
+        {copied ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
+      </span>
+    </button>
+  );
+}
+
 export default function PvpFriend() {
   const navigate = useNavigate();
   const { dispatch } = useGame();
@@ -17,7 +38,7 @@ export default function PvpFriend() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'select' | 'create' | 'join'>('select');
   const [joinCode, setJoinCode] = useState('');
-  // matchCode comes from PvP context
+  const [joining, setJoining] = useState(false);
 
   // Navigate when both players joined
   useEffect(() => {
@@ -39,12 +60,14 @@ export default function PvpFriend() {
 
   const handleJoin = () => {
     haptics.light();
+    setJoining(true);
     pvp.joinFriendMatch(joinCode);
   };
 
   const handleCancel = () => {
     pvp.cancelSearch();
     setJoinCode('');
+    setJoining(false);
     setMode('select');
   };
 
@@ -102,6 +125,7 @@ export default function PvpFriend() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: SPACING.xxl }}>
           <span style={styles.label}>{t('pvpFriend.matchCode')}</span>
           <span style={styles.matchCode}>{pvp.matchCode || '...'}</span>
+          {pvp.matchCode && <CopyCodeButton code={pvp.matchCode} />}
           <span style={styles.shareText}>{t('pvpFriend.shareCode')}</span>
           {pvp.error && (
             <span style={{ ...styles.errorText, marginTop: SPACING.md }}>{pvp.error}</span>
@@ -137,10 +161,10 @@ export default function PvpFriend() {
           placeholder="000000"
           maxLength={6}
           inputMode="numeric"
-          disabled={pvp.phase === 'connecting'}
+          disabled={joining}
         />
 
-        {pvp.phase === 'connecting' ? (
+        {joining ? (
           <div style={styles.connectingRow}>
             <RadarSpinner size={40} />
             <span style={styles.connectingText}>{t('pvpFriend.connecting')}</span>
@@ -238,5 +262,29 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     color: COLORS.accent.fire,
     textAlign: 'center' as const,
+  },
+  copyBtn: {
+    marginTop: SPACING.sm,
+    paddingLeft: SPACING.md,
+    paddingRight: SPACING.md,
+    paddingTop: 4,
+    paddingBottom: 4,
+    borderRadius: 4,
+    border: `1px solid ${COLORS.accent.gold}`,
+    background: 'none',
+    cursor: 'pointer',
+  },
+  copyBtnCopied: {
+    borderColor: COLORS.status.online,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+  },
+  copyBtnText: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.accent.gold,
+    letterSpacing: 2,
+  },
+  copyBtnTextCopied: {
+    color: COLORS.status.online,
   },
 };

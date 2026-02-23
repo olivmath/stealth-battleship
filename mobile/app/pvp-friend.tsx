@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import * as Clipboard from 'expo-clipboard';
 import GradientContainer from '../src/components/UI/GradientContainer';
 import NavalButton from '../src/components/UI/NavalButton';
 import RadarSpinner from '../src/components/UI/RadarSpinner';
@@ -16,6 +17,27 @@ function generateMatchId(): string {
     id += chars[Math.floor(Math.random() * chars.length)];
   }
   return id;
+}
+
+function CopyCodeButton({ code }: { code: string }) {
+  const { t } = useTranslation();
+  const haptics = useHaptics();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(code);
+    haptics.light();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <TouchableOpacity onPress={handleCopy} style={[styles.copyBtn, copied && styles.copyBtnCopied]}>
+      <Text style={[styles.copyBtnText, copied && styles.copyBtnTextCopied]}>
+        {copied ? t('wallet.view.copied') : t('wallet.view.tapToCopy')}
+      </Text>
+    </TouchableOpacity>
+  );
 }
 
 export default function PvPFriendScreen() {
@@ -116,6 +138,7 @@ export default function PvPFriendScreen() {
           <View style={styles.header}>
             <Text style={styles.label}>{t('pvpFriend.matchCode')}</Text>
             <Text style={styles.matchCode}>{matchId}</Text>
+            <CopyCodeButton code={matchId} />
             <Text style={styles.shareText}>{t('pvpFriend.shareCode')}</Text>
             <View style={styles.divider} />
           </View>
@@ -274,5 +297,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.secondary,
     letterSpacing: 3,
+  },
+  copyBtn: {
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.accent.gold,
+  },
+  copyBtnCopied: {
+    borderColor: COLORS.status.online,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+  },
+  copyBtnText: {
+    fontFamily: FONTS.heading,
+    fontSize: 10,
+    color: COLORS.accent.gold,
+    letterSpacing: 2,
+  },
+  copyBtnTextCopied: {
+    color: COLORS.status.online,
   },
 });
