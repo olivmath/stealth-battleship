@@ -12,8 +12,8 @@ importers:
         specifier: ^0.72.1
         version: 0.72.1
       '@noir-lang/noir_js':
-        specifier: ^1.0.0-beta.2
-        version: 1.0.0-beta.18
+        specifier: 1.0.0-beta.2
+        version: 1.0.0-beta.2
       '@stellar/stellar-sdk':
         specifier: ^14.5.0
         version: 14.5.0
@@ -237,17 +237,17 @@ packages:
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
 
-  '@noir-lang/acvm_js@1.0.0-beta.18':
-    resolution: {integrity: sha512-QQXAaowxSzGKk+Ua7ofc2jcpvUTYSxmDuF5SzwwOFMue9+ccp9QcqOkjyyIZWjtapcenV7YCXrzcBjvEt7N8Nw==}
+  '@noir-lang/acvm_js@1.0.0-beta.2':
+    resolution: {integrity: sha512-vZYidnNS0MGRddggrq73Te0MiOb7j7ehZwM5L0dbxGwG6RqUNU+RDjG/TE7VUHOOFkZGY20lQqjHY1mj4pOH2A==}
 
-  '@noir-lang/noir_js@1.0.0-beta.18':
-    resolution: {integrity: sha512-J0VSw13U9SQpejh1sWNEjuKxjl/uJblOmWJMdlpYqCetth9oBAnKv8+IMk0bZlkrjDp22Yf8vMDkf+Qb8KBZ2Q==}
+  '@noir-lang/noir_js@1.0.0-beta.2':
+    resolution: {integrity: sha512-CiHnU5H1tUQHoKheHh93Ss7DJificdjXFUUfdasjMd8lsCMCPqY/oUoG4FZjWb7mWT8h0d/qcpGKMbs1VkBThQ==}
 
-  '@noir-lang/noirc_abi@1.0.0-beta.18':
-    resolution: {integrity: sha512-ZLobgQwGbxBpR4iMQpCpYQS4EaM25Fl31rVkrcteQIwcz5kAknH1Yc5FJYICCxzO1HEFj6coAzF3FXO/Ic4p4Q==}
+  '@noir-lang/noirc_abi@1.0.0-beta.2':
+    resolution: {integrity: sha512-8/Pc6C0IY4F3UCsubs96G4Nwalzo49TVW+2jej7uNaEJB7LCqbOk5G641XGcCV2McS7n7WbLt1eN3cKJrxUWrA==}
 
-  '@noir-lang/types@1.0.0-beta.18':
-    resolution: {integrity: sha512-/1nsk8qFd27P6bW4W5ayUjMQpN6PustwTJEqZPNP//DZ6TrolnWxT/Y+7v9d2/a4OZal61sx177VjQY3U2GZvw==}
+  '@noir-lang/types@1.0.0-beta.2':
+    resolution: {integrity: sha512-0CosvfeAhwjmEt5cwJtEbju+8itRpmOUOmyt6TUo6JcRxaR8d4A+7j0sOgGxs2KVqWnMi1akJdGodAu0e4H+1A==}
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -984,20 +984,19 @@ snapshots:
 
   '@noble/hashes@1.8.0': {}
 
-  '@noir-lang/acvm_js@1.0.0-beta.18': {}
+  '@noir-lang/acvm_js@1.0.0-beta.2': {}
 
-  '@noir-lang/noir_js@1.0.0-beta.18':
+  '@noir-lang/noir_js@1.0.0-beta.2':
     dependencies:
-      '@noir-lang/acvm_js': 1.0.0-beta.18
-      '@noir-lang/noirc_abi': 1.0.0-beta.18
-      '@noir-lang/types': 1.0.0-beta.18
-      pako: 2.1.0
+      '@noir-lang/acvm_js': 1.0.0-beta.2
+      '@noir-lang/noirc_abi': 1.0.0-beta.2
+      '@noir-lang/types': 1.0.0-beta.2
 
-  '@noir-lang/noirc_abi@1.0.0-beta.18':
+  '@noir-lang/noirc_abi@1.0.0-beta.2':
     dependencies:
-      '@noir-lang/types': 1.0.0-beta.18
+      '@noir-lang/types': 1.0.0-beta.2
 
-  '@noir-lang/types@1.0.0-beta.18': {}
+  '@noir-lang/types@1.0.0-beta.2': {}
 
   '@socket.io/component-emitter@3.1.2': {}
 
