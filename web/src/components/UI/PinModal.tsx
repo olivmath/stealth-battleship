@@ -126,9 +126,8 @@ export function PinModal({ visible, pinLength = 4, title, error, onSubmit, onCan
 
         <input
           ref={inputRef}
-          type="password"
-          inputMode="numeric"
-          pattern="[0-9]*"
+          type="tel"
+          autoComplete="one-time-code"
           maxLength={pinLength}
           value={pin}
           onChange={handleChange}

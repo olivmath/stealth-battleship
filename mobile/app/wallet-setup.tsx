@@ -185,6 +185,7 @@ export default function WalletSetupScreen() {
         </View>
 
         <PinModal
+          key={pinStep}
           visible={true}
           title={pinStep === 'enter'
             ? t('wallet.setup.pinLabel')
