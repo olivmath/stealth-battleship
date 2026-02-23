@@ -1,5 +1,6 @@
 // Interactor — turns proof verify use case (no Express, no Noir imports)
 
+import { performance } from 'perf_hooks';
 import type { TurnsProofVerifyInput, VerifyResult } from '../shared/entities.js';
 import { c } from '../log.js';
 
@@ -12,6 +13,7 @@ export async function verifyTurnsProof(
   port: TurnsProofVerifyPort,
   tag: string,
 ): Promise<VerifyResult> {
+  const startMs = performance.now();
   const t0 = Date.now();
   const { boardHashPlayer, boardHashAi, shipSizes, winner, proof } = input;
 
@@ -36,6 +38,12 @@ export async function verifyTurnsProof(
   console.log('');
   console.log(`${tag} ${valid ? c.bgGreen(`VALID — ${totalMs}ms`) : c.bgRed(`INVALID — ${totalMs}ms`)}`);
   console.log('');
+
+  const elapsedMs = (performance.now() - startMs).toFixed(1);
+  const proofSizeBytes = proof.length;
+  console.log(
+    `[VERIFY] circuit=turns_proof size=${proofSizeBytes}B time=${elapsedMs}ms valid=${valid}`
+  );
 
   return { valid };
 }
