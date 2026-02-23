@@ -48,29 +48,46 @@ export default function PvpMode() {
     }
   }, [pinError, walletExists]);
 
-  // Payment step: send 0.001 XLM to server, verify, then connect
+  // Payment step: memo-based flow — request memo, send payment with trustline, poll for token
   const handlePayment = async (secret: string) => {
     setPaymentState('paying');
     setPaymentError('');
     try {
-      // 1. Get server address
+      const { sendPaymentWithTrustline, getPublicKey } = await walletInteractor();
+      const publicKey = await getPublicKey();
+      if (!publicKey) throw new Error('No public key found');
+
+      // 1. Get server address + fee
       const addrRes = await fetch(`${API_URL}/api/payment/address`);
       if (!addrRes.ok) throw new Error('Failed to fetch server address');
-      const { address, feeXlm } = await addrRes.json();
+      const { address, feeXlm, assetCode } = await addrRes.json();
 
-      // 2. Send payment
-      const { sendPayment, getPublicKey } = await walletInteractor();
-      const txHash = await sendPayment(secret, address, feeXlm);
-      const publicKey = await getPublicKey();
-
-      // 3. Verify payment with backend
-      const verifyRes = await fetch(`${API_URL}/api/payment/verify`, {
+      // 2. Request memo from server
+      const memoRes = await fetch(`${API_URL}/api/payment/memo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash, playerPk: publicKey }),
+        body: JSON.stringify({ playerPk: publicKey }),
       });
-      const result = await verifyRes.json();
-      if (!result.valid) throw new Error(result.error || 'Payment verification failed');
+      if (!memoRes.ok) throw new Error('Failed to get payment memo');
+      const { memo } = await memoRes.json();
+
+      // 3. Send payment with trustline + memo in atomic tx
+      await sendPaymentWithTrustline(secret, address, feeXlm, memo, assetCode || 'BATTLE');
+
+      // 4. Poll for token confirmation
+      const pollForToken = async (): Promise<boolean> => {
+        for (let i = 0; i < 30; i++) {
+          await new Promise(r => setTimeout(r, 2000));
+          const statusRes = await fetch(`${API_URL}/api/payment/status/${publicKey}`);
+          if (!statusRes.ok) continue;
+          const statusData = await statusRes.json();
+          if (statusData.hasToken) return true;
+        }
+        return false;
+      };
+
+      const hasToken = await pollForToken();
+      if (!hasToken) throw new Error('Payment confirmation timed out');
 
       setPaymentState('paid');
       // Now connect to PvP

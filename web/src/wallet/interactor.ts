@@ -77,6 +77,40 @@ export async function sendPayment(secretKey: string, destination: string, amount
   return (result as any).hash;
 }
 
+export async function sendPaymentWithTrustline(
+  secret: string,
+  destination: string,
+  amount: string,
+  memo: string,
+  assetCode: string,
+): Promise<string> {
+  const StellarSdk = await import('@stellar/stellar-sdk');
+  const { Keypair, TransactionBuilder, Networks, Operation, Asset, Memo: StellarMemo } = StellarSdk;
+  const horizon = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
+
+  const kp = Keypair.fromSecret(secret);
+  const account = await horizon.loadAccount(kp.publicKey());
+  const battleAsset = new Asset(assetCode, destination);
+
+  const tx = new TransactionBuilder(account, {
+    fee: '100',
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(Operation.changeTrust({ asset: battleAsset }))
+    .addOperation(Operation.payment({
+      destination,
+      asset: Asset.native(),
+      amount,
+    }))
+    .addMemo(StellarMemo.text(memo))
+    .setTimeout(30)
+    .build();
+
+  tx.sign(kp);
+  const result = await horizon.submitTransaction(tx);
+  return (result as any).hash;
+}
+
 export async function getBalance(publicKey: string): Promise<string> {
   try {
     const res = await fetch(`${HORIZON_TESTNET}/accounts/${publicKey}`);
