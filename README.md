@@ -24,45 +24,24 @@
 | 2 | **Deployed Onchain Component** | ✅ | Soroban contract [`CDL6EX...HMR3`](https://stellar.expert/explorer/testnet/contract/CDL6EX734XCDSTOQE5W3FYD5ZKOHQOIBXZOL4NF5FC66CEHRPIQRHMR3) verifies UltraHonk proofs on-chain. Calls `start_game()` and `end_game()` on the [Game Hub `CB4VZA...EMYG`](https://stellar.expert/explorer/testnet/contract/CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG). Backend wallet has [124 operations on testnet](https://stellar.expert/explorer/testnet/account/GDANLGAOCSGXHMSO4PM2L43FB27MB7JBDXKSBV5CMCCEFXE3ISDEM4Z2). |
 | 3 | **Front End** | ✅ | Full mobile app (React Native / Expo) + web client. 14 screens with gameplay, animations, haptics, i18n (EN/PT-BR/ES), ranking system, match history. See [Screenshots](#screenshots) below. |
 | 4 | **Open-source Repo** | ✅ | [github.com/olivmath/stealth-battleship](https://github.com/olivmath/stealth-battleship) — full source code with clear README. |
-| 5 | **Video Demo (2-3 min)** | ✅ | See demo video below. |
+| 5 | **Video Demo (2-3 min)** | ✅ | See the [raw demo video](https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4). |
 
----
-
-## Demo Video
-
-https://github.com/olivmath/stealth-battleship/raw/main/assets/zkbb.mp4
 
 ---
 
 ## The Problem
 
-In digital Battleship, someone always sees both boards. The server knows everything.
-
-<p align="center">
-  <img src="pitch/slides/slide-2-problem.png" width="700" />
-</p>
-
-Traditional approaches all fail: the server can cheat, commit-reveal breaks when the loser disconnects, and on-chain boards leak to mempool front-running.
-
----
+In digital Battleship, someone always sees both boards. The server knows everything. Traditional approaches all fail: the server can cheat, commit-reveal breaks when the loser disconnects, and on-chain boards leak to mempool front-running.
 
 ## The Solution: Prove-as-You-Go
 
 No board reveal. No commit-reveal. Every action generates a ZK proof in real-time. **Private inputs never leave your device.**
-
-<p align="center">
-  <img src="pitch/slides/slide-3-solution.png" width="700" />
-</p>
 
 ---
 
 ## ZK Circuits (Noir)
 
 Three specialized circuits guard the entire game lifecycle:
-
-<p align="center">
-  <img src="pitch/slides/slide-4-circuit.png" width="700" />
-</p>
 
 | Circuit | Trigger | What it proves | Public inputs |
 |---------|---------|----------------|---------------|
@@ -82,10 +61,6 @@ Three specialized circuits guard the entire game lifecycle:
 ## Architecture
 
 Hybrid on-chain / off-chain — only 2 Soroban transactions per game.
-
-<p align="center">
-  <img src="pitch/slides/slide-7-arch.png" width="700" />
-</p>
 
 ```
 Player Device (client)               Backend                     Stellar Testnet
@@ -127,14 +102,6 @@ The Soroban contract ([`soroban/contracts/battleship`](soroban/contracts/battles
 | Match end | `close_match()` verifies the `turns_proof`, then calls **`end_game()`** on the Game Hub with the verified winner |
 
 This is possible thanks to **Protocol 25 (X-Ray)** which provides native BN254 elliptic-curve operations and Poseidon2 hashing at the protocol level.
-
----
-
-## What's Built
-
-<p align="center">
-  <img src="pitch/slides/slide-11-status.png" width="700" />
-</p>
 
 ---
 
