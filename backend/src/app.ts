@@ -8,6 +8,7 @@ import turnsProofRouter from './turns-proof/translator.js';
 import boardValidityVerifyRouter from './board-validity/verify-translator.js';
 import shotProofVerifyRouter from './shot-proof/verify-translator.js';
 import turnsProofVerifyRouter from './turns-proof/verify-translator.js';
+import { paymentRouter } from './payment/translator.js';
 import { c } from './log.js';
 
 const app = express();
@@ -27,6 +28,9 @@ app.get('/health', (_req, res) => {
 app.use('/api/prove', boardValidityRouter);
 app.use('/api/prove', shotProofRouter);
 app.use('/api/prove', turnsProofRouter);
+
+// Payment routes
+app.use('/api/payment', paymentRouter);
 
 // Verify routes
 app.use('/api/verify', boardValidityVerifyRouter);

@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import {
   findRandomMatch, cancelSearch, createFriendMatch, joinFriendMatch,
 } from './interactor.js';
+import { hasValidPayment, consumePayment } from '../payment/interactor.js';
 import { c } from '../log.js';
 
 export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
@@ -9,6 +10,11 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   const shortKey = publicKey.slice(0, 8);
 
   socket.on('match:find_random', (data: { gridSize?: number }) => {
+    if (!hasValidPayment(publicKey)) {
+      socket.emit('match:error', { message: 'Payment required to play PvP' });
+      return;
+    }
+
     const gridSize = data?.gridSize || 10;
     console.log(c.magenta('[match]') + ` ${shortKey}... searching (${gridSize}x${gridSize})`);
 
@@ -21,6 +27,10 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
       const match = result.match;
       const p1Id = match.player1.socketId;
       const p2Id = match.player2!.socketId;
+
+      // Consume payments for both players on successful match
+      consumePayment(match.player1.publicKey);
+      consumePayment(match.player2!.publicKey);
 
       io.to(p1Id).emit('match:found', {
         matchId: match.id,
@@ -44,6 +54,11 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   });
 
   socket.on('match:create_friend', (data: { gridSize?: number }) => {
+    if (!hasValidPayment(publicKey)) {
+      socket.emit('match:error', { message: 'Payment required to play PvP' });
+      return;
+    }
+
     const gridSize = data?.gridSize || 10;
     const { matchId, matchCode } = createFriendMatch(publicKey, socket.id, gridSize);
 
@@ -52,6 +67,11 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
   });
 
   socket.on('match:join_friend', (data: { matchCode: string }) => {
+    if (!hasValidPayment(publicKey)) {
+      socket.emit('match:error', { message: 'Payment required to play PvP' });
+      return;
+    }
+
     if (!data?.matchCode) {
       socket.emit('match:error', { message: 'Match code required' });
       return;
@@ -67,6 +87,10 @@ export function registerMatchmakingHandlers(io: Server, socket: Socket): void {
 
     const match = result.match;
     const p1Id = match.player1.socketId;
+
+    // Consume payments for both players on successful friend match
+    consumePayment(match.player1.publicKey);
+    consumePayment(publicKey);
 
     // Notify both players
     io.to(p1Id).emit('match:friend_joined', {
