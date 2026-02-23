@@ -2,9 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import boardValidityRouter from './board-validity/translator.js';
-import shotProofRouter from './shot-proof/translator.js';
-import turnsProofRouter from './turns-proof/translator.js';
 import boardValidityVerifyRouter from './board-validity/verify-translator.js';
 import shotProofVerifyRouter from './shot-proof/verify-translator.js';
 import turnsProofVerifyRouter from './turns-proof/verify-translator.js';
@@ -23,11 +20,6 @@ app.get('/health', (_req, res) => {
   console.log(c.green('[health]') + ' Health check ' + c.ok('OK'));
   res.json({ status: 'ok' });
 });
-
-// Proof routes
-app.use('/api/prove', boardValidityRouter);
-app.use('/api/prove', shotProofRouter);
-app.use('/api/prove', turnsProofRouter);
 
 // Payment routes
 app.use('/api/payment', paymentRouter);
