@@ -33,7 +33,7 @@ interface PvPContextValue extends PvPState {
   joinFriendMatch: (matchCode: string) => void;
   submitPlacement: (boardHash: string, proof: number[]) => void;
   attack: (row: number, col: number) => void;
-  respondShotResult: (row: number, col: number, result: 'hit' | 'miss', proof: number[]) => void;
+  respondShotResult: (row: number, col: number, result: 'hit' | 'miss', proof: number[], sunkShipName?: string, sunkShipSize?: number) => void;
   forfeit: () => void;
   reset: () => void;
 }
@@ -171,9 +171,9 @@ export function PvPProvider({ children }: { children: React.ReactNode }) {
     doSendAttack(state.match.matchId, row, col);
   }, [state.match]);
 
-  const respondShotResult = useCallback((row: number, col: number, result: 'hit' | 'miss', proof: number[]) => {
+  const respondShotResult = useCallback((row: number, col: number, result: 'hit' | 'miss', proof: number[], sunkShipName?: string, sunkShipSize?: number) => {
     if (!state.match) return;
-    doSendShotResult(state.match.matchId, row, col, result, proof);
+    doSendShotResult(state.match.matchId, row, col, result, proof, sunkShipName, sunkShipSize);
   }, [state.match]);
 
   const forfeit = useCallback(() => {

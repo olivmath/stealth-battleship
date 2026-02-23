@@ -195,7 +195,9 @@ export function sendShotResult(
   row: number,
   col: number,
   result: 'hit' | 'miss',
-  proof: number[]
+  proof: number[],
+  sunkShipName?: string,
+  sunkShipSize?: number
 ): void {
   const keys = getKeys();
   if (!keys) {
@@ -214,6 +216,8 @@ export function sendShotResult(
     proof,
     timestamp,
     signature,
+    sunkShipName,
+    sunkShipSize,
   });
 }
 

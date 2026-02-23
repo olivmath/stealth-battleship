@@ -27,6 +27,8 @@ export interface ShotResultPayload {
   proof: number[];
   timestamp: number;
   signature: string;
+  sunkShipName?: string;
+  sunkShipSize?: number;
 }
 
 export interface ForfeitPayload {
