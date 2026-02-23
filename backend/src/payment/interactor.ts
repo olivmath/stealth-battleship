@@ -41,6 +41,10 @@ export async function verifyPayment(txHash: string, playerPk: string): Promise<{
 
     verifiedPayments.set(txHash, { txHash, playerPk, timestamp: Date.now() });
 
+    console.log(c.cyan('[payment]') + ` Payment verified for ${playerPk.slice(0, 8)}...`);
+    console.log(c.cyan('[payment]') + ` TX: https://stellar.expert/explorer/testnet/tx/${txHash}`);
+    console.log(c.cyan('[payment]') + ` Amount: >= ${PVP_FEE_XLM} XLM | Verified payments in memory: ${verifiedPayments.size}`);
+
     return { valid: true };
   } catch (err: any) {
     return { valid: false, error: `Horizon error: ${err.message}` };
