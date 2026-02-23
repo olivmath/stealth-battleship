@@ -1,5 +1,6 @@
 // Interactor — shot proof verify use case (no Express, no Noir imports)
 
+import { performance } from 'perf_hooks';
 import type { ShotProofVerifyInput, VerifyResult } from '../shared/entities.js';
 import { c } from '../log.js';
 
@@ -12,6 +13,7 @@ export async function verifyShotProof(
   port: ShotProofVerifyPort,
   tag: string,
 ): Promise<VerifyResult> {
+  const startMs = performance.now();
   const t0 = Date.now();
   const { boardHash, row, col, isHit, proof } = input;
 
@@ -31,6 +33,12 @@ export async function verifyShotProof(
   console.log('');
   console.log(`${tag} ${valid ? c.bgGreen(`VALID — ${totalMs}ms`) : c.bgRed(`INVALID — ${totalMs}ms`)}`);
   console.log('');
+
+  const elapsedMs = (performance.now() - startMs).toFixed(1);
+  const proofSizeBytes = proof.length;
+  console.log(
+    `[VERIFY] circuit=shot_proof size=${proofSizeBytes}B time=${elapsedMs}ms valid=${valid}`
+  );
 
   return { valid };
 }

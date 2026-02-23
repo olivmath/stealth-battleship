@@ -1,5 +1,6 @@
 // Interactor — board validity verify use case (no Express, no Noir imports)
 
+import { performance } from 'perf_hooks';
 import type { BoardValidityVerifyInput, VerifyResult, ShipTuple } from '../shared/entities.js';
 import { c } from '../log.js';
 
@@ -13,6 +14,7 @@ export async function verifyBoardValidity(
   port: BoardValidityVerifyPort,
   tag: string,
 ): Promise<VerifyResult> {
+  const startMs = performance.now();
   const t0 = Date.now();
   const { ships, nonce, proof } = input;
 
@@ -39,6 +41,12 @@ export async function verifyBoardValidity(
   console.log('');
   console.log(`${tag} ${valid ? c.bgGreen(`VALID — ${totalMs}ms`) : c.bgRed(`INVALID — ${totalMs}ms`)}`);
   console.log('');
+
+  const elapsedMs = (performance.now() - startMs).toFixed(1);
+  const proofSizeBytes = proof.length;
+  console.log(
+    `[VERIFY] circuit=board_validity size=${proofSizeBytes}B time=${elapsedMs}ms valid=${valid}`
+  );
 
   return { valid };
 }
