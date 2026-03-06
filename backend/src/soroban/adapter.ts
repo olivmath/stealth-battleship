@@ -53,7 +53,6 @@ async function buildSignSubmit(
   const account = await server.getAccount(kp.publicKey());
   const contract = new Contract(getContractId());
 
-  // Build with placeholder fee — will be replaced after simulation
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
     networkPassphrase: Networks.TESTNET,
@@ -70,19 +69,9 @@ async function buildSignSubmit(
   }
 
   const minFee = Number((simResult as rpc.Api.SimulateTransactionSuccessResponse).minResourceFee);
-  const feeWithMargin = Math.ceil(minFee * 1.15); // 15% safety margin
-  console.log(c.cyan('[stellar]') + ` ${c.bold(method)} minResourceFee=${minFee} stroops (${(minFee / 1e7).toFixed(4)} XLM), fee=${feeWithMargin} stroops (${(feeWithMargin / 1e7).toFixed(4)} XLM)`);
+  console.log(c.cyan('[stellar]') + ` ${c.bold(method)} minResourceFee=${minFee} stroops (${(minFee / 1e7).toFixed(4)} XLM)`);
 
-  // Rebuild TX with the simulation fee + margin as the max fee
-  const txWithFee = new TransactionBuilder(account, {
-    fee: String(feeWithMargin),
-    networkPassphrase: Networks.TESTNET,
-  })
-    .addOperation(contract.call(method, ...args))
-    .setTimeout(30)
-    .build();
-
-  const preparedTx = rpc.assembleTransaction(txWithFee, simResult).build();
+  const preparedTx = rpc.assembleTransaction(tx, simResult).build();
   preparedTx.sign(kp);
 
   const sendResult = await server.sendTransaction(preparedTx);
