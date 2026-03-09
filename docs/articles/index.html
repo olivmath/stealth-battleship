@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diario de Bordo: ZK Battleship</title>
+<style>
+  :root {
+    --bg: #fff;
+    --text: #1a1a1a;
+    --text-secondary: #555;
+    --accent: #2563eb;
+    --code-bg: #f3f4f6;
+    --code-border: #e5e7eb;
+    --border: #e5e7eb;
+    --nav-bg: #f9fafb;
+    --table-stripe: #f9fafb;
+    --blockquote-bg: #f0f7ff;
+    --blockquote-border: #2563eb;
+    --tag-bg: #e0e7ff;
+    --tag-text: #3730a3;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --code-bg: #161b22;
+    --code-border: #30363d;
+    --border: #30363d;
+    --nav-bg: #161b22;
+    --table-stripe: #161b22;
+    --blockquote-bg: #121e2e;
+    --blockquote-border: #58a6ff;
+    --tag-bg: #1c2541;
+    --tag-text: #79c0ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* --- Top nav --- */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(8px);
+    transition: background 0.3s;
+  }
+
+  .topbar-title {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+
+  .part-indicator {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  /* --- Article tabs --- */
+  .tabs {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    transition: background 0.3s;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 10px 1.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* --- Content --- */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 120px 1.5rem 6rem;
+  }
+
+  .article { display: none; }
+  .article.active { display: block; }
+
+  /* --- Typography --- */
+  h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+  }
+
+  h1 + p { margin-bottom: 2rem; }
+
+  .subtitle {
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  h4 {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  p {
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
+  }
+
+  strong { color: var(--text); }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  a:hover { border-bottom-color: var(--accent); }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* --- Code --- */
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--code-border);
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+
+  /* --- Blockquote --- */
+  blockquote {
+    background: var(--blockquote-bg);
+    border-left: 3px solid var(--blockquote-border);
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+  }
+  blockquote p { margin-bottom: 0; }
+
+  /* --- Tables --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+  }
+
+  tr:nth-child(even) { background: var(--table-stripe); }
+
+  /* --- Lists --- */
+  ul, ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+  }
+  li {
+    margin-bottom: 0.4rem;
+    font-size: 1.05rem;
+  }
+
+  /* --- Nav footer --- */
+  .article-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    gap: 1rem;
+  }
+
+  .nav-btn {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .nav-btn:hover {
+    border-color: var(--accent);
+    background: var(--blockquote-bg);
+  }
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .nav-btn:disabled:hover {
+    border-color: var(--border);
+    background: none;
+  }
+
+  /* --- Reading progress --- */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 200;
+    transition: width 0.1s;
+    width: 0%;
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 600px) {
+    .content { padding: 110px 1rem 4rem; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; }
+    pre { padding: 0.75rem; font-size: 0.8rem; }
+    .tab { padding: 8px 1rem; font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="topbar">
+  <span class="topbar-title">DIARIO DE BORDO: ZK BATTLESHIP</span>
+  <div class="topbar-right">
+    <span class="part-indicator" id="partIndicator">1 / 5</span>
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema">&#9790;</button>
+  </div>
+</nav>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-idx="0">1. O que eu me meti?</button>
+  <button class="tab" data-idx="1">2. Provando sem mostrar</button>
+  <button class="tab" data-idx="2">3. A blockchain que verificou</button>
+  <button class="tab" data-idx="3">4. Dois navios, uma batalha</button>
+  <button class="tab" data-idx="4">5. A licao de 214 XLM</button>
+</div>
+
+<main class="content">
+
+<!-- ==================== ARTIGO 1 ==================== -->
+<article class="article active" id="art0">
+
+<h1>O que eu me meti?</h1>
+<p class="subtitle">Como um dev que nunca fez jogos decidiu construir um Battleship com provas matematicas numa blockchain</p>
+
+<h2>O hackathon</h2>
+<p>Fevereiro de 2026. A Stellar Foundation anuncia o <strong>Stellar Hacks: ZK Gaming</strong> &mdash; um hackathon para construir jogos on-chain usando zero-knowledge proofs. O premio? Reconhecimento, feedback de devs da Stellar, e a chance de mostrar que ZK nao e so coisa de paper academico.</p>
+<p>Eu me inscrevi sem ter feito nenhum jogo na vida. Tambem nunca tinha escrito uma prova zero-knowledge. E meu contato com smart contracts era superficial. Mas eu sabia programar, sabia TypeScript, e tinha uma intuicao: Battleship era o jogo perfeito para ZK.</p>
+<p>Esse e o diario de como eu construi o <strong>Stealth Battleship</strong> em 17 dias, 331 commits, e 4 linguagens.</p>
+
+<hr>
+
+<h2>O problema: alguem sempre ve os dois tabuleiros</h2>
+<p>Voce conhece Batalha Naval. Dois jogadores, cada um com um tabuleiro. Voce posiciona seus navios, o oponente posiciona os dele. Ninguem ve o tabuleiro do outro. Voce ataca uma coordenada, o oponente diz "acertou" ou "errou".</p>
+<p>Simples no mundo fisico &mdash; cada jogador tem seu tabuleiro atras de uma barreira. Mas no mundo digital, quem guarda os tabuleiros?</p>
+
+<p><strong>Abordagem 1: o servidor ve tudo.</strong><br>O servidor sabe onde estao os navios dos dois jogadores. Funciona, mas voce precisa confiar que o servidor nao vai trapacear. Se o servidor quiser favorecer um jogador, ele pode. Voce nunca saberia.</p>
+
+<p><strong>Abordagem 2: commit-reveal.</strong><br>Cada jogador faz um hash do seu tabuleiro no inicio e publica esse hash. No final, revela o tabuleiro original e todos conferem se bate com o hash. Parece elegante, mas tem um furo fatal: se o jogador esta perdendo, ele simplesmente desconecta. Nunca revela. Ninguem pode provar nada.</p>
+
+<p><strong>Abordagem 3: tabuleiro on-chain.</strong><br>Coloca tudo na blockchain! Transparente e imutavel. Exceto que... a blockchain e publica. Qualquer um pode ler a mempool e ver as transacoes antes de serem confirmadas. Seu oponente veria seus navios antes do jogo comecar.</p>
+
+<p>Nenhuma das tres funciona. Todas falham por uma razao fundamental: <strong>em algum momento, alguem ve informacao que nao deveria ver</strong>.</p>
+
+<hr>
+
+<h2>A ideia: e se ninguem precisasse ver?</h2>
+<p>Zero-Knowledge Proofs (ZK) resolvem exatamente isso. A ideia e simples de entender, mas profunda nas consequencias:</p>
+
+<blockquote><p>Eu consigo te <strong>provar</strong> que algo e verdade, <strong>sem te mostrar</strong> a informacao que torna isso verdade.</p></blockquote>
+
+<p>Vamos com uma analogia. Imagine que eu tenho um cofre lacrado. Dentro dele tem um tabuleiro de Batalha Naval com 5 navios. Voce nao pode abrir o cofre. Mas eu te entrego um certificado matematico &mdash; uma <strong>prova</strong> &mdash; que diz:</p>
+
+<ol>
+  <li>O tabuleiro dentro do cofre tem exatamente 5 navios</li>
+  <li>Nenhum navio se sobrepoe a outro</li>
+  <li>Todos estao dentro dos limites do tabuleiro</li>
+  <li>O hash do conteudo do cofre e <code>0x07488bfc167d2ba679...</code></li>
+</ol>
+
+<p>Voce nao sabe onde os navios estao. Mas voce sabe que eles existem, sao validos, e que aquele hash representa esse tabuleiro especifico. Se mais tarde eu disser "errou", voce pode pedir outra prova &mdash; desta vez provando que naquela coordenada nao tem navio, contra o mesmo hash.</p>
+
+<p><strong>Se eu mentir, a matematica quebra. A prova nao fecha. Trapacear e matematicamente impossivel.</strong></p>
+
+<hr>
+
+<h2>Aplicando ZK ao Battleship</h2>
+<p>Com essa ideia, o jogo funciona assim:</p>
+<ol>
+  <li><strong>Inicio</strong>: cada jogador posiciona seus navios e gera uma prova de que o tabuleiro e valido. Essa prova e publica; o tabuleiro, nao.</li>
+  <li><strong>Cada jogada</strong>: quando eu ataco a coordenada (3, 5) do meu oponente, ele me diz "acertou" ou "errou" &mdash; e junto manda uma prova de que a resposta e honesta contra o tabuleiro original.</li>
+  <li><strong>Final</strong>: quando todos os navios sao afundados, a partida inteira e replayed dentro de um circuito que calcula o vencedor deterministicamente.</li>
+</ol>
+<p>Ninguem nunca ve o tabuleiro do outro. Nao tem servidor onisciente. Nao tem reveal no final que pode ser evitado. A matematica garante tudo.</p>
+
+<hr>
+
+<h2>Por que Stellar?</h2>
+<p>O hackathon era da Stellar, entao a blockchain ja estava definida. Mas descobri que nao era so obrigacao &mdash; era vantagem.</p>
+<p>A Stellar acabou de lancar o <strong>Protocol 25</strong>, codinome <strong>X-Ray</strong>. Esse upgrade trouxe duas coisas que mudam tudo para ZK:</p>
+<ul>
+  <li><strong>BN254 nativo</strong>: operacoes de curva eliptica (a matematica por tras das provas ZK) rodando direto no protocolo, sem precisar reimplementar em smart contract</li>
+  <li><strong>Poseidon2 nativo</strong>: uma funcao de hash otimizada para circuitos ZK, tambem nativa no protocolo</li>
+</ul>
+<p>Isso significa que verificar uma prova ZK na Stellar e ordens de grandeza mais barato do que em outras blockchains, porque as operacoes mais pesadas (multiplicacao de pontos na curva, hashing) sao instrucoes nativas, nao smart contract code.</p>
+
+<hr>
+
+<h2>O primeiro commit</h2>
+<p>7 de fevereiro de 2026. Commit <code>a2682d0</code>: <strong>init</strong>.</p>
+<p>Comecei pelo que eu sabia: TypeScript, React Native, Expo. A ideia era fazer primeiro um jogo que funcionasse &mdash; single player contra IA &mdash; e depois ir adicionando as camadas de ZK e blockchain.</p>
+
+<pre><code>stealth-battleship/
+  mobile/          # React Native / Expo
+  circuits/        # (vazio por enquanto)
+  backend/         # (vazio por enquanto)
+  soroban/         # (vazio por enquanto)</code></pre>
+
+<p>Nos primeiros dois dias, eu tinha um jogo jogavel: tabuleiro 6x6, 3 navios, IA com hunt/target algorithm, animacoes, haptics, ranking, historico de partidas. 76 commits em 48 horas.</p>
+<p>O jogo era bonito. Telas com estetica naval escura, fontes Orbitron e Rajdhani, gradientes de azul marinho com detalhes em dourado. Tutorial, dificuldade configuravel, internacionalizacao em 3 idiomas.</p>
+<p>Mas era um jogo normal. Sem ZK. Sem blockchain. Sem nada que justificasse o hackathon.</p>
+<p>A parte facil tinha acabado.</p>
+
+<hr>
+
+<h2>A timeline</h2>
+<table>
+  <tr><th>Periodo</th><th>Foco</th><th>Commits</th></tr>
+  <tr><td>7-8 fev</td><td>Jogo single-player completo</td><td>107</td></tr>
+  <tr><td>14-15 fev</td><td>Pesquisa: ZK, Noir, Stellar Protocol 25</td><td>5</td></tr>
+  <tr><td>21-22 fev</td><td>Circuitos ZK + backend PvP</td><td>100</td></tr>
+  <tr><td>23 fev</td><td><strong>O dia de 112 commits</strong></td><td>112</td></tr>
+</table>
+<p>O dia 23 de fevereiro merece um asterisco. 112 commits num unico dia. Foi o dia em que tudo precisava funcionar junto &mdash; provas ZK geradas no cliente, verificadas no backend, submetidas na blockchain, com dois jogadores reais se enfrentando via WebSocket. Cada fix levava a outro bug, que levava a outra descoberta.</p>
+<p>Mas estou adiantando a historia.</p>
+
+<hr>
+
+<h2>O que vem pela frente</h2>
+<p>Nos proximos artigos, vou contar cada fase com codigo real, erros reais, e os momentos de "eureka" que fizeram o projeto funcionar:</p>
+<ul>
+  <li><strong>Parte 2</strong>: Escrevendo circuitos ZK em Noir &mdash; e descobrindo que o app mobile nao roda bb.js</li>
+  <li><strong>Parte 3</strong>: Verificando provas na blockchain Stellar &mdash; e gastando 214 XLM procurando um bug</li>
+  <li><strong>Parte 4</strong>: Conectando dois jogadores em tempo real &mdash; e a avalanche de race conditions</li>
+  <li><strong>Parte 5</strong>: A licao que custou 214 XLM &mdash; o que eu aprendi e faria diferente</li>
+</ul>
+<p>Se voce nunca mexeu com ZK, blockchain, ou jogos &mdash; bom, eu tambem nao tinha. Vamos juntos.</p>
+
+<div class="article-nav">
+  <button class="nav-btn" disabled>&larr; Anterior</button>
+  <button class="nav-btn" onclick="goTo(1)">Proximo &rarr;</button>
+</div>
+</article>
+
+<!-- ==================== ARTIGO 2 ==================== -->
+<article class="article" id="art1">
+
+<h1>Provando sem mostrar</h1>
+<p class="subtitle">Escrevendo circuitos ZK em Noir, escolhendo Poseidon2, e descobrindo que o app mobile lindo nao roda provas</p>
+
+<h2>21 de fevereiro: hora de aprender ZK de verdade</h2>
+<p>O jogo single-player estava pronto. Bonito, jogavel, com 14 telas e animacoes. Mas ate agora nao tinha uma unica linha de codigo ZK. O hackathon fechava em 2 dias. Era hora de mergulhar.</p>
+<p>Meu primeiro problema: <strong>como voce escreve uma prova zero-knowledge?</strong></p>
+<p>Voce nao escreve a prova diretamente. Voce escreve um <strong>circuito</strong> &mdash; um programa que descreve as regras que a prova precisa satisfazer. Depois, uma ferramenta matematica gera a prova a partir do circuito e dos dados de entrada.</p>
+<p>Pensa assim: o circuito e o contrato. A prova e a assinatura. Quem verifica a prova esta confirmando que alguem executou o circuito corretamente com entradas validas, sem ver quais eram as entradas.</p>
+
+<hr>
+
+<h2>Noir: a linguagem dos circuitos</h2>
+<p>Existem varias linguagens para escrever circuitos ZK: Circom, Cairo, Noir, entre outras. Escolhi <strong>Noir</strong> (da Aztec) por tres razoes:</p>
+<ol>
+  <li>A sintaxe parece Rust &mdash; familiar o suficiente para nao ter que aprender uma linguagem alienigena</li>
+  <li>Tem toolchain moderna: <code>nargo</code> para compilar e testar, <code>bb.js</code> para gerar provas em JavaScript</li>
+  <li>O sistema de provas (UltraHonk) e compativel com a curva BN254 &mdash; a mesma que o Protocol 25 da Stellar suporta nativamente</li>
+</ol>
+<p>Instalar e direto:</p>
+<pre><code>curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+noirup -v 1.0.0-beta.9</code></pre>
+
+<hr>
+
+<h2>O primeiro circuito: board_validity</h2>
+<p>O circuito mais importante e o primeiro: provar que seu tabuleiro e valido sem revelar onde estao os navios.</p>
+<p>O que ele precisa verificar:</p>
+<ol>
+  <li>Os navios tem os tamanhos corretos (5, 4, 3, 3, 2)</li>
+  <li>Nenhum navio sai dos limites do tabuleiro 10x10</li>
+  <li>Nenhum navio se sobrepoe a outro</li>
+  <li>O hash do tabuleiro bate com um compromisso publico</li>
+</ol>
+<p>Aqui esta o circuito real, em Noir:</p>
+
+<pre><code>use poseidon::poseidon2::Poseidon2;
+
+fn main(
+    ships: [(u8, u8, u8, bool); 5],      // posicoes secretas dos navios
+    nonce: Field,                          // numero aleatorio secreto
+    board_hash: pub Field,                 // compromisso publico
+    ship_sizes: pub [u8; 5],              // tamanhos esperados (publico)
+) {
+    // 1. O hash bate?
+    let computed_hash = compute_board_hash(ships, nonce);
+    assert(computed_hash == board_hash, "board hash invalido");
+
+    // 2. Tamanhos corretos?
+    for i in 0..5 {
+        let (_, _, size, _) = ships[i];
+        assert(size == ship_sizes[i], "tamanho de navio invalido");
+    }
+
+    // 3. Dentro dos limites?
+    for i in 0..5 {
+        let (row, col, size, horizontal) = ships[i];
+        assert(ship_in_bounds(row, col, size, horizontal));
+    }
+
+    // 4. Sem sobreposicao?
+    for i in 0..5 {
+        for j in (i + 1)..5 {
+            assert(!ships_overlap(ships[i], ships[j]));
+        }
+    }
+}</code></pre>
+
+<p>Observe a palavra-chave <code>pub</code>. Inputs marcados com <code>pub</code> sao <strong>publicos</strong> &mdash; qualquer um pode ve-los. Inputs sem <code>pub</code> sao <strong>privados</strong> &mdash; so quem gera a prova conhece.</p>
+<p><code>ships</code> e <code>nonce</code> sao privados: ninguem sabe onde seus navios estao nem qual numero aleatorio voce usou. <code>board_hash</code> e <code>ship_sizes</code> sao publicos: todos podem verificar que a prova foi gerada contra esse hash especifico e com esses tamanhos de navio.</p>
+
+<hr>
+
+<h2>A funcao de hash: Poseidon2</h2>
+<p>Um detalhe que parece pequeno mas e uma das decisoes mais importantes do projeto: qual funcao de hash usar.</p>
+<p>No mundo normal, voce usaria SHA-256. Segura, testada, onipresente. Eu comecei com SHA-256 (commit <code>5253a32</code>: <code>feat(crypto): add board commitment types and SHA-256 hashing</code>). Mas dentro de um circuito ZK, SHA-256 e <strong>extremamente cara</strong>. Cada operacao bitwise vira milhares de constraints no circuito, tornando a prova lenta para gerar.</p>
+<p><strong>Poseidon2</strong> e uma funcao de hash desenhada especificamente para circuitos ZK. Ela opera sobre campos finitos (os numeros naturais dos circuitos) em vez de bits, o que a torna ordens de grandeza mais eficiente dentro de um circuito.</p>
+
+<pre><code>fn compute_board_hash(
+    ships: [(u8, u8, u8, bool); 5],
+    nonce: Field
+) -&gt; Field {
+    let mut inputs: [Field; 21] = [0; 21];
+    for i in 0..5 {
+        let (r, c, s, h) = ships[i];
+        inputs[i * 4 + 0] = r as Field;    // linha
+        inputs[i * 4 + 1] = c as Field;    // coluna
+        inputs[i * 4 + 2] = s as Field;    // tamanho
+        inputs[i * 4 + 3] = if h { 1 } else { 0 }; // orientacao
+    }
+    inputs[20] = nonce;  // sal aleatorio
+    Poseidon2::hash(inputs, 21)
+}</code></pre>
+
+<p>5 navios x 4 campos cada = 20 inputs, mais 1 nonce = 21 valores. O Poseidon2 comprime tudo num unico <code>Field</code> (um numero de 254 bits). Esse e o compromisso publico do tabuleiro.</p>
+<p>O <code>nonce</code> e crucial: sem ele, alguem poderia tentar todas as combinacoes possiveis de tabuleiro e comparar com o hash publico. O nonce torna isso impossivel &mdash; e um sal aleatorio que so voce conhece.</p>
+<p>E aqui vem o bonus: a Stellar implementou Poseidon2 como <strong>instrucao nativa</strong> no Protocol 25. Isso significa que quando verificamos o hash on-chain, nao estamos executando codigo de smart contract &mdash; estamos usando uma operacao do proprio protocolo. Rapido e barato.</p>
+
+<hr>
+
+<h2>O segundo circuito: shot_proof</h2>
+<p>Com o tabuleiro comprometido, precisamos provar que cada resposta durante o jogo e honesta.</p>
+<p>Quando meu oponente ataca a coordenada (3, 5) do meu tabuleiro, eu digo "acertou" ou "errou". Mas como ele sabe que eu nao estou mentindo?</p>
+
+<pre><code>fn main(
+    ships: [(u8, u8, u8, bool); 5],  // minhas posicoes (SECRETAS)
+    nonce: Field,                      // meu nonce (SECRETO)
+    board_hash: pub Field,             // meu compromisso (PUBLICO)
+    row: pub u8,                       // coordenada atacada
+    col: pub u8,
+    is_hit: pub bool,                  // minha resposta
+) {
+    // O hash bate com o tabuleiro que eu comprometi no inicio?
+    let computed_hash = compute_board_hash(ships, nonce);
+    assert(computed_hash == board_hash, "board hash invalido");
+
+    // A resposta e consistente com a posicao real dos navios?
+    let actual_hit = cell_is_hit(ships, row, col);
+    assert(actual_hit == is_hit, "resultado desonesto");
+}</code></pre>
+
+<p>Se eu tentar mentir (dizer "miss" quando tem navio), o <code>assert</code> falha e a prova nao pode ser gerada. <strong>Mentir e matematicamente impossivel.</strong></p>
+
+<hr>
+
+<h2>O terceiro circuito: turns_proof</h2>
+<p>O circuito final e o mais ambicioso: replay a partida inteira e calcula o vencedor.</p>
+
+<pre><code>fn main(
+    ships_player: [(u8, u8, u8, bool); 5],  // navios do P1 (secreto)
+    ships_ai: [(u8, u8, u8, bool); 5],      // navios do P2 (secreto)
+    nonce_player: Field,
+    nonce_ai: Field,
+    board_hash_player: pub Field,
+    board_hash_ai: pub Field,
+    attacks_player: pub [(u8, u8); 100],     // todos os ataques do P1
+    attacks_ai: pub [(u8, u8); 100],         // todos os ataques do P2
+    n_attacks_player: pub u8,
+    n_attacks_ai: pub u8,
+    ship_sizes: pub [u8; 5],
+    winner: pub u8,                           // 0 = P1, 1 = P2
+) {
+    // Verifica os dois tabuleiros
+    assert(compute_board_hash(ships_player, nonce_player) == board_hash_player);
+    assert(compute_board_hash(ships_ai, nonce_ai) == board_hash_ai);
+
+    // Conta hits em cada tabuleiro
+    let mut hits_on_ai: u8 = 0;
+    for i in 0..100 {
+        if (i as u8) &lt; n_attacks_player {
+            let (row, col) = attacks_player[i];
+            if cell_is_hit(ships_ai, row, col) {
+                hits_on_ai += 1;
+            }
+        }
+    }
+    // ... mesma logica para hits_on_player ...
+
+    // O vencedor declarado realmente venceu?
+    let cells_to_win = total_ship_cells(ship_sizes); // 5+4+3+3+2 = 17
+    if winner == 0 {
+        assert(hits_on_ai == cells_to_win);
+    } else {
+        assert(hits_on_player == cells_to_win);
+    }
+}</code></pre>
+
+<p>O array de 100 ataques e fixo (circuitos ZK nao suportam tamanho variavel). Os slots nao usados sao preenchidos com <code>(0, 0)</code> e ignorados via o contador <code>n_attacks</code>.</p>
+
+<hr>
+
+<h2>Testando os circuitos</h2>
+<p>Noir tem suporte a testes embutido:</p>
+
+<pre><code>#[test]
+fn test_valid_board() {
+    let ships: [(u8, u8, u8, bool); 5] = [
+        (0, 0, 5, true),   // Carrier na linha 0, horizontal
+        (2, 0, 4, true),   // Battleship na linha 2
+        (4, 0, 3, true),   // Cruiser na linha 4
+        (6, 0, 3, true),   // Submarine na linha 6
+        (8, 0, 2, true),   // Destroyer na linha 8
+    ];
+    let nonce: Field = 12345;
+    let board_hash = compute_board_hash(ships, nonce);
+    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
+    main(ships, nonce, board_hash, ship_sizes);
+}
+
+#[test(should_fail)]
+fn test_lying_miss_when_hit() {
+    main(ships, nonce, board_hash, 0, 0, false); // DEVE falhar
+}</code></pre>
+
+<pre><code>$ nargo test
+[pass] test_valid_board
+[pass] test_lying_miss_when_hit (expected failure)</code></pre>
+
+<hr>
+
+<h2>Gerando provas: bb.js e o problema do React Native</h2>
+<p>Para gerar uma prova a partir de um circuito Noir, voce precisa de dois componentes:</p>
+<ol>
+  <li><strong>NoirJS</strong> (<code>@noir-lang/noir_js</code>): executa o circuito e gera a "witness"</li>
+  <li><strong>bb.js</strong> (<code>@aztec/bb.js</code>): pega a witness e gera a prova criptografica usando UltraHonk</li>
+</ol>
+<p>No Node.js, funciona perfeitamente:</p>
+
+<pre><code>import { Noir } from '@noir-lang/noir_js';
+import { UltraHonkBackend } from '@aztec/bb.js';
+
+const circuit = JSON.parse(fs.readFileSync('board_validity.json'));
+const backend = new UltraHonkBackend(circuit.bytecode);
+const noir = new Noir(circuit);
+
+const { witness } = await noir.execute({
+    ships: [[0, 0, 5, true], [2, 0, 4, true], ...],
+    nonce: "12345",
+    board_hash: "0x07488bfc...",
+    ship_sizes: [5, 4, 3, 3, 2],
+});
+
+const proof = await backend.generateProof(witness, { keccak: true });
+// proof.proof: Uint8Array de 14592 bytes</code></pre>
+
+<p>Mas o plano era gerar provas <strong>no cliente</strong> &mdash; no app mobile.</p>
+<p>E aqui comecou o pesadelo.</p>
+
+<hr>
+
+<h2>O muro: bb.js no React Native</h2>
+<p>O <code>bb.js</code> usa <strong>WebAssembly</strong> pesado. Ele carrega binarios de megabytes para fazer operacoes criptograficas. No Node.js e no browser, isso funciona porque ambos tem suporte maduro a WASM. Mas o React Native nao roda num browser &mdash; ele roda num runtime JavaScript proprio (Hermes) que nao tem suporte completo a WebAssembly.</p>
+
+<p><strong>Tentativa 1: importar bb.js direto no React Native.</strong><br>Falhou imediatamente. <code>WebAssembly</code> nao existe no Hermes.</p>
+
+<p><strong>Tentativa 2: WebView invisivel.</strong><br>Criar um <code>&lt;WebView&gt;</code> escondido que carrega uma pagina HTML com o bb.js. O WebView roda num engine de browser real, entao WASM funciona. Quase funcionou &mdash; mas as provas demoravam 30+ segundos no celular. Inviavel.</p>
+
+<p><strong>Tentativa 3: downgrade de versoes.</strong><br>Commit <code>e78a543</code>: <code>fix(backend): downgrade bb.js and noir_js to compatible versions</code>. Testei bb.js 0.72.1. Ainda nao rodava no React Native.</p>
+
+<hr>
+
+<h2>A decisao dolorosa</h2>
+<p>Olhei pro app mobile. 14 telas. Animacoes com Reanimated. Haptics. Internacionalizacao em 3 idiomas. Splash screen animado, modelo 3D de navio no menu, confetti na vitoria.</p>
+<p>E olhei pro bb.js que se recusava a rodar nele.</p>
+<p>A decisao: <strong>abandonar o mobile-only e fazer um cliente web.</strong></p>
+<p>O web (Vite + React) roda num browser real. WASM funciona. bb.js funciona. Tudo funciona. Nao seria tao bonito quanto o app nativo, mas seria funcional.</p>
+<p>O app mobile continuou existindo &mdash; para single-player e como referencia visual. Mas o PvP com ZK seria web-only.</p>
+
+<blockquote><p>Se eu pudesse voltar no tempo, testaria o bb.js no React Native no <strong>primeiro dia</strong>. Antes de fazer 14 telas. A integracao mais arriscada do projeto deveria ter sido testada primeiro.</p></blockquote>
+
+<div class="article-nav">
+  <button class="nav-btn" onclick="goTo(0)">&larr; Anterior</button>
+  <button class="nav-btn" onclick="goTo(2)">Proximo &rarr;</button>
+</div>
+</article>
+
+<!-- ==================== ARTIGO 3 ==================== -->
+<article class="article" id="art2">
+
+<h1>A blockchain que verificou a prova</h1>
+<p class="subtitle">Encontrando um verificador Soroban, descobrindo o cold start de 5.5 XLM, e gastando 214 XLM procurando um bug que nao existia</p>
+
+<h2>23 de fevereiro: o dia dos 112 commits</h2>
+<p>As provas estavam sendo geradas no cliente. O backend verificava localmente. Mas uma verificacao no backend nao e suficiente &mdash; qualquer um pode rodar um backend e dizer "sim, confio". Precisavamos de um lugar <strong>onde ninguem controla</strong> a verificacao: a blockchain.</p>
+
+<hr>
+
+<h2>O que e Soroban?</h2>
+<p>Soroban e a plataforma de smart contracts da Stellar. Voce escreve contratos em <strong>Rust</strong>, compila para WebAssembly, e faz deploy na rede. Diferente do Ethereum/Solidity, Soroban tem um modelo de recursos explicito &mdash; voce paga por CPU, memoria, I/O, e tamanho de transacao separadamente.</p>
+
+<hr>
+
+<h2>A caca ao verificador</h2>
+<p>Minha primeira pergunta: alguem ja escreveu um verificador UltraHonk para Soroban?</p>
+<p>O ecossistema de ZK no Soroban e nascente. O que existe e um crate experimental chamado <code>ultrahonk-soroban-verifier</code> &mdash; um port do algoritmo de verificacao para o runtime Soroban, aproveitando as operacoes BN254 nativas do Protocol 25.</p>
+<p>Encontrar esse crate ja foi uma aventura. Nao estava num registro publico. Quando encontrei, a API nao era estavel &mdash; mudou entre versoes.</p>
+<p>Commit <code>fe29b0a</code>: <code>soroban: update SDK and verifier dependencies to official repos</code><br>Commit <code>30e7939</code>: <code>soroban: migrate to UltraHonkVerifier struct API</code></p>
+
+<hr>
+
+<h2>A arquitetura on-chain</h2>
+<p>O contrato final e um intermediario entre o verificador ZK e um Game Hub da Stellar:</p>
+
+<pre><code>#[contract]
+pub struct BattleshipContract;
+
+#[contractimpl]
+impl BattleshipContract {
+    pub fn verify_board(env: Env, proof: Bytes, pub_inputs: Bytes)
+      -&gt; Result&lt;bool, Error&gt; {
+        admin.require_auth();
+        let verifier = VerifierClient::new(&amp;env, &amp;verifier_addr);
+        verifier.verify_board(&amp;proof, &amp;pub_inputs);
+        Ok(true)
+    }
+
+    pub fn open_match(env: Env, p1: Address, p2: Address)
+      -&gt; Result&lt;u32, Error&gt; {
+        // Registra partida + notifica Game Hub
+        client.start_game(&amp;self_addr, &amp;session_id, &amp;p1, &amp;p2, &amp;0i128, &amp;0i128);
+        Ok(session_id)
+    }
+
+    pub fn close_match(env: Env, session_id: u32, proof: Bytes,
+      pub_inputs: Bytes, player1_won: bool) -&gt; Result&lt;(), Error&gt; {
+        verifier.verify_turns(&amp;proof, &amp;pub_inputs);
+        client.end_game(&amp;session_id, &amp;player1_won);
+        Ok(())
+    }
+}</code></pre>
+
+<p>O fluxo on-chain por partida e de apenas <strong>4 transacoes</strong>:</p>
+<ol>
+  <li><code>verify_board</code> &mdash; verifica prova do tabuleiro do Jogador 1</li>
+  <li><code>verify_board</code> &mdash; verifica prova do tabuleiro do Jogador 2</li>
+  <li><code>open_match</code> &mdash; registra a partida e notifica o Game Hub</li>
+  <li><code>close_match</code> &mdash; verifica a prova final e declara o vencedor</li>
+</ol>
+
+<p>Os <code>shot_proof</code> (cada jogada) nao vao on-chain &mdash; sao verificados apenas no backend. A <code>turns_proof</code> no final compensa, verificando tudo retroativamente.</p>
+
+<hr>
+
+<h2>O fee de 214 XLM</h2>
+<p>No adapter do backend, eu montava as transacoes assim:</p>
+
+<pre><code>const tx = new TransactionBuilder(account, {
+    fee: '2147483647', // max u32 stroops = 214.7 XLM
+    networkPassphrase: Networks.TESTNET,
+})</code></pre>
+
+<p>2.147.483.647 stroops. Isso e o valor maximo de um inteiro unsigned de 32 bits. Em XLM, sao <strong>214.7 XLM</strong> &mdash; cerca de 30 dolares.</p>
+<p>Por que eu coloquei isso? Porque eu nao sabia quanto custava verificar uma prova UltraHonk on-chain. E toda vez que eu colocava um valor menor, a transacao falhava. Entao fui aumentando ate colocar o maximo possivel.</p>
+
+<hr>
+
+<h2>A descoberta do cold start</h2>
+<p>Fui checar na Horizon API quanto realmente custou:</p>
+
+<table>
+  <tr><th>TX</th><th>Operacao</th><th>Fee cobrado</th></tr>
+  <tr><td><code>06e56a10...</code></td><td>verify_board P1</td><td><strong>5.54 XLM</strong></td></tr>
+  <tr><td><code>5112644f...</code></td><td>verify_board P2</td><td>0.034 XLM</td></tr>
+  <tr><td><code>fbaedebf...</code></td><td>open_match</td><td>0.007 XLM</td></tr>
+  <tr><td><code>1ca4f6b2...</code></td><td>close_match</td><td>0.050 XLM</td></tr>
+</table>
+
+<p>A primeira transacao custou <strong>5.5 XLM</strong>. A segunda &mdash; mesma operacao &mdash; custou <strong>0.034 XLM</strong>. 180 vezes mais barata.</p>
+
+<p>A resposta: <strong>cold start do WASM</strong>. Quando um contrato Soroban e invocado pela primeira vez, o validator precisa carregar o bytecode WebAssembly do storage e instancia-lo. Isso consome muito mais recursos. Nas chamadas seguintes, o WASM esta cacheado.</p>
+
+<p>Na segunda rodada de testes:</p>
+<table>
+  <tr><th>TX</th><th>1a rodada</th><th>2a rodada</th></tr>
+  <tr><td>verify_board P1</td><td><strong>5.54 XLM</strong></td><td><strong>0.034 XLM</strong></td></tr>
+  <tr><td>verify_board P2</td><td>0.034 XLM</td><td>0.034 XLM</td></tr>
+  <tr><td>open_match</td><td>0.007 XLM</td><td>0.007 XLM</td></tr>
+  <tr><td>close_match</td><td>0.050 XLM</td><td>0.050 XLM</td></tr>
+  <tr><td><strong>Total</strong></td><td><strong>~5.63 XLM</strong></td><td><strong>~0.12 XLM</strong></td></tr>
+</table>
+
+<p>Custo real: <strong>~0.12 XLM</strong> por partida. Nao 214.</p>
+
+<hr>
+
+<h2>O bug do sequence number</h2>
+<p>Tentei otimizar: simular primeiro, pegar o <code>minResourceFee</code>, e reconstruir a TX com o fee correto.</p>
+
+<pre><code>// Simula
+const simResult = await server.simulateTransaction(tx);
+const minFee = simResult.minResourceFee;
+
+// Reconstroi TX com fee real
+const txWithFee = new TransactionBuilder(account, {
+    fee: String(Math.ceil(minFee * 1.15)),
+}).build();</code></pre>
+
+<p>Primeira TX: sucesso. Segunda TX: <strong>ERROR</strong>.</p>
+<p>O <code>TransactionBuilder</code> incrementa o <strong>sequence number</strong> da conta internamente. A TX simulada tinha seq N+1, mas a reconstruida tinha seq N+2. Mismatch.</p>
+
+<p>A solucao final: nao reconstruir. Deixar o <code>assembleTransaction</code> do SDK setar o fee, e apenas logar o custo real:</p>
+
+<pre><code>const simResult = await server.simulateTransaction(tx);
+const minFee = simResult.minResourceFee;
+console.log(`${method} minResourceFee=${minFee} (${minFee/1e7} XLM)`);
+
+const preparedTx = rpc.assembleTransaction(tx, simResult).build();
+preparedTx.sign(kp);</code></pre>
+
+<hr>
+
+<h2>Protocol 25: por que isso so e possivel agora</h2>
+<p>Uma prova UltraHonk envolve operacoes com pontos na curva eliptica BN254. Antes do Protocol 25, fazer essas operacoes no Soroban significaria faze-las em codigo Rust puro &mdash; milhoes de instrucoes WASM.</p>
+<p>Com o Protocol 25 (X-Ray), a Stellar adicionou BN254 e Poseidon2 como <strong>host functions</strong> &mdash; executadas nativamente pelo validator. O custo cai de "impossivel" para "0.05 XLM".</p>
+
+<div class="article-nav">
+  <button class="nav-btn" onclick="goTo(1)">&larr; Anterior</button>
+  <button class="nav-btn" onclick="goTo(3)">Proximo &rarr;</button>
+</div>
+</article>
+
+<!-- ==================== ARTIGO 4 ==================== -->
+<article class="article" id="art3">
+
+<h1>Dois navios, uma batalha</h1>
+<p class="subtitle">Conectando dois jogadores em tempo real, sobrevivendo race conditions, e o teste E2E de 33 turnos</p>
+
+<h2>O desafio que parecia simples</h2>
+<p>Circuitos ZK? Prontos. Verificacao on-chain? Funcionando. Agora so faltava o "jogo" &mdash; fazer dois jogadores se encontrarem e jogarem em tempo real.</p>
+<p>Parece a parte mais trivial. Exceto que cada acao envolve uma prova criptografica, cada resposta precisa ser verificada, e qualquer jogador pode desconectar a qualquer momento.</p>
+
+<hr>
+
+<h2>Autenticacao: Ed25519 sem wallet</h2>
+<p>Cada jogador gera um par de chaves Ed25519 localmente. Quando conecta ao servidor, assina um desafio:</p>
+
+<pre><code>export function signAuth(keys, timestamp, nonce) {
+    const message = `${keys.publicKeyHex}:${timestamp}:${nonce}`;
+    const msgBytes = new TextEncoder().encode(message);
+    const sig = nacl.sign.detached(msgBytes, keys.fullSecretKey);
+    return { publicKey: keys.publicKeyHex, timestamp, nonce, signature };
+}</code></pre>
+
+<p>O servidor verifica no middleware do Socket.io. Cada acao durante o jogo tambem e assinada &mdash; impede falsificacao de acoes.</p>
+
+<hr>
+
+<h2>A avalanche de race conditions</h2>
+
+<p><strong>Bug 1: entradas duplicadas na fila.</strong><br>Jogador clicava "buscar partida" duas vezes rapido. Entrava na fila duas vezes.</p>
+<pre><code>// Fix: checar se ja esta na fila
+const alreadyQueued = matchQueue.some(e =&gt; e.publicKey === publicKey);
+if (alreadyQueued) return { type: 'queued' };</code></pre>
+
+<p><strong>Bug 2: jogador preso apos partida.</strong><br>O <code>playerToMatch</code> nao era limpo quando a partida terminava.</p>
+<pre><code>// Fix: limpar no endMatch
+export function endMatch(match, winnerKey, reason) {
+    if (match.player1) playerToMatch.delete(match.player1.publicKey);
+    if (match.player2) playerToMatch.delete(match.player2.publicKey);
+    match.status = 'finished';
+}</code></pre>
+
+<p><strong>Bug 3: rate limit entre turnos.</strong><br>Cooldown de 1 ataque/segundo persistia entre turnos.</p>
+<pre><code>// Fix: resetar rate limit quando o turno comeca
+function emitTurnStart(io, match) {
+    resetRateLimit(activeSocketId);
+    // ...
+}</code></pre>
+
+<hr>
+
+<h2>Desconexao e grace period</h2>
+<p>Se um jogador desconecta, ele tem 60 segundos para voltar. Se nao reconectar, perde por W.O.</p>
+
+<pre><code>socket.on('disconnect', (reason) =&gt; {
+    const match = getPlayerMatch(publicKey);
+    if (match &amp;&amp; match.status === 'battle') {
+        io.to(opponentSocketId).emit('pvp:opponent_disconnected');
+
+        disconnectGrace.set(publicKey, setTimeout(() =&gt; {
+            endMatch(match, opponentKey, 'disconnect_timeout');
+            io.to(opponentSocketId).emit('battle:game_over', {
+                winner: opponentKey,
+                reason: 'opponent_disconnected',
+            });
+        }, 60_000));
+    }
+});</code></pre>
+
+<hr>
+
+<h2>O teste E2E: 33 turnos, 44 segundos</h2>
+<p>O momento decisivo: um teste end-to-end que simula uma partida completa com provas ZK reais.</p>
+
+<pre><code>Phase 1: Setup
+  Circuits loaded (hash_helper, board_validity, shot_proof)
+  Board proofs generated (P1: 14592 bytes, P2: 14592 bytes)
+  Both players connected
+
+Phase 2: Matchmaking
+  Match created: 0b9aece78758d687, code: 782336
+  Both joined match (10x10)
+
+Phase 3: Placement
+  Both ready! First turn: 6a144be1...
+
+Phase 4: Battle
+  Turn 5: P1 -&gt; (0,2) hit
+  Turn 9: P1 -&gt; (0,4) hit [SUNK Carrier]
+  Turn 17: P1 -&gt; (2,3) hit [SUNK Battleship]
+  Turn 23: P1 -&gt; (4,2) hit [SUNK Cruiser]
+  Turn 29: P1 -&gt; (6,2) hit [SUNK Submarine]
+  Turn 33: P1 -&gt; (8,1) hit [SUNK Destroyer]
+  Game over! Winner: Player1, turns: 33
+
+Phase 5: Reveal &amp; Turns Proof
+  turns_proof received (29184 hex chars)
+
+  Duration: 44.4s
+  Status: ALL PASSED</code></pre>
+
+<p>33 turnos. 33 provas <code>shot_proof</code> verificadas (~200ms cada). 2 provas <code>board_validity</code> (~730ms cada). 1 <code>turns_proof</code> gerada em 11.7 segundos. 4 transacoes Soroban no testnet. Tudo em 44 segundos.</p>
+
+<hr>
+
+<h2>Persistencia: Supabase como banco off-chain</h2>
+<table>
+  <tr><th>Tabela</th><th>O que guarda</th></tr>
+  <tr><td><code>matches</code></td><td>Registro de partidas (players, grid, status, vencedor)</td></tr>
+  <tr><td><code>attacks</code></td><td>Historico de cada ataque (coordenadas, resultado, turno)</td></tr>
+  <tr><td><code>player_stats</code></td><td>Wins, losses, total de partidas por jogador</td></tr>
+  <tr><td><code>proof_logs</code></td><td>Log de cada prova verificada (circuito, tempo, valida?)</td></tr>
+</table>
+<p>A blockchain e o tribunal. O Supabase e o cartorio. Um garante a verdade; o outro organiza os documentos.</p>
+
+<div class="article-nav">
+  <button class="nav-btn" onclick="goTo(2)">&larr; Anterior</button>
+  <button class="nav-btn" onclick="goTo(4)">Proximo &rarr;</button>
+</div>
+</article>
+
+<!-- ==================== ARTIGO 5 ==================== -->
+<article class="article" id="art4">
+
+<h1>A licao que custou 214 XLM</h1>
+<p class="subtitle">O que eu aprendi construindo um jogo ZK em 17 dias, o que eu faria diferente, e por que zero-knowledge proofs vao mudar tudo</p>
+
+<h2>Os numeros finais</h2>
+<table>
+  <tr><th>Metrica</th><th>Valor</th></tr>
+  <tr><td>Dias de desenvolvimento</td><td>17</td></tr>
+  <tr><td>Commits totais</td><td>331</td></tr>
+  <tr><td>Maior dia</td><td>23 fev: 112 commits</td></tr>
+  <tr><td>Linguagens</td><td>4 (TypeScript, Rust, Noir, HTML)</td></tr>
+  <tr><td>Circuitos ZK</td><td>3</td></tr>
+  <tr><td>TXs on-chain por partida</td><td>4</td></tr>
+  <tr><td>Custo real por partida</td><td>~0.12 XLM (~$0.02)</td></tr>
+  <tr><td>Custo que eu achava que era</td><td>214 XLM (~$30)</td></tr>
+  <tr><td>Tempo de verificacao (shot_proof)</td><td>~200ms</td></tr>
+  <tr><td>Tempo do teste E2E completo</td><td>44.4s</td></tr>
+</table>
+
+<hr>
+
+<h2>A arquitetura final</h2>
+<pre><code>                    Gera provas ZK
+                    (NoirJS + bb.js WASM)
+                          |
+    [Cliente Web]  -------|
+         |                |
+         | Socket.io      |
+         | (Ed25519)      |
+         v                v
+    [Backend Express] -----------&gt; [Supabase]
+         |                         (historico, stats)
+         |
+         | 4 TXs por partida
+         v
+    [Soroban Testnet]
+         |
+         |-- BattleshipContract (nosso)
+         |-- UltraHonk Verifier (BN254 nativo, Protocol 25)
+         |-- Game Hub (Stellar ecosystem)</code></pre>
+
+<hr>
+
+<h2>As 5 licoes</h2>
+
+<h3>1. Teste a integracao mais arriscada primeiro</h3>
+<p>Eu comecei pelo jogo single-player. 14 telas bonitas, animacoes, haptics. Quando tentei integrar bb.js no React Native... nao rodava. Tive que fazer um cliente web do zero.</p>
+<p>Se eu tivesse gasto 2 horas no primeiro dia testando bb.js no React Native, teria ido direto para web.</p>
+<blockquote><p>A primeira coisa que voce faz num projeto e testar a parte que pode matar o projeto.</p></blockquote>
+
+<h3>2. Fees de blockchain sao dinamicos &mdash; nao chute</h3>
+<p>Coloquei 214 XLM como fee porque "assim nao falha". Quando finalmente olhei os custos reais via Horizon API, descobri que custava 0.03 XLM.</p>
+<blockquote><p>Nunca ignore os custos. Logue, entenda, otimize.</p></blockquote>
+
+<h3>3. Sequence numbers sao estado mutavel</h3>
+<p>Tentei reconstruir a transacao com o fee correto. Mas o <code>TransactionBuilder</code> incrementa o sequence number internamente. Ao reconstruir, o sequence foi para N+2 quando a simulacao esperava N+1.</p>
+<blockquote><p>Efeitos colaterais em construtores sao armadilhas. Leia o codigo-fonte do SDK.</p></blockquote>
+
+<h3>4. ZK nao e magica &mdash; e trade-off</h3>
+<table>
+  <tr><th>Aspecto</th><th>Trade-off</th></tr>
+  <tr><td>Tamanho do circuito</td><td>Mais verificacoes = prova mais lenta</td></tr>
+  <tr><td>Inputs fixos</td><td>Arrays de tamanho fixo, preenche com zeros</td></tr>
+  <tr><td>Tempo de geracao</td><td>board_validity: ~2s. turns_proof: ~12s</td></tr>
+  <tr><td>Compatibilidade</td><td>bb.js precisa de WASM &mdash; nao roda em todo lugar</td></tr>
+</table>
+
+<h3>5. O cold start do WASM existe &mdash; e caro</h3>
+<p>A primeira invocacao de um contrato Soroban custa 100-180x mais que invocacoes subsequentes. Nao e bug &mdash; e como a VM funciona. Se voce nao sabe disso, vai achar que verificar uma prova custa 5 XLM quando custa 0.03 XLM.</p>
+
+<hr>
+
+<h2>O que ZK muda nos jogos</h2>
+<p>Em qualquer jogo com informacao oculta &mdash; poker, Battleship, fog of war, cartas na mao &mdash; alguem precisa ser o "arbitro confiavel". Historicamente, esse papel cai no servidor.</p>
+<p>Com ZK, ninguem precisa confiar em ninguem. A matematica e o arbitro.</p>
+<p>E com blockchains como Stellar adicionando suporte nativo a essas operacoes via Protocol 25, a barreira de entrada so vai diminuir.</p>
+
+<hr>
+
+<h2>O resultado</h2>
+<p>Stealth Battleship e um jogo de Batalha Naval onde ninguem ve o tabuleiro do outro, ninguem confia no servidor, e a matematica garante que ninguem pode trapacear.</p>
+<p>Tres circuitos ZK. Quatro transacoes on-chain. Zero confianca necessaria.</p>
+<p>Se eu &mdash; um dev que nunca tinha feito um jogo, nunca tinha escrito um circuito ZK, e nunca tinha deployado um smart contract &mdash; consegui fazer isso em 17 dias, voce tambem consegue.</p>
+<p><strong>A prova esta on-chain. Pode verificar.</strong></p>
+
+<hr>
+
+<h3>Indice da serie</h3>
+<ol>
+  <li><a href="#" onclick="goTo(0);return false">O que eu me meti?</a> &mdash; O problema e a ideia</li>
+  <li><a href="#" onclick="goTo(1);return false">Provando sem mostrar</a> &mdash; Noir, circuitos ZK, e o muro do React Native</li>
+  <li><a href="#" onclick="goTo(2);return false">A blockchain que verificou a prova</a> &mdash; Soroban, Protocol 25, e 214 XLM</li>
+  <li><a href="#" onclick="goTo(3);return false">Dois navios, uma batalha</a> &mdash; PvP real-time e race conditions</li>
+  <li><a href="#" onclick="goTo(4);return false">A licao que custou 214 XLM</a> &mdash; Retrospectiva</li>
+</ol>
+
+<div class="article-nav">
+  <button class="nav-btn" onclick="goTo(3)">&larr; Anterior</button>
+  <button class="nav-btn" disabled>Fim &bull;</button>
+</div>
+</article>
+
+</main>
+
+<script>
+const articles = document.querySelectorAll('.article');
+const tabs = document.querySelectorAll('.tab');
+const indicator = document.getElementById('partIndicator');
+const progressBar = document.getElementById('progressBar');
+let current = 0;
+
+function goTo(idx) {
+  articles[current].classList.remove('active');
+  tabs[current].classList.remove('active');
+  current = idx;
+  articles[current].classList.add('active');
+  tabs[current].classList.add('active');
+  indicator.textContent = `${idx + 1} / 5`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress();
+  tabs[current].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => goTo(Number(tab.dataset.idx)));
+});
+
+// Theme
+const toggle = document.getElementById('themeToggle');
+const saved = localStorage.getItem('zk-theme');
+if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  toggle.textContent = '\u2600';
+}
+toggle.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  toggle.textContent = isDark ? '\u263E' : '\u2600';
+  localStorage.setItem('zk-theme', isDark ? 'light' : 'dark');
+});
+
+// Reading progress
+function updateProgress() {
+  const el = articles[current];
+  const rect = el.getBoundingClientRect();
+  const scrolled = -rect.top;
+  const total = rect.height - window.innerHeight;
+  const pct = Math.min(100, Math.max(0, (scrolled / total) * 100));
+  progressBar.style.width = pct + '%';
+}
+window.addEventListener('scroll', updateProgress);
+
+// Keyboard nav
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' && current < 4) goTo(current + 1);
+  if (e.key === 'ArrowLeft' && current > 0) goTo(current - 1);
+});
+</script>
+
+</body>
+</html>
