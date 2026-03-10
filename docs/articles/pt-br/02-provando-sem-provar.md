@@ -308,7 +308,7 @@ const { witness } = await noir.execute({
 const proof = await backend.generateProof(witness, { keccak: true });
 ```
 
-A flag `{ keccak: true }` é importante — ela gera provas compatíveis com verificação on-chain.
+A flag `{ keccak: true }` não tem a ver com o Poseidon2. O Poseidon2 é o hash que **nós** usamos para hashear o tabuleiro — faz parte da lógica do jogo. Já essa flag controla outro hash, usado pelo **próprio bb.js** por baixo dos panos na hora de montar a prova. Por padrão ele usa Blake3, mas os contratos na Stellar têm Keccak256 ou SHA256. A flag troca para Keccak256, permitindo que o contrato on-chain consiga verificar a prova.
 
 ---
 

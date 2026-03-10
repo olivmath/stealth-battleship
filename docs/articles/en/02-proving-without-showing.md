@@ -308,7 +308,7 @@ const { witness } = await noir.execute({
 const proof = await backend.generateProof(witness, { keccak: true });
 ```
 
-The `{ keccak: true }` flag is important — it generates proofs compatible with on-chain verification.
+The `{ keccak: true }` flag is unrelated to Poseidon2. Poseidon2 is the hash **we** use to hash the board — it's part of the game logic. This flag controls a different hash, used by **bb.js itself** under the hood when assembling the proof. By default it uses Blake3, but smart contracts don't have Blake3 — they have Keccak256. The flag switches to Keccak256, allowing the on-chain contract to verify the proof.
 
 ---
 
