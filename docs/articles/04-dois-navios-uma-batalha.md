@@ -10,7 +10,7 @@
 
 Circuitos ZK? Prontos. Verificação on-chain? Funcionando. Agora só faltava o "jogo" — fazer dois jogadores se encontrarem e jogarem Batalha Naval em tempo real.
 
-Parece a parte mais trivial, certo? Afinal, é "só" um servidor de WebSocket que gerencia turnos. Exceto que cada ação de cada jogador envolve uma prova criptográfica, cada resposta precisa ser verificada, e qualquer jogador pode desconectar a qualquer momento.
+Parece a parte mais trivial, certo? Afinal, é "só" um servidor de WebSocket que gerencia turnos. Exceto que cada ação de cada jogador envolve uma Prova ZK, cada resposta precisa ser verificada, e qualquer jogador pode desconectar a qualquer momento.
 
 ---
 
@@ -283,7 +283,7 @@ Phase 5: Reveal & Turns Proof
   Status: ALL PASSED
 ```
 
-33 turnos. 17 ataques do P1, 16 do P2. 33 provas `shot_proof` verificadas (~200ms cada). 2 provas `board_validity` verificadas (~730ms cada). 1 `turns_proof` gerada em 11.7 segundos. 4 transações Soroban no testnet. Tudo em 44 segundos.
+33 turnos. 17 ataques do P1, 16 do P2. 33 Provas ZK `shot_proof` verificadas (~200ms cada). 2 Provas ZK `board_validity` verificadas (~730ms cada). 1 `turns_proof` gerada em 11.7 segundos. 4 transações Soroban no testnet. Tudo em 44 segundos.
 
 O log do backend durante esse teste é uma sinfonia:
 
@@ -315,7 +315,7 @@ Nem tudo vai on-chain. O Supabase guarda o que é operacional:
 | `matches` | Registro de partidas (players, grid, status, vencedor) |
 | `attacks` | Histórico de cada ataque (coordenadas, resultado, turno) |
 | `player_stats` | Wins, losses, total de partidas por jogador |
-| `proof_logs` | Log de cada prova verificada (circuito, tempo, válida?) |
+| `proof_logs` | Log de cada Prova ZK verificada (circuito, tempo, válida?) |
 
 A blockchain é o tribunal. O Supabase é o cartório. Um garante a verdade; o outro organiza os documentos.
 
@@ -331,7 +331,7 @@ Ao final dessa fase:
 - Verificação de `board_validity` e `shot_proof` a cada ação
 - Grace period de 60s para reconexão
 - Geração de `turns_proof` no servidor após game over
-- Submissão fire-and-forget de provas on-chain
+- Submissão fire-and-forget de Provas ZK on-chain
 - Teste E2E completo passando (33 turnos, 44s)
 - Deploy no Render (plano free, região Oregon)
 
@@ -339,5 +339,5 @@ A máquina funciona. Mas só funciona porque aprendemos várias lições pelo ca
 
 ---
 
-*Anterior: [Parte 3 — "A blockchain que verificou a prova"](./03-a-blockchain-que-verificou.md)*
+*Anterior: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-a-blockchain-que-verificou.md)*
 *Próximo: [Parte 5 — "A lição que custou 214 XLM"](./05-a-licao-que-custou-214-xlm.md)*

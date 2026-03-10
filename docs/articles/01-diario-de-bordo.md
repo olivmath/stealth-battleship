@@ -134,7 +134,7 @@ Mas estou adiantando a história.
 Nos próximos artigos, vou contar cada fase com código real, erros reais, e os momentos de "eureka" que fizeram o projeto funcionar:
 
 - **Parte 2**: Escrevendo Provas ZK em Noir e descobrindo que o app mobile não roda Provas ZK (bb.js)
-- **Parte 3**: Verificando provas na blockchain Stellar e gastando 214 XLM procurando um bug.
+- **Parte 3**: Verificando Provas ZK na blockchain Stellar e gastando 214 XLM procurando um bug.
 - **Parte 4**: Conectando dois jogadores em tempo real e a avalanche de race conditions.
 - **Parte 5**: A lição que custou 214 XLM — o que eu aprendi e faria diferente.
 

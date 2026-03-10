@@ -1,6 +1,6 @@
 # Diário de Bordo: ZK Battleship
 
-## Parte 3 — "A blockchain que verificou a prova"
+## Parte 3 — "A blockchain que verificou a Prova ZK"
 
 *Encontrando um verificador Soroban, descobrindo o cold start de 5.5 XLM, e gastando 214 XLM procurando um bug que não existia*
 
@@ -8,9 +8,9 @@
 
 ### 23 de fevereiro: o dia dos 112 commits
 
-As provas estavam sendo geradas no cliente. O backend verificava localmente usando `bb.js`. Mas uma verificação no backend não é suficiente — qualquer um pode rodar um backend e dizer "sim, confio". Precisávamos de um lugar **onde ninguém controla** a verificação: a blockchain.
+As Provas ZK estavam sendo geradas no cliente. O backend verificava localmente usando `bb.js`. Mas uma verificação no backend não é suficiente — qualquer um pode rodar um backend e dizer "sim, confio". Precisávamos de um lugar **onde ninguém controla** a verificação: a blockchain.
 
-A ideia: submeter as provas ZK para um smart contract na Stellar que as verifica de forma independente. Se o contrato diz que a prova é válida, **qualquer pessoa no mundo pode confirmar**. É imutável, transparente, trustless.
+A ideia: submeter as provas ZK para um smart contract na Stellar que as verifica de forma independente. Se o contrato diz que a Prova ZK é válida, **qualquer pessoa no mundo pode confirmar**. É imutável, transparente, trustless.
 
 Fácil de descrever. Brutal de implementar.
 
@@ -94,7 +94,7 @@ impl BattleshipContract {
         pub_inputs: Bytes,
         player1_won: bool,
     ) -> Result<(), Error> {
-        // Verifica a prova do resultado
+        // Verifica a Prova ZK do resultado
         verifier.verify_turns(&proof, &pub_inputs);
         // Notifica o Game Hub: end_game(...)
         Ok(())
@@ -104,10 +104,10 @@ impl BattleshipContract {
 
 O fluxo on-chain por partida é de apenas **4 transações**:
 
-1. `verify_board` — verifica prova do tabuleiro do Jogador 1
-2. `verify_board` — verifica prova do tabuleiro do Jogador 2
+1. `verify_board` — verifica Prova ZK do tabuleiro do Jogador 1
+2. `verify_board` — verifica Prova ZK do tabuleiro do Jogador 2
 3. `open_match` — registra a partida e notifica o Game Hub
-4. `close_match` — verifica a prova final e declara o vencedor
+4. `close_match` — verifica a Prova ZK final e declara o vencedor
 
 Note que os `shot_proof` (cada jogada) não vão on-chain. São verificados apenas no backend. A blockchain só vê o início e o fim. Isso é intencional — submeter uma transação a cada jogada seria lento demais para um jogo em tempo real. A partida inteira é validada pela `turns_proof` no final.
 
@@ -188,7 +188,7 @@ Quê?
 
 ### O cold start do WASM — ou melhor, o rent do Soroban
 
-Isso me deixou confuso por horas. A mesma função (`verify_board`), a mesma prova, o mesmo contrato. Por que a primeira é 180 vezes mais cara?
+Isso me deixou confuso por horas. A mesma função (`verify_board`), a mesma Prova ZK, o mesmo contrato. Por que a primeira é 180 vezes mais cara?
 
 A resposta não é simplesmente "cache frio". É algo mais fundamental: **state rent**.
 
@@ -314,7 +314,7 @@ O hash dos contratos na Stellar Expert:
 - Battleship Contract: `CBDLYHFFUD2GYFXOPQ56JKXDDSCRW4C4WWAYFCXRRL5WTYJPREUMYTB4`
 - Game Hub: `CB4VZAT2U3UC6XFK3N23SKRF2NDCMP3QHJYMCHHFMZO7MRQO6DQ2EMYG`
 
-As provas estavam sendo geradas no cliente, verificadas no backend, E verificadas on-chain. Faltava a parte mais caótica: fazer dois jogadores se enfrentarem em tempo real.
+As Provas ZK estavam sendo geradas no cliente, verificadas no backend, E verificadas on-chain. Faltava a parte mais caótica: fazer dois jogadores se enfrentarem em tempo real.
 
 ---
 
