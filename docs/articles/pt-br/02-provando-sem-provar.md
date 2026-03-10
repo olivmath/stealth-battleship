@@ -12,9 +12,9 @@ O jogo single-player estava pronto. Bonito, jogável, com 14 telas e animações
 
 **Mas como você escreve uma prova zero-knowledge?**
 
-Você não escreve a Prova ZK diretamente. Você escreve um circuito. Um circuito é um programa que descreve as regras que a Prova ZK precisa satisfazer. Depois, uma ferramenta matemática gera a Prova ZK a partir do circuito e dos dados de entrada.
+Você não escreve a Prova de Conhecimento Zero (ZKP) diretamente. Você escreve um circuito. Um circuito é um programa que descreve as regras que a prova precisa satisfazer. Depois, uma ferramenta matemática usa o circuito junto com os dados de entrada, públicos e privados para gerar a Prova de Conhecimento Zero que vamos chamar simplesmente de prova.
 
-Essas regras se chamam restrições e na verdade vão gerar uma Prova ZK de computação. Uma Prova ZK de que aquele script executou de forma correta sem revelar os dados de entrada da execução.
+Essas regras se chamam **restrições** e vão gerar uma prova de computação. Uma prova de que aquele código executou de forma correta sem revelar os dados de entrada da execução.
 
 ---
 
@@ -23,10 +23,12 @@ Essas regras se chamam restrições e na verdade vão gerar uma Prova ZK de comp
 Existem várias linguagens para escrever circuitos ZK como: Circom, Cairo, Noir, entre outras. Escolhi Noir por três razões:
 
 1. A sintaxe é similar ao Rust: então eu já "sabia" programar.
-2. Conjunto de ferramentas: muito prático de instalar, compilar, testar e gerar as Provas ZK.
-3. O sistema de Provas ZK compatível: o Protocol 25 da Stellar é totalmente compatível com o sistema UltraHonk de geração de Provas ZK. (os dois usam a mesma curva elíptica BN254)
+2. Conjunto de ferramentas: muito prático de instalar, compilar, testar e gerar as provas.
+3. O sistema de provas compatível: o Protocol 25 da Stellar é totalmente compatível com o sistema UltraHonk de geração de provas. (os dois usam a mesma curva elíptica BN254 e função de hash Poseidon2)
 
-### Circuito do Tabuleiro
+---
+
+## Circuito do Tabuleiro
 
 O circuito mais importante é o primeiro: provar que seu tabuleiro é válido sem revelar onde estão os navios.
 
@@ -37,9 +39,9 @@ O que ele precisa verificar:
 - Nenhum navio sai dos limites do tabuleiro 10x10
 - Nenhum navio se sobrepõe a outro
 
-Eu modelei o tabuleiro como uma matriz 10x10 e os navios como vetores do tipo A[i][j].
+Eu modelei o tabuleiro como uma matriz 10x10 e os navios como vetores do tipo `A[i][j]`.
 
-As restrições eu modelei como funções de if/else que deveriam quebrar o circuito como um todo caso alguma falhasse. Assim, ou tudo está válido ou nada está, fazendo o circuito ser atômico.
+As restrições eu modelei como funções de if/else que deveriam quebrar o circuito como um todo caso alguma falhasse. Assim, ou tudo está válido ou nada está, fazendo o circuito ser **atômico**.
 
 E para transformar essas restrições em código usei Noir assim:
 
@@ -77,23 +79,23 @@ fn main(
 }
 ```
 
-Observe a palavra-chave `pub`. Inputs marcados com `pub` são **públicos** e qualquer um pode vê-los. Inputs sem `pub` são **privados**, só quem gera a Prova ZK conhece.
+Observe a palavra-chave `pub`. Parâmetros marcados com `pub` são públicos e qualquer um pode vê-los. Parâmetros sem `pub` são privados, só quem gera a prova os conhece.
 
-`ships`: ninguém sabe onde seus navios estão.
-`nonce`: número aleatório para evitar que alguém teste todas as combinações possíveis de tabuleiro até encontrar o board_hash e descobrir as posições reais.
-`board_hash` e `ship_sizes`: todos podem verificar que a Prova ZK foi gerada contra esse hash específico e com esses tamanhos de navio.
+- `ships`: coordenadas dos seus navios.
+- `nonce`: número aleatório para evitar que alguém teste todas as combinações possíveis de tabuleiro até encontrar o `board_hash` e descobrir as posições reais.
+- `board_hash` e `ship_sizes`: todos podem verificar que a prova foi gerada contra esse hash específico e com esses tamanhos de navio.
 
 ---
 
-### SHA256 vs Poseidon2
+## SHA256 vs Poseidon2
 
 Um detalhe que parece pequeno mas é uma das decisões mais importantes do projeto: qual função de hash usar.
 
 No mundo normal, você usaria SHA-256 pela simplicidade e porque qualquer linguagem de programação tem ela disponível nativamente.
 
-Eu até comecei com SHA-256 pra acelerar o MVP, mas dentro de um circuito ZK, SHA-256 é **extremamente cara e lenta**. Cada operação bitwise vira milhares de restrições depois do circuito ser compilado, tornando a Prova ZK lenta para gerar e cara pra verificar.
+Eu até comecei com SHA-256 pra acelerar o MVP, mas dentro de um circuito ZK, SHA-256 é extremamente cara e lenta. Cada operação bitwise vira milhares de restrições depois do circuito ser compilado, tornando a prova lenta para gerar e cara pra verificar.
 
-**Poseidon2** é uma função de hash desenhada especificamente para circuitos ZK. Ela opera sobre campos finitos em vez de bits, o que a torna ordens de grandeza mais eficiente dentro de um circuito.
+Poseidon2 é uma função de hash desenhada especificamente para circuitos ZK. Ela opera sobre campos finitos em vez de bits, o que a torna ordens de grandeza mais eficiente dentro de um circuito.
 
 ```rust
 fn compute_board_hash(
@@ -103,36 +105,38 @@ fn compute_board_hash(
     let mut inputs: [Field; 21] = [0; 21];
     for i in 0..5 {
         let (r, c, s, h) = ships[i];
-        inputs[i * 4 + 0] = r as Field;    // linha
-        inputs[i * 4 + 1] = c as Field;    // coluna
-        inputs[i * 4 + 2] = s as Field;    // tamanho
-        inputs[i * 4 + 3] = if h { 1 } else { 0 }; // orientação
+        inputs[i * 4 + 0] = r as Field;             // linha
+        inputs[i * 4 + 1] = c as Field;             // coluna
+        inputs[i * 4 + 2] = s as Field;             // tamanho
+        inputs[i * 4 + 3] = if h { 1 } else { 0 };  // orientação
     }
-    inputs[20] = nonce;  // sal aleatório
+    inputs[20] = nonce;                             // sal aleatório
     Poseidon2::hash(inputs, 21)
 }
 ```
 
-5 navios x 4 campos cada = 20 inputs, mais 1 nonce = 21 valores. O Poseidon2 comprime tudo num único `Field` (um número de 254 bits). Esse é o compromisso público do tabuleiro.
+5 navios × 4 campos cada = 20 inputs + 1 nonce = 21 bytes no total. O Poseidon2 transforma todos os inputs em um único elemento de campo (Field) de 254 bits. Esse é o compromisso público do tabuleiro.
 
-O `nonce` é crucial: sem ele, alguém poderia tentar todas as combinações possíveis de tabuleiro e comparar com o hash público. O nonce torna isso impossível — ele é um sal aleatório que só você conhece.
+O nonce é crucial: sem ele, alguém poderia tentar todas as combinações possíveis de tabuleiro e comparar com o hash público. O nonce torna isso impossível — ele é um sal aleatório que só você conhece.
 
-E aqui vem o bônus: a Stellar implementou Poseidon2 como **instrução nativa** no Protocol 25. Isso significa que quando verificamos o hash on-chain, não estamos executando código de smart contract — estamos usando uma operação do próprio protocolo. Rápido e barato.
+E aqui vem o bônus: a Stellar implementou Poseidon2 como instrução nativa no Protocol 25. Isso significa que quando verificamos o hash on-chain, não estamos executando código de smart contract na verdade estamos usando uma operação nativa do protocolo. Rápido e barato.
 
 ---
 
-### Circuito de Ataque
+## Circuito de Ataque
+
+> Com o tabuleiro validado, o próximo problema é garantir honestidade durante a partida.
 
 Além de provar que o tabuleiro é válido, também precisamos provar que cada ação durante o jogo é honesta.
 
 Quando meu oponente ataca a coordenada (3, 5) do meu tabuleiro, eu digo "acertou" ou "errou". Mas como ele sabe que eu não estou mentindo?
 
-Eu escrevi 2 restrições para gerar uma Prova ZK anti mentiras:
+Escrevi 2 restrições para essa prova:
 
 1. O hash que estou usando deve ser o mesmo do tabuleiro do início.
 2. Caso tenha um navio naquela coordenada, digo `true`; se não, `false`.
 
-Se eu tentar mentir (dizer "errou" quando ele "acertou" o navio), o circuito falha e a Prova ZK não pode ser gerada. **Mentir é matematicamente impossível.**
+Se eu tentar mentir (dizer "errou" quando ele "acertou" o navio), o circuito falha e a prova não pode ser gerada. Mentir sem quebrar a segurança do sistema de provas é matematicamente inviável.
 
 E o código disso fica assim:
 
@@ -155,56 +159,53 @@ fn main(
 }
 ```
 
-Mas espera — por que `is_hit` é um **input** e não um retorno do circuito?
+**Mas espera — por que `is_hit` é um input e não um retorno do circuito?**
 
-Circuitos ZK não retornam valores. Eles são sistemas de restrições. Isso quer dizer que eles só fazem `assert`, passam ou falham. Se o circuito pudesse *retornar* o resultado calculado de `cell_is_hit`, ele teria que expor algo derivado de `ships`, que é privado. Isso vazaria informação sobre onde estão os navios.
+Circuitos ZK não retornam valores. Eles são sistemas de restrições. Isso quer dizer que eles só fazem `assert`, passam ou falham. Se o circuito pudesse retornar o resultado calculado de `cell_is_hit`, ele teria que expor algo derivado de `ships`, que é privado. Isso vazaria informação sobre onde estão os navios.
 
-No mundo dos circuitos o padrão é o inverso do mundo da programação.
+No mundo dos circuitos o padrão é o **inverso** do mundo da programação:
 
-**Eu declaro** o resultado (`is_hit = true`), e o circuito **prova que minha declaração é verdadeira** com os dados secretos. Se minha declaração for falsa, a Prova ZK simplesmente não é gerada porque o circuito falha.
+> Você declara o resultado (`is_hit = true`), e o circuito prova que sua declaração é verdadeira com os dados secretos. Se sua declaração for falsa, a prova simplesmente não é gerada porque o circuito falha.
 
 ---
 
-### Circuito final da partida
+## Circuito Final da Partida
 
-O circuito final é o mais ambicioso: fazer o replay da partida inteira e calcular o vencedor sem saber os tabuleiros e de forma matematicamente perfeita.
+> Com a validação de tabuleiro e de ataques individuais resolvida, faltava o árbitro da partida inteira.
 
-Esse circuito é o árbitro final. Ele recebe toda a história da partida, todos os ataques dos dois jogadores e recalcula quem ganhou. Se alguém tentar declarar o vencedor errado, a Prova ZK falha.
+O circuito final é o mais ambicioso: fazer o replay da partida inteira e calcular, passo a passo, o vencedor sem revelar os tabuleiros, de forma matematicamente verificável.
 
-Pra isso usei um array de ataques com tamanho fixo de 100 (porque os circuitos ZK não suportam tamanho variável). Os slots não usados são preenchidos com `(0, 0)` e ignorados via o contador `n_attacks`.
+Esse circuito é o árbitro final. Ele recebe toda a história da partida, todos os ataques dos dois jogadores e recalcula quem ganhou. Se alguém tentar declarar o vencedor errado, a prova falha.
 
-Esse circuito é o maior, mais lento e mais caro dos três e mesmo assim só me custou $0.00032 USD. Isso porque ele tem que executar 2 loops pra contar quem acertou todos os navios do adversário:
+Os circuitos ZK em Noir exigem que os arrays tenham tamanho fixo em tempo de compilação. Por isso usei um array de ataques com tamanho fixo de 100 (que é o número máximo para um tabuleiro de 10x10). Os slots não usados são preenchidos com `(0, 0)` e ignorados via o contador `n_attacks`.
+
+Esse circuito é o maior, mais lento e mais caro dos três; Mesmo assim o custo de verificação on-chain na Stellar foi de apenas **$0.00032 USD**. Isso porque ele tem que executar 2 loops pra contar quem acertou todos os navios do adversário:
 
 ```rust
 fn main(
+    // Jogador 1
     ships_player: [(u8, u8, u8, bool); 5],  // navios do jogador 1 (SECRETO)
-    ships_ai: [(u8, u8, u8, bool); 5],      // navios do jogador 2 (SECRETO)
-    nonce_player: Field,
-    nonce_ai: Field,
+    attacks_player: pub [(u8, u8); 100],    // todos os ataques do jogador 1
     board_hash_player: pub Field,
-    board_hash_ai: pub Field,
-    attacks_player: pub [(u8, u8); 100],     // todos os ataques do jogador 1
-    attacks_ai: pub [(u8, u8); 100],         // todos os ataques do jogador 2
     n_attacks_player: pub u8,
+    nonce_player: Field,
+
+    // Jogador 2 (AI)
+    ships_ai: [(u8, u8, u8, bool); 5],      // navios do jogador 2 (SECRETO)
+    attacks_ai: pub [(u8, u8); 100],        // todos os ataques do jogador 2
+    board_hash_ai: pub Field,
     n_attacks_ai: pub u8,
+    nonce_ai: Field,
+
+    // Partida
     ship_sizes: pub [u8; 5],
-    winner: pub u8,                          // 0 = jogador 1 ou 1 = jogador 2
+    winner: pub u8,                         // jogador 1 ou jogador 2
 ) {
     // Verifica os dois tabuleiros
     assert(compute_board_hash(ships_player, nonce_player) == board_hash_player);
     assert(compute_board_hash(ships_ai, nonce_ai) == board_hash_ai);
 
-    // Conta hits em cada tabuleiro
-    let mut hits_on_ai: u8 = 0;
-    for i in 0..100 {
-        if (i as u8) < n_attacks_player {
-            let (row, col) = attacks_player[i];
-            if cell_is_hit(ships_ai, row, col) {
-                hits_on_ai += 1;
-            }
-        }
-    }
-
+    // Conta hits do jogador 1
     let mut hits_on_player: u8 = 0;
     for i in 0..100 {
         if (i as u8) < n_attacks_ai {
@@ -215,47 +216,74 @@ fn main(
         }
     }
 
+    // Conta hits do jogador 2 (AI)
+    let mut hits_on_ai: u8 = 0;
+    for i in 0..100 {
+        if (i as u8) < n_attacks_player {
+            let (row, col) = attacks_player[i];
+            if cell_is_hit(ships_ai, row, col) {
+                hits_on_ai += 1;
+            }
+        }
+    }
+
+    // 5+4+3+3+2 = 17 células de navio no total
+    let total_ship_counter = 17;
+    
     // O vencedor declarado realmente venceu?
-    let total_ship_counter = 17 // 5+4+3+3+2 = 17 navios no total
     if winner == 0 {
-        assert(hits_on_ai == total_ship_counter);     // P1 afundou todos os navios de P2
+        // P1 afundou todos os navios de P2?
+        assert(hits_on_ai == total_ship_counter);
     } else {
-        assert(hits_on_player == total_ship_counter); // P2 afundou todos os navios de P1
+        // P2 afundou todos os navios de P1?
+        assert(hits_on_player == total_ship_counter);
     }
 }
 ```
 
-### Integrando os Circuitos
+---
 
-Agora que o circuito está pronto, ele precisa receber os dados para começar a gerar as Provas ZK. Mas onde essa linguagem roda? Node.js? Rust? No browser?
+## Integrando os Circuitos
+
+> Com os três circuitos prontos, o próximo passo era entender onde e como eles rodam.
+
+Agora que o circuito está pronto, ele precisa receber os dados para começar a gerar as provas. Mas onde essa linguagem roda? Node.js? Rust? No browser?
 
 Vou comparar o ciclo de vida dos circuitos ao dos contratos inteligentes e, se você é de web2, com as functions-as-a-service:
 
-**Web2: Functions-as-a-Service**
-- Escrever -> Compilar -> Testar -> Upload/Deploy na Nuvem -> Interagir (cold start)
+**Web2 - Functions-as-a-Service:**
+```
+Escrever → Compilar → Testar → Deploy na Nuvem → Interagir (cold start)
+```
 
-**Web3: Smart-contracts**
-- Escrever -> Compilar -> Testar -> Upload/Deploy na VM (EVM/Soroban) -> Interagir (gas fee)
+**Web3 - Smart-contracts:**
+```
+Escrever → Compilar → Testar → Deploy na Blockchain (EVM/Soroban) → Interagir (gas fee)
+```
 
-**Web3ZK: Circuitos**
-- Escrever -> Compilar -> Testar -> Importar -> Interagir (CPU) -> Output (Prova ZK)
+**Web3 ZK - Circuitos:**
+```
+Escrever → Compilar → Testar → Importar no cliente → Interagir (CPU) → Output (prova)
+```
 
-Diferente da Web2 e Web3, os circuitos não DEVEM ser executados no lado do servidor. Para pra pensar: se você tem que enviar os dados para o servidor para gerar uma Prova ZK secreta, você já revelou seus dados para a rede e para o servidor.
+Diferente da Web2 e Web3, os circuitos **não devem ser executados no lado do servidor**. Para pra pensar: se você tem que enviar os dados para o servidor para gerar uma prova com inputs secretos, você já revelou seus dados para a rede e para o servidor.
 
-Por isso os circuitos devem ser compilados e injetados no cliente assim como uma biblioteca WASM ou um asset que vai transpilado para o cliente.
+Por isso os circuitos devem ser compilados e injetados no cliente assim como uma biblioteca WASM ou um asset js que é executado no cliente.
 
-Depois de escrever os circuitos, eu compilei e o output é um binário executável do circuito capaz de gerar Provas ZK dinamicamente com inputs secretos. Mas a compilação gera outro artefato importante: a **Verification Key** (VK).
+Depois de escrever os circuitos, a compilação gera um binário executável capaz de gerar provas dinamicamente com inputs secretos. Mas a compilação gera outro artefato importante: a **Verification Key (VK)**.
 
-A VK é a metade pública do circuito que contém tudo que um verificador precisa para confirmar que uma Prova ZK é legítima, sem precisar do circuito completo nem dos dados secretos. No meu projeto, as VKs dos circuitos `board_validity` e `turns_proof` são embarcadas dentro do contrato inteligente Soroban que usa elas para verificar as Provas ZK on-chain.
+A VK é a metade pública do circuito, ela contém tudo que um verificador precisa para confirmar que uma prova é legítima, sem precisar do circuito completo nem dos dados secretos. No meu projeto, as VKs dos circuitos do tabuleiro e da partida são embarcadas dentro do contrato inteligente Soroban que as usa para verificar as provas on-chain. Já o circuito de ataque fica apenas no backend pois ele é verificado off-chain.
 
-Então para FINALMENTE gerar uma Prova ZK a partir de um circuito Noir, você precisa de dois componentes:
+Para gerar uma prova a partir de um circuito Noir, você precisa de dois componentes:
 
-1. **NoirJS** (`@noir-lang/noir_js`): executa o circuito e gera a `witness` (já explico)
-2. **bb.js** (`@aztec/bb.js`): pega a `witness` e gera a Prova ZK
+- **NoirJS** (`@noir-lang/noir_js`): executa o circuito e gera a **witness**
+- **bb.js** (`@aztec/bb.js`): pega a witness e gera a prova
+
+> **O que é a witness?** É o conjunto de todos os valores intermediários do circuito durante a execução — como um rastro completo de cada fio do circuito. A prova é gerada a partir dessa witness.
 
 No Node.js, funciona assim:
 
-```typescript
+```javascript
 // Importa as libs
 import { Noir } from '@noir-lang/noir_js';
 import { UltraHonkBackend } from '@aztec/bb.js';
@@ -276,51 +304,55 @@ const { witness } = await noir.execute({
     ship_sizes: [5, 4, 3, 3, 2],
 });
 
-// FINALMENTE gera a Prova ZK que é um artefato Uint8Array de 14592 bytes
+// Gera a prova: um artefato Uint8Array de 14592 bytes
 const proof = await backend.generateProof(witness, { keccak: true });
 ```
 
-A flag `{ keccak: true }` é importante — ela gera Provas ZK compatíveis com verificação on-chain.
-
-No backend (Node.js), isso funcionou de primeira. Mas o plano era gerar Provas ZK **no cliente**, que no meu caso seria o app mobile. O jogador posiciona os navios, o app gera a Prova ZK localmente, e envia pro backend só a Prova ZK (nunca as posições).
-
-E aqui começou a diversão.
+A flag `{ keccak: true }` é importante — ela gera provas compatíveis com verificação on-chain.
 
 ---
 
 ## Mobile ZK
 
-O `bb.js` usa **WebAssembly** pesado. Ele carrega binários de megabytes para fazer operações criptográficas. No Node.js e no browser, isso funciona porque ambos têm suporte maduro a WASM. Mas o React Native...
+> O Node.js funcionou. O próximo desafio: rodar isso num app mobile.
+
+No backend (Node.js), isso funcionou de primeira. Mas o plano era gerar provas no cliente, que no meu caso seria o app mobile. O jogador posiciona os navios, o app gera a prova localmente, e envia pro backend só a prova (nunca as posições).
+
+E aqui começou a diversão.
+
+O `bb.js` usa WebAssembly pesado. Ele carrega binários de megabytes para fazer operações criptográficas. No Node.js e no browser, isso funciona porque ambos têm suporte maduro a WASM. Mas o React Native...
 
 O React Native não roda num browser. Ele roda num runtime JavaScript próprio (Hermes ou JSC) que não tem suporte completo a WebAssembly. O `bb.js` precisa de WASM threads, memória compartilhada, e APIs que simplesmente não existem no runtime do React Native.
 
 Tentei várias abordagens:
 
 **Tentativa 1: importar bb.js direto no React Native. (GAMB)**
-Falhou imediatamente. `WebAssembly` não existe no Hermes.
+Falhou imediatamente. WebAssembly não existe no Hermes.
 
 **Tentativa 2: WebView invisível. (MASTER GAMB)**
-A ideia: criar um `<WebView>` escondido que carrega uma página HTML com o bb.js, e comunicar via `postMessage`. O WebView roda num engine de browser real, então WASM funciona.
+A ideia: criar um `<WebView>` transparente que carrega uma página HTML com o `bb.js`, e comunicar via `postMessage`. O WebView roda num engine de browser real, então WASM deveria funcionar.
 
-```typescript
+```tsx
 // zk/adapter.tsx — WebView provider
 <WebView
     source={{ html: zkWorkerHtml }}
     onMessage={(event) => {
         const result = JSON.parse(event.nativeEvent.data);
-        // Prova ZK gerada!
+        // Prova gerada!
     }}
 />
 ```
 
-Isso quase funcionou. Me iludi achando que as Provas ZK "só estavam lentas", que "depois eu refino". Esperei por 20 minutos a geração das Provas ZK e nada, só queimando memória e CPU. E a comunicação via `postMessage` adicionava latência extra ainda.
+Isso quase funcionou. Me iludi achando que as provas "só estavam lentas", que "depois eu refino". Esperei por 20 minutos a geração das provas e nada, só queimando memória e CPU. E a comunicação via `postMessage` adicionava latência extra ainda.
 
 **Tentativa 3: downgrade de versões.**
-Talvez uma versão mais antiga do bb.js fosse mais leve? Commit `e78a543`: `fix(backend): downgrade bb.js and noir_js to compatible versions`. Testei bb.js 0.72.1 com noir_js beta.2. Ainda não rodava no React Native.
+Pensei que talvez uma versão mais antiga do `bb.js` fosse mais leve. Testei `bb.js 0.72.1` com `noir_js beta.2`. Ainda não rodava no React Native.
 
 ---
 
-### A decisão dolorosa
+## A Decisão Dolorosa
+
+> Com três tentativas fracassadas, chegou a hora de aceitar o custo da decisão anterior.
 
 Olhei pro app mobile. 14 telas. Animações + vibração como reação. Splash screen animado com radar, modelo 3D do navio, confettis...
 
@@ -328,9 +360,9 @@ Enfim, mandei o Claude Code migrar tudo para um cliente web reaproveitando tudo 
 
 O browser é um ambiente estável hoje e você consegue executar várias coisas de forma nativa como WASM e outras APIs de criptografia. Tudo funcionou e não perdi tanto a beleza do app.
 
-O aprendizado técnico que tive foi que no browser você tem que trabalhar os imports melhor pra poder carregar seu circuito e as bibliotecas:
+O aprendizado técnico foi sobre como trabalhar os imports no browser para carregar o circuito e as bibliotecas corretamente:
 
-```typescript
+```javascript
 // 1. Importar os circuitos compilados como JSON estático
 import boardValidityCircuit from './circuits/board_validity.json';
 import shotProofCircuit from './circuits/shot_proof.json';
@@ -345,35 +377,35 @@ const [noirMod, bbMod] = await Promise.all([
 // 3. Instanciar o circuito com NoirJS
 const noir = new noirMod.Noir(boardValidityCircuit);
 
-// 4. Executar o circuito e gerar a Prova ZK
+// 4. Executar o circuito e gerar a prova
 const { witness } = await noir.execute(inputs);
 const backend = new bbMod.UltraHonkBackend(boardValidityCircuit.bytecode);
 const { proof, publicInputs } = await backend.generateProof(witness, { keccak: true });
 ```
 
-Os circuitos compilados (`.json`) são importados como assets estáticos — o Vite resolve isso no build. Já o NoirJS e bb.js são importados dinamicamente porque carregam WASM pesado que não pode ser pré-bundled (no `vite.config.ts` eles ficam no `optimizeDeps.exclude`).
+Os circuitos compilados (`.json`) são importados como assets estáticos, o Vite resolve isso no build. Já o NoirJS e bb.js são importados dinamicamente porque carregam WASM pesado que não pode ser pré-bundled (no `vite.config.ts` eles ficam no `optimizeDeps.exclude`).
 
 Aqui tem outro aprendizado, agora não técnico.
 
-Eu deveria ter escrito um circuito hello world e validado que era possível gerar a Prova ZK no mobile no dia 0, antes de começar a perfumaria. Mas eu me apaixonei.
+**Eu deveria ter escrito um circuito hello world e validado que era possível gerar a prova no mobile no dia 0, antes de começar a perfumaria.** Mas eu me apaixonei.
 
-Me apaixonei porque foi uma das experiências mais legais de programação que eu tive. Num jogo é super divertido testar as coisas porque você está jogando enquanto programa, bem diferente de ficar testando tela de cadastro ou ver se o docker vai compilar certo dessa vez.
+Me apaixonei porque foi uma das experiências mais legais de programação que eu tive. Num jogo é super divertido testar as coisas porque você está jogando enquanto programa, bem diferente de ficar testando tela de cadastro ou ver se o docker vai compilar certo dessa vez.,,
 
 ---
 
-### O que temos até aqui
+## O que temos até aqui
 
 Ao final dessa fase:
 
 - 3 circuitos Noir compilados e testados (`board_validity`, `shot_proof`, `turns_proof`)
 - 100% compatível com Stellar Protocol 25 (Poseidon2 + BN254)
-- Circuitos gerando Provas ZK no cliente web (browser + bb.js + NoirJS)
+- Circuitos gerando provas no cliente web (browser + bb.js + NoirJS)
 
-Os circuitos estavam prontos. As Provas ZK estavam sendo geradas. Mas ninguém ainda as estava **verificando** — nem o backend, nem a blockchain.
+Os circuitos estavam prontos. As provas estavam sendo geradas. Mas ninguém ainda as estava verificando — nem o backend, nem a blockchain.
 
 Isso é o próximo capítulo.
 
 ---
 
-*Anterior: [Parte 1 — "O que eu me meti?"](./01-diario-de-bordo.md)*
-*Próximo: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-provas-onchain-sqn.md)*
+← [Parte 1 — "O que eu me meti?"](#)
+→ [Parte 3 — "A blockchain que verificou a prova"](#)
