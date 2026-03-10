@@ -318,5 +318,5 @@ As Provas ZK estavam sendo geradas no cliente, verificadas no backend, E verific
 
 ---
 
-*Anterior: [Parte 2 — "Provando sem mostrar"](./02-provando-sem-mostrar.md)*
+*Anterior: [Parte 2 — "Provando sem mostrar"](./02-provando-sem-provar.md)*
 *Próximo: [Parte 4 — "Dois navios, uma batalha"](./04-dois-navios-uma-batalha.md)*

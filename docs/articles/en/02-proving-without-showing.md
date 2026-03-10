@@ -360,4 +360,4 @@ That's the next chapter.
 ---
 
 *Previous: [Part 1 — "The Hackathon"](./01-logbook.md)*
-*Next: [Part 3 — "The blockchain that verified the proof"](./03-proofs-onchain-sqn.md)*
+*Next: [Part 3 — "The blockchain that verified the proof"](./03-proofs-onchain.md)*

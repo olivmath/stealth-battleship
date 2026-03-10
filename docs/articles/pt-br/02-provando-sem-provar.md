@@ -375,5 +375,5 @@ Isso é o próximo capítulo.
 
 ---
 
-*Anterior: [Parte 1 — "O que eu me meti?"](./01-o-que-eu-me-meti.md)*
-*Próximo: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-a-blockchain-que-verificou.md)*
+*Anterior: [Parte 1 — "O que eu me meti?"](./01-diario-de-bordo.md)*
+*Próximo: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-provas-onchain-sqn.md)*

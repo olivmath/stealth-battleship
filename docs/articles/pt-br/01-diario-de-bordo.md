@@ -142,4 +142,4 @@ Se você nunca mexeu com ZK, blockchain, ou jogos juntos — bom, eu também nã
 
 ---
 
-*Próximo: [Parte 2 — "Provando sem provar"](./02-provando-sem-mostrar.md)*
+*Próximo: [Parte 2 — "Provando sem provar"](./02-provando-sem-provar.md)*

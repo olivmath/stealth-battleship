@@ -339,5 +339,5 @@ A máquina funciona. Mas só funciona porque aprendemos várias lições pelo ca
 
 ---
 
-*Anterior: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-a-blockchain-que-verificou.md)*
-*Próximo: [Parte 5 — "A lição que custou 214 XLM"](./05-a-licao-que-custou-214-xlm.md)*
+*Anterior: [Parte 3 — "A blockchain que verificou a Prova ZK"](./03-provas-onchain-sqn.md)*
+*Próximo: [Parte 5 — "A lição que custou 214 XLM"](./05-214-xlm.md)*

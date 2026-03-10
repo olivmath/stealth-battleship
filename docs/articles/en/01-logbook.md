@@ -142,4 +142,4 @@ If you've never worked with ZK, blockchain, or games together — well, neither 
 
 ---
 
-*Next: [Part 2 — "Proving without showing"](./02-provando-sem-mostrar.md)*
+*Next: [Part 2 — "Proving without showing"](./02-proving-without-showing.md)*
