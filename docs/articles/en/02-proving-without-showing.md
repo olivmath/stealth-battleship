@@ -1,78 +1,76 @@
 # Devlog: ZK Battleship
 
-## Part 2 — "Proving without showing"
+## Part 2 — "Proving Without Showing"
 
-*Writing ZK circuits in Noir, choosing Poseidon2, and discovering that the beautiful mobile app can't run proofs*
-
----
-
-### February 21st: time to actually learn ZK
-
-The single-player game was ready. Beautiful, playable, with 14 screens and animations. But so far there wasn't a single line of ZK code. The hackathon closed in 2 days. It was time to dive in.
-
-My first problem: **how do you write a zero-knowledge proof?**
-
-You don't write the proof directly. You write a **circuit** — a program that describes the rules the proof must satisfy. Then, a mathematical tool generates the proof from the circuit and the input data.
-
-Think of it this way: the circuit is the contract. The proof is the signature. Whoever verifies the proof is confirming that someone executed the circuit correctly with valid inputs, without seeing what the inputs were.
+*>>> ARTICLE HANDWRITTEN WITH GRAMMAR CORRECTIONS BY A.I. <<<*
 
 ---
 
-### Noir: the language of circuits
+## February 21st: Actually Learning ZK
 
-There are several languages for writing ZK circuits: Circom, Cairo, Noir, among others. I chose **Noir** (by Aztec) for three reasons:
+The single-player game was ready. Beautiful, playable, with 14 screens and animations. But so far there wasn't a single line of ZK code.
 
-1. The syntax looks like Rust — familiar enough that I didn't have to learn an alien language
-2. It has a modern toolchain: `nargo` for compiling and testing, `bb.js` for generating proofs in JavaScript
-3. The proof system (UltraHonk) is compatible with the BN254 curve — the same one Stellar's Protocol 25 natively supports
+**But how do you write a zero-knowledge proof?**
 
-Installation is straightforward:
+You don't write the Zero-Knowledge Proof (ZKP) directly. You write a circuit. A circuit is a program that describes the rules the proof must satisfy. Then, a mathematical tool uses the circuit along with the input data, both public and private, to generate the Zero-Knowledge Proof — which we'll simply call a proof.
 
-```bash
-curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-noirup -v 1.0.0-beta.9
-```
+These rules are called **constraints** and will generate a proof of computation. A proof that the code executed correctly without revealing the execution's input data.
 
 ---
 
-### The first circuit: board_validity
+## Noir: The Language of Circuits
+
+There are several languages for writing ZK circuits: Circom, Cairo, Noir, among others. I chose Noir for three reasons:
+
+1. The syntax is similar to Rust: so I already "knew" how to program.
+2. Toolchain: very practical to install, compile, test, and generate proofs.
+3. Compatible proof system: Stellar's Protocol 25 is fully compatible with the UltraHonk proof system. (both use the same BN254 elliptic curve and Poseidon2 hash function)
+
+---
+
+## Board Circuit
 
 The most important circuit is the first one: proving that your board is valid without revealing where the ships are.
 
 What it needs to verify:
-1. The ships have the correct sizes (5, 4, 3, 3, 2)
-2. No ship goes out of the 10x10 board bounds
-3. No ship overlaps another
-4. The board hash matches a public commitment
 
-Here's the actual circuit, in Noir:
+- Prove that the board being used is the one being proven (public commitment)
+- The ships have the correct sizes (5, 4, 3, 3, 2)
+- No ship goes out of the 10x10 board bounds
+- No ship overlaps another
 
-```noir
+I modeled the board as a 10x10 matrix and the ships as vectors of type `A[i][j]`.
+
+I modeled the constraints as if/else functions that should break the entire circuit if any failed. This way, either everything is valid or nothing is, making the circuit **atomic**.
+
+And to turn these constraints into code, I used Noir like this:
+
+```rust
 use poseidon::poseidon2::Poseidon2;
 
 fn main(
-    ships: [(u8, u8, u8, bool); 5],      // secret ship positions
-    nonce: Field,                          // secret random number
-    board_hash: pub Field,                 // public commitment
-    ship_sizes: pub [u8; 5],              // expected sizes (public)
+    ships: [(u8, u8, u8, bool); 5],      // Ship coordinates (SECRET)
+    nonce: Field,                        // random number (SECRET)
+    board_hash: pub Field,               // public commitment
+    ship_sizes: pub [u8; 5],             // expected sizes
 ) {
-    // 1. Does the hash match?
+    // 1. Validate the public commitment
     let computed_hash = compute_board_hash(ships, nonce);
     assert(computed_hash == board_hash, "invalid board hash");
 
-    // 2. Correct sizes?
+    // 2. Validate ship sizes
     for i in 0..5 {
         let (_, _, size, _) = ships[i];
         assert(size == ship_sizes[i], "invalid ship size");
     }
 
-    // 3. Within bounds?
+    // 3. Validate board bounds
     for i in 0..5 {
         let (row, col, size, horizontal) = ships[i];
         assert(ship_in_bounds(row, col, size, horizontal));
     }
 
-    // 4. No overlap?
+    // 4. Validate ship overlap
     for i in 0..5 {
         for j in (i + 1)..5 {
             assert(!ships_overlap(ships[i], ships[j]));
@@ -81,21 +79,25 @@ fn main(
 }
 ```
 
-Notice the `pub` keyword. Inputs marked with `pub` are **public** — anyone can see them. Inputs without `pub` are **private** — only the proof generator knows them.
+Notice the `pub` keyword. Parameters marked with `pub` are public and anyone can see them. Parameters without `pub` are private — only the proof generator knows them.
 
-`ships` and `nonce` are private: nobody knows where your ships are or what random number you used. `board_hash` and `ship_sizes` are public: everyone can verify that the proof was generated against that specific hash and with those ship sizes.
+- `ships`: coordinates of your ships.
+- `nonce`: random number to prevent someone from testing all possible board combinations until they find the `board_hash` and discover the actual positions.
+- `board_hash` and `ship_sizes`: everyone can verify that the proof was generated against that specific hash and with those ship sizes.
 
 ---
 
-### The hash function: Poseidon2
+## SHA256 vs Poseidon2
 
 A detail that seems small but is one of the most important decisions of the project: which hash function to use.
 
-In the normal world, you'd use SHA-256. Secure, tested, ubiquitous. I started with SHA-256 (commit `5253a32`: `feat(crypto): add board commitment types and SHA-256 hashing`). But inside a ZK circuit, SHA-256 is **extremely expensive**. Each bitwise operation becomes thousands of constraints in the circuit, making the proof slow to generate.
+In the normal world, you'd use SHA-256 for its simplicity and because any programming language has it available natively.
 
-**Poseidon2** is a hash function designed specifically for ZK circuits. It operates over finite fields (the natural numbers of circuits) instead of bits, making it orders of magnitude more efficient inside a circuit.
+I even started with SHA-256 to speed up the MVP, but inside a ZK circuit, SHA-256 is extremely expensive and slow. Each bitwise operation becomes thousands of constraints after the circuit is compiled, making the proof slow to generate and expensive to verify.
 
-```noir
+Poseidon2 is a hash function designed specifically for ZK circuits. It operates over finite fields instead of bits, making it orders of magnitude more efficient inside a circuit.
+
+```rust
 fn compute_board_hash(
     ships: [(u8, u8, u8, bool); 5],
     nonce: Field
@@ -103,37 +105,48 @@ fn compute_board_hash(
     let mut inputs: [Field; 21] = [0; 21];
     for i in 0..5 {
         let (r, c, s, h) = ships[i];
-        inputs[i * 4 + 0] = r as Field;    // row
-        inputs[i * 4 + 1] = c as Field;    // column
-        inputs[i * 4 + 2] = s as Field;    // size
-        inputs[i * 4 + 3] = if h { 1 } else { 0 }; // orientation
+        inputs[i * 4 + 0] = r as Field;             // row
+        inputs[i * 4 + 1] = c as Field;             // column
+        inputs[i * 4 + 2] = s as Field;             // size
+        inputs[i * 4 + 3] = if h { 1 } else { 0 };  // orientation
     }
-    inputs[20] = nonce;  // random salt
+    inputs[20] = nonce;                             // random salt
     Poseidon2::hash(inputs, 21)
 }
 ```
 
-5 ships x 4 fields each = 20 inputs, plus 1 nonce = 21 values. Poseidon2 compresses everything into a single `Field` (a 254-bit number). That's the public commitment of the board.
+5 ships × 4 fields each = 20 inputs + 1 nonce = 21 bytes total. Poseidon2 transforms all inputs into a single Field element of 254 bits. This is the public commitment of the board.
 
-The `nonce` is crucial: without it, someone could try all possible board combinations and compare against the public hash. The nonce makes this impossible — it's a random salt that only you know.
+The nonce is crucial: without it, someone could try all possible board combinations and compare against the public hash. The nonce makes this impossible — it's a random salt that only you know.
 
-And here's the bonus: Stellar implemented Poseidon2 as a **native instruction** in Protocol 25. This means that when we verify the hash on-chain, we're not executing smart contract code — we're using a protocol-level operation. Fast and cheap.
+And here's the bonus: Stellar implemented Poseidon2 as a native instruction in Protocol 25. This means that when we verify the hash on-chain, we're not executing smart contract code — we're actually using a native protocol operation. Fast and cheap.
 
 ---
 
-### The second circuit: shot_proof
+## Attack Circuit
 
-With the board committed, we need to prove that each response during the game is honest.
+> With the board validated, the next problem is ensuring honesty during the match.
+
+Beyond proving the board is valid, we also need to prove that each action during the game is honest.
 
 When my opponent attacks coordinate (3, 5) on my board, I say "hit" or "miss". But how do they know I'm not lying?
 
-```noir
+I wrote 2 constraints for this proof:
+
+1. The hash I'm using must match the board from the beginning.
+2. If there's a ship at that coordinate, I say `true`; if not, `false`.
+
+If I try to lie (say "miss" when they actually "hit" a ship), the circuit fails and the proof cannot be generated. Lying without breaking the proof system's security is mathematically infeasible.
+
+And the code for this looks like:
+
+```rust
 fn main(
-    ships: [(u8, u8, u8, bool); 5],  // my positions (SECRET)
+    ships: [(u8, u8, u8, bool); 5],    // my positions (SECRET)
     nonce: Field,                      // my nonce (SECRET)
-    board_hash: pub Field,             // my commitment (PUBLIC)
-    row: pub u8,                       // attacked coordinate
-    col: pub u8,
+    board_hash: pub Field,             // public commitment
+    row: pub u8,                       // attacked X coordinate
+    col: pub u8,                       // attacked Y coordinate
     is_hit: pub bool,                  // my response
 ) {
     // Does the hash match the board I committed at the start?
@@ -146,48 +159,53 @@ fn main(
 }
 ```
 
-The circuit does two things:
-1. Verifies that the hash matches — meaning I'm using the same board from the start
-2. Verifies that the response matches reality — if there's a ship in that cell, it has to be "hit"
+**But wait — why is `is_hit` an input and not a return value from the circuit?**
 
-If I try to lie (say "miss" when there's a ship), the `assert` fails and the proof can't be generated. **Lying is mathematically impossible.**
+ZK circuits don't return values. They are constraint systems. This means they only do `assert` — they pass or fail. If the circuit could return the calculated result of `cell_is_hit`, it would have to expose something derived from `ships`, which is private. This would leak information about where the ships are.
+
+In the world of circuits, the pattern is the **inverse** of regular programming:
+
+> You declare the result (`is_hit = true`), and the circuit proves that your declaration is true given the secret data. If your declaration is false, the proof simply cannot be generated because the circuit fails.
 
 ---
 
-### The third circuit: turns_proof
+## Final Match Circuit
 
-The final circuit is the most ambitious: replay the entire match and calculate the winner.
+> With board validation and individual attack verification solved, what remained was the referee for the entire match.
 
-```noir
+The final circuit is the most ambitious: replaying the entire match and calculating, step by step, the winner without revealing the boards, in a mathematically verifiable way.
+
+This circuit is the final referee. It receives the entire match history — all attacks from both players — and recalculates who won. If someone tries to declare the wrong winner, the proof fails.
+
+ZK circuits in Noir require arrays to have fixed sizes at compile time. That's why I used an attack array with a fixed size of 100 (which is the maximum for a 10x10 board). Unused slots are filled with `(0, 0)` and ignored via the `n_attacks` counter.
+
+This circuit is the largest, slowest, and most expensive of the three. Even so, the on-chain verification cost on Stellar was only **$0.00032 USD**. This is because it has to run 2 loops to count who hit all of the opponent's ships:
+
+```rust
 fn main(
-    ships_player: [(u8, u8, u8, bool); 5],  // player 1's ships (secret)
-    ships_ai: [(u8, u8, u8, bool); 5],      // player 2's ships (secret)
-    nonce_player: Field,
-    nonce_ai: Field,
+    // Player 1
+    ships_player: [(u8, u8, u8, bool); 5],  // player 1's ships (SECRET)
+    attacks_player: pub [(u8, u8); 100],    // all player 1's attacks
     board_hash_player: pub Field,
-    board_hash_ai: pub Field,
-    attacks_player: pub [(u8, u8); 100],     // all P1 attacks
-    attacks_ai: pub [(u8, u8); 100],         // all P2 attacks
     n_attacks_player: pub u8,
+    nonce_player: Field,
+
+    // Player 2 (AI)
+    ships_ai: [(u8, u8, u8, bool); 5],      // player 2's ships (SECRET)
+    attacks_ai: pub [(u8, u8); 100],        // all player 2's attacks
+    board_hash_ai: pub Field,
     n_attacks_ai: pub u8,
+    nonce_ai: Field,
+
+    // Match
     ship_sizes: pub [u8; 5],
-    winner: pub u8,                           // 0 = P1, 1 = P2
+    winner: pub u8,                         // player 1 or player 2
 ) {
     // Verify both boards
     assert(compute_board_hash(ships_player, nonce_player) == board_hash_player);
     assert(compute_board_hash(ships_ai, nonce_ai) == board_hash_ai);
 
-    // Count hits on each board
-    let mut hits_on_ai: u8 = 0;
-    for i in 0..100 {
-        if (i as u8) < n_attacks_player {
-            let (row, col) = attacks_player[i];
-            if cell_is_hit(ships_ai, row, col) {
-                hits_on_ai += 1;
-            }
-        }
-    }
-
+    // Count player 1's hits
     let mut hits_on_player: u8 = 0;
     for i in 0..100 {
         if (i as u8) < n_attacks_ai {
@@ -198,75 +216,87 @@ fn main(
         }
     }
 
+    // Count player 2's (AI) hits
+    let mut hits_on_ai: u8 = 0;
+    for i in 0..100 {
+        if (i as u8) < n_attacks_player {
+            let (row, col) = attacks_player[i];
+            if cell_is_hit(ships_ai, row, col) {
+                hits_on_ai += 1;
+            }
+        }
+    }
+
+    // 5+4+3+3+2 = 17 total ship cells
+    let total_ship_counter = 17;
+
     // Did the declared winner actually win?
-    let cells_to_win = total_ship_cells(ship_sizes); // 5+4+3+3+2 = 17
     if winner == 0 {
-        assert(hits_on_ai == cells_to_win);   // P1 sunk all of P2's ships
+        // Did P1 sink all of P2's ships?
+        assert(hits_on_ai == total_ship_counter);
     } else {
-        assert(hits_on_player == cells_to_win); // P2 sunk all of P1's ships
+        // Did P2 sink all of P1's ships?
+        assert(hits_on_player == total_ship_counter);
     }
 }
 ```
 
-This circuit is the final referee. It receives the entire match history — all attacks from both players — and recalculates who won. If someone tries to declare the wrong winner, the proof fails.
-
-The 100-attack array is fixed (ZK circuits don't support variable-length arrays). Unused slots are filled with `(0, 0)` and ignored via the `n_attacks` counter.
-
 ---
 
-### Testing the circuits
+## Integrating the Circuits
 
-Noir has built-in test support. Each circuit includes tests that verify valid and invalid scenarios:
+> With all three circuits ready, the next step was understanding where and how they run.
 
-```noir
-#[test]
-fn test_valid_board() {
-    let ships: [(u8, u8, u8, bool); 5] = [
-        (0, 0, 5, true),   // Carrier on row 0, horizontal
-        (2, 0, 4, true),   // Battleship on row 2
-        (4, 0, 3, true),   // Cruiser on row 4
-        (6, 0, 3, true),   // Submarine on row 6
-        (8, 0, 2, true),   // Destroyer on row 8
-    ];
-    let nonce: Field = 12345;
-    let board_hash = compute_board_hash(ships, nonce);
-    let ship_sizes: [u8; 5] = [5, 4, 3, 3, 2];
-    main(ships, nonce, board_hash, ship_sizes); // should not fail
-}
+Now that the circuit is ready, it needs to receive data to start generating proofs. But where does this language run? Node.js? Rust? In the browser?
 
-#[test(should_fail)]
-fn test_lying_miss_when_hit() {
-    // Trying to say "miss" on a cell that has a ship
-    main(ships, nonce, board_hash, 0, 0, false); // MUST fail
-}
+I'll compare the circuit lifecycle to smart contracts and, if you're from web2, to functions-as-a-service:
+
+**Web2 - Functions-as-a-Service:**
+```
+Write → Compile → Test → Deploy to Cloud → Interact (cold start)
 ```
 
-```bash
-nargo test
+**Web3 - Smart contracts:**
+```
+Write → Compile → Test → Deploy to Blockchain (EVM/Soroban) → Interact (gas fee)
 ```
 
-All passing. The circuits work. Now I need to generate real proofs.
+**Web3 ZK - Circuits:**
+```
+Write → Compile → Test → Import in client → Interact (CPU) → Output (proof)
+```
 
----
+Unlike Web2 and Web3, circuits **should not be executed on the server side**. Think about it: if you have to send your data to the server to generate a proof with secret inputs, you've already revealed your data to the network and to the server.
 
-### Generating proofs: bb.js and the React Native problem
+That's why circuits should be compiled and injected into the client, just like a WASM library or a JS asset that runs on the client.
+
+After writing the circuits, compilation generates an executable binary capable of dynamically generating proofs with secret inputs. But compilation also generates another important artifact: the **Verification Key (VK)**.
+
+The VK is the public half of the circuit — it contains everything a verifier needs to confirm that a proof is legitimate, without needing the full circuit or the secret data. In my project, the VKs for the board and match circuits are embedded inside the Soroban smart contract, which uses them to verify proofs on-chain. The attack circuit's VK stays only on the backend since it's verified off-chain.
 
 To generate a proof from a Noir circuit, you need two components:
 
-1. **NoirJS** (`@noir-lang/noir_js`): executes the circuit and generates the "witness" (the intermediate values)
-2. **bb.js** (`@aztec/bb.js`): takes the witness and generates the cryptographic proof using UltraHonk
+- **NoirJS** (`@noir-lang/noir_js`): executes the circuit and generates the **witness**
+- **bb.js** (`@aztec/bb.js`): takes the witness and generates the proof
 
-On Node.js, it works perfectly:
+> **What is the witness?** It's the set of all intermediate values of the circuit during execution — like a complete trace of every wire in the circuit. The proof is generated from this witness.
 
-```typescript
+On Node.js, it works like this:
+
+```javascript
+// Import the libs
 import { Noir } from '@noir-lang/noir_js';
 import { UltraHonkBackend } from '@aztec/bb.js';
 
-const circuit = JSON.parse(fs.readFileSync('board_validity.json', 'utf-8'));
+// Import the circuit as an executable binary
+const binary = fs.readFileSync('board_validity.json', 'utf-8');
+const circuit = JSON.parse(binary);
+
+// Instantiate the circuit
 const backend = new UltraHonkBackend(circuit.bytecode);
 const noir = new Noir(circuit);
 
-// Generate witness (execute the circuit with inputs)
+// Generate witness (execute the circuit with secret inputs)
 const { witness } = await noir.execute({
     ships: [[0, 0, 5, true], [2, 0, 4, true], ...],
     nonce: "12345",
@@ -274,90 +304,108 @@ const { witness } = await noir.execute({
     ship_sizes: [5, 4, 3, 3, 2],
 });
 
-// Generate proof
+// Generate the proof: a Uint8Array artifact of 14592 bytes
 const proof = await backend.generateProof(witness, { keccak: true });
-// proof.proof: Uint8Array of 14592 bytes
 ```
 
 The `{ keccak: true }` flag is important — it generates proofs compatible with on-chain verification.
 
-On the backend (Node.js), this worked on the first try. But the plan was to generate proofs **on the client** — on the mobile app. The player places their ships, the app generates the proof locally, and sends only the proof to the backend (never the positions).
-
-And here the nightmare began.
-
 ---
 
-### The wall: bb.js on React Native
+## Mobile ZK
 
-`bb.js` uses **heavy WebAssembly**. It loads megabytes of binaries to perform cryptographic operations. On Node.js and the browser, this works because both have mature WASM support. But React Native...
+> Node.js worked. The next challenge: running this on a mobile app.
+
+On the backend (Node.js), this worked on the first try. But the plan was to generate proofs on the client, which in my case would be the mobile app. The player positions the ships, the app generates the proof locally, and sends only the proof to the backend (never the positions).
+
+And here the fun began.
+
+`bb.js` uses heavy WebAssembly. It loads megabytes of binaries to perform cryptographic operations. On Node.js and the browser, this works because both have mature WASM support. But React Native...
 
 React Native doesn't run in a browser. It runs on its own JavaScript runtime (Hermes or JSC) that doesn't have full WebAssembly support. `bb.js` needs WASM threads, shared memory, and APIs that simply don't exist in the React Native runtime.
 
 I tried several approaches:
 
-**Attempt 1: import bb.js directly in React Native.**
-Failed immediately. `WebAssembly` doesn't exist in Hermes.
+**Attempt 1: import bb.js directly in React Native. (HACK)**
+Failed immediately. WebAssembly doesn't exist in Hermes.
 
-**Attempt 2: invisible WebView.**
-The idea: create a hidden `<WebView>` that loads an HTML page with bb.js, and communicate via `postMessage`. The WebView runs on a real browser engine, so WASM works.
+**Attempt 2: invisible WebView. (MASTER HACK)**
+The idea: create a transparent `<WebView>` that loads an HTML page with bb.js, and communicate via `postMessage`. The WebView runs on a real browser engine, so WASM should work.
 
-```typescript
+```tsx
 // zk/adapter.tsx — WebView provider
 <WebView
     source={{ html: zkWorkerHtml }}
     onMessage={(event) => {
         const result = JSON.parse(event.nativeEvent.data);
-        // proof generated!
+        // Proof generated!
     }}
 />
 ```
 
-This almost worked. But the proofs took too long — the WebView has memory and CPU limitations. And communication via `postMessage` added latency. In tests, generating a `board_validity` proof took over 30 seconds on a phone. Unfeasible for a game.
+This almost worked. I deluded myself thinking the proofs "were just slow", that "I'd refine it later". I waited 20 minutes for proof generation and nothing — just burning memory and CPU. And the communication via `postMessage` added extra latency on top of that.
 
 **Attempt 3: version downgrade.**
-Maybe an older version of bb.js would be lighter? Commit `e78a543`: `fix(backend): downgrade bb.js and noir_js to compatible versions`. Tested bb.js 0.72.1 with noir_js beta.2. Still didn't run on React Native.
+I thought maybe an older version of bb.js would be lighter. Tested bb.js 0.72.1 with noir_js beta.2. Still didn't run on React Native.
 
 ---
 
-### The painful decision
+## The Painful Decision
 
-I looked at the mobile app. 14 screens. Reanimated animations. Haptics. Internationalization in 3 languages. Animated splash screen, 3D ship model in the menu, confetti on victory. A beautiful app that took days to polish.
+> With three failed attempts, it was time to accept the cost of the previous decision.
 
-And I looked at bb.js refusing to run on it.
+I looked at the mobile app. 14 screens. Animations + haptic feedback as reactions. Animated splash screen with radar, 3D ship model, confetti...
 
-The decision: **abandon mobile-only and build a web client.**
+In short, I had Claude Code migrate everything to a web client, reusing everything it could. I used basic Vite + React to make everything work in the browser.
 
-Web (Vite + React) runs on a real browser. WASM works. bb.js works. Everything works. It wouldn't be as beautiful as the native app, but it would be functional.
+The browser is a stable environment today and you can execute many things natively like WASM and other cryptography APIs. Everything worked and I didn't lose much of the app's beauty.
 
-Commit `f63324b`: `feat(web): merge wallet creation into login flow`. The web client started to take shape, mirroring the mobile's features but with the critical advantage of being able to generate ZK proofs.
+The technical learning was about how to handle imports in the browser to correctly load the circuit and libraries:
 
-The mobile app continued to exist — for single-player and as a visual reference. But PvP with ZK would be web-only.
+```javascript
+// 1. Import compiled circuits as static JSON
+import boardValidityCircuit from './circuits/board_validity.json';
+import shotProofCircuit from './circuits/shot_proof.json';
+import turnsProofCircuit from './circuits/turns_proof.json';
+
+// 2. Import libs dynamically (heavy WASM, can't be bundled)
+const [noirMod, bbMod] = await Promise.all([
+  import('@noir-lang/noir_js'),
+  import('@aztec/bb.js'),
+]);
+
+// 3. Instantiate the circuit with NoirJS
+const noir = new noirMod.Noir(boardValidityCircuit);
+
+// 4. Execute the circuit and generate the proof
+const { witness } = await noir.execute(inputs);
+const backend = new bbMod.UltraHonkBackend(boardValidityCircuit.bytecode);
+const { proof, publicInputs } = await backend.generateProof(witness, { keccak: true });
+```
+
+The compiled circuits (`.json`) are imported as static assets — Vite resolves this at build time. NoirJS and bb.js are imported dynamically because they load heavy WASM that can't be pre-bundled (in `vite.config.ts` they go in `optimizeDeps.exclude`).
+
+Here's another learning, this time non-technical.
+
+**I should have written a hello world circuit and validated that it was possible to generate the proof on mobile on day 0, before starting the polish.** But I fell in love.
+
+I fell in love because it was one of the coolest programming experiences I've ever had. In a game, it's super fun to test things because you're playing while you program — very different from testing signup screens or seeing if Docker will compile correctly this time.
 
 ---
 
-### The lesson here
-
-If I could go back in time, I would have tested bb.js on React Native on **day one**. Before building 14 screens. Before polishing animations. The riskiest integration of the project should have been tested first.
-
-But it's easy to say that in hindsight. At the time, the single-player game was pure motivation — seeing something working, beautiful, playable. And that motivation carried me to the point where ZK needed to work.
-
----
-
-### What we have so far
+## What We Have So Far
 
 At the end of this phase:
 
 - 3 Noir circuits compiled and tested (`board_validity`, `shot_proof`, `turns_proof`)
-- Poseidon2 as hash function (compatible with Stellar Protocol 25)
-- Proofs generating on Node.js and browser (bb.js + NoirJS)
-- Beautiful mobile app but without ZK
-- Functional web client with proof generation
+- 100% compatible with Stellar Protocol 25 (Poseidon2 + BN254)
+- Circuits generating proofs on the web client (browser + bb.js + NoirJS)
 
-The circuits were ready. The proofs were being generated. But nobody was **verifying** them yet — neither the backend nor the blockchain.
+The circuits were ready. The proofs were being generated. But nobody was verifying them yet — neither the backend nor the blockchain.
 
 That's the next chapter.
 
 ---
 
-*Previous: [Part 1 — "The Hackathon"](./01-logbook.md)*
-*Next: [Part 3 — "The blockchain that verified the proof"](./03-proofs-onchain.md)*
+← [Part 1 — "What did I get myself into?"](#)
+→ [Part 3 — "The blockchain that verified the proof"](#)
